@@ -56,3 +56,8 @@ lerna-debug.log*
 .idea/
 .vscode/
 *.swp
+
+# Temporary Scripts and Logs
+*.ps1
+*.txt
+stitch_assets/
