@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using CleanApp.API.OpenApi;
 using CleanApp.Application;
 using CleanApp.Application.Ai;
@@ -121,15 +122,17 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// ── Hangfire dashboard (admin only in production) ───────────────
-app.MapHangfireDashboard("/hangfire");
-
 // ── Database seed ───────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // Ensure database is created
+    await db.Database.EnsureCreatedAsync();
     await DatabaseSeeder.SeedAsync(db);
 }
+
+// ── Hangfire dashboard (admin only in production) ───────────────
+app.MapHangfireDashboard("/hangfire");
 
 // ── Schedule recurring background jobs ──────────────────────────
 RecurringJob.AddOrUpdate<LowStockAlertJob>(
