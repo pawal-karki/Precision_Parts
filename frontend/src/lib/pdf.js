@@ -22,7 +22,7 @@ export function generateInvoicePdf(invoice) {
   doc.setTextColor(90, 96, 94);
   doc.text("Kathmandu, Nepal", 20, 36);
   doc.text("New Baneshwor, Kathmandu 44600", 20, 41);
-  doc.text("accounts@precision-parts.com.np", 20, 46);
+  doc.text("accounts@precision-parts.com", 20, 46);
 
   doc.setDrawColor(236, 239, 236);
   doc.line(20, 55, pageWidth - 20, 55);
@@ -131,7 +131,7 @@ export function generateReportPdf(title, columns, rows) {
   doc.setTextColor(90, 96, 94);
   doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 33);
   doc.text("Precision Atelier Industrial Inventory", pageWidth - 20, 33, { align: "right" });
-  doc.text("accounts@precision-parts.com.np", pageWidth - 20, 38, { align: "right" });
+  doc.text("accounts@precision-parts.com", pageWidth - 20, 38, { align: "right" });
 
   doc.setDrawColor(236, 239, 236);
   doc.line(20, 42, pageWidth - 20, 42);

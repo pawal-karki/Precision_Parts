@@ -11,4 +11,3 @@ public interface IVendorRepository
     void Remove(Vendor vendor);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
-                 

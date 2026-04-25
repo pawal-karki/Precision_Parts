@@ -150,7 +150,7 @@ export default function VendorManagement() {
 
   return (
     <PageTransition className="space-y-10">
-      <section className="flex justify-between items-end">
+      <section className="flex flex-col md:flex-row justify-between md:items-end items-start gap-4">
         <div>
           <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
             Vendor Management

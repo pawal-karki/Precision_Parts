@@ -188,7 +188,7 @@ export default function PartsManagement() {
         <div className="flex h-full">
           {/* Main content */}
           <div className="flex-1 overflow-y-auto p-8">
-            <section className="flex justify-between items-end mb-8">
+            <section className="flex flex-col md:flex-row justify-between md:items-end items-start gap-4 mb-8">
               <div>
                 <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
                   Parts Management
@@ -208,7 +208,7 @@ export default function PartsManagement() {
               variants={staggerContainer}
               initial="initial"
               animate="animate"
-              className="grid grid-cols-4 gap-4 mb-8"
+              className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
             >
               {[
                 { label: "Total SKUs", value: stats.total, color: "" },
@@ -241,7 +241,8 @@ export default function PartsManagement() {
             </div>
 
             {/* Table */}
-            <div className="bg-white dark:bg-[#1C1C1C] rounded-xl overflow-hidden border border-surface-container-low dark:border-neutral-800/50">
+            <div className="bg-white dark:bg-[#1C1C1C] rounded-xl overflow-x-auto border border-surface-container-low dark:border-neutral-800/50">
+              <div className="min-w-[800px]">
               <Table>
                 <TableHeader>
                   <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
@@ -311,6 +312,7 @@ export default function PartsManagement() {
                   <p className="text-sm font-medium">No parts found</p>
                 </div>
               )}
+              </div>
             </div>
           </div>
 

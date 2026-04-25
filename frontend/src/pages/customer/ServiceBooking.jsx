@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/toast";
 import { motion, PageTransition, fadeInUp } from "@/components/ui/motion";
@@ -14,12 +14,6 @@ const services = [
 ];
 
 const timeSlots = ["09:00 AM", "11:30 AM", "02:15 PM", "04:45 PM"];
-
-const pastBookings = [
-  { id: "#SRV-2901", date: "Sept 12, 2024", services: "Full Engine Overhaul, Filter Swap", status: "Completed" },
-  { id: "#SRV-2784", date: "Aug 05, 2024", services: "Brake Fluid Flush, Tire Rotation", status: "Completed" },
-  { id: "#SRV-2612", date: "July 18, 2024", services: "Air Filter Replacement", status: "Cancelled" },
-];
 
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
@@ -39,6 +33,23 @@ export default function ServiceBooking() {
   const [selectedDay, setSelectedDay] = useState(now.getDate());
   const [selectedTime, setSelectedTime] = useState("11:30 AM");
   const [selectedServices, setSelectedServices] = useState([1, 3]);
+  const [pastBookings, setPastBookings] = useState([]);
+
+  useEffect(() => {
+    api.getAppointments()
+      .then(res => {
+        if (Array.isArray(res)) {
+          const formatted = res.map(book => ({
+            id: book.referenceNumber,
+            date: new Date(book.scheduledAtUtc).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            services: book.services?.join(", ") || "General Service",
+            status: book.status
+          }));
+          setPastBookings(formatted);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -114,7 +125,7 @@ export default function ServiceBooking() {
       <div className="space-y-10">
         {/* Header */}
         <motion.header variants={fadeInUp} initial="initial" animate="animate">
-          <h1 className="text-4xl font-extrabold tracking-tight font-headline text-on-surface dark:text-white mb-2">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-headline text-on-surface dark:text-white mb-2">
             Service Booking
           </h1>
           <p className="text-on-surface-variant dark:text-stone-400 max-w-2xl">
@@ -314,17 +325,14 @@ export default function ServiceBooking() {
           animate="animate"
           transition={{ delay: 0.4 }}
         >
-          <div className="flex justify-between items-end mb-6">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-6">
             <div>
-              <h3 className="font-extrabold font-headline text-2xl text-on-surface dark:text-white">Service History</h3>
-              <p className="text-on-surface-variant text-sm">Track your vehicle&apos;s maintenance timeline and past reports.</p>
+              <h3 className="font-extrabold font-headline text-xl sm:text-2xl text-on-surface dark:text-white">Service History</h3>
+              <p className="text-on-surface-variant text-sm">Track past maintenance and booked appointments.</p>
             </div>
-            <button className="text-sm font-bold text-secondary flex items-center gap-1 hover:underline">
-              View All History <Icon name="arrow_forward" className="text-sm" />
-            </button>
           </div>
-          <div className="bg-surface-container-low dark:bg-stone-900 rounded-2xl overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div className="bg-surface-container-low dark:bg-stone-900 rounded-2xl overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[520px]">
               <thead className="bg-surface-container-high dark:bg-stone-800">
                 <tr>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Service ID</th>
@@ -366,6 +374,12 @@ export default function ServiceBooking() {
                 ))}
               </tbody>
             </table>
+            {pastBookings.length === 0 && (
+              <div className="text-center py-10 text-on-surface-variant">
+                <Icon name="event_busy" className="text-4xl mb-2" />
+                <p className="text-sm">No bookings yet. Book your first service above!</p>
+              </div>
+            )}
           </div>
         </motion.section>
       </div>

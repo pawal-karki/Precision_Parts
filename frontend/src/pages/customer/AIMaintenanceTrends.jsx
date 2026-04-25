@@ -3,48 +3,75 @@ import { Icon } from "@/components/ui/icon";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { motion, PageTransition, fadeInUp } from "@/components/ui/motion";
+import { Button } from "@/components/ui/button";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+
+const MOCK_WEAR_DATA_12M = [
+  { month: "May", wear: 12 }, { month: "Jun", wear: 18 }, { month: "Jul", wear: 22 },
+  { month: "Aug", wear: 19 }, { month: "Sep", wear: 28 }, { month: "Oct", wear: 35 },
+  { month: "Nov", wear: 40 }, { month: "Dec", wear: 38 }, { month: "Jan", wear: 45 },
+  { month: "Feb", wear: 52 }, { month: "Mar", wear: 61 }, { month: "Apr", wear: 68 },
+];
+const MOCK_WEAR_DATA_6M = MOCK_WEAR_DATA_12M.slice(-6);
 
 export default function AIMaintenanceTrends() {
   const [predictions, setPredictions] = useState([]);
   const [trends, setTrends] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [chartRange, setChartRange] = useState("12M");
   const toast = useToast();
 
   useEffect(() => {
-    Promise.all([api.getAiPredictions(), api.getMaintenanceTrends()])
-      .then(([p, t]) => {
-        setPredictions(Array.isArray(p) ? p : []);
-        setTrends(Array.isArray(t) ? t : []);
-      })
-      .catch(() => {
-        toast("Could not load AI data from API", "error");
-        setPredictions([]);
-        setTrends([]);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial load only
+    let cancelled = false;
+    (async () => {
+      try {
+        const [p, t] = await Promise.all([api.getAiPredictions(), api.getMaintenanceTrends()]);
+        if (!cancelled) {
+          setPredictions(Array.isArray(p) ? p : []);
+          setTrends(Array.isArray(t) ? t : []);
+        }
+      } catch {
+        if (!cancelled) {
+          // Toast is optional here — AI endpoint might not be ready
+          setPredictions([]);
+          setTrends([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const riskColor = (level) =>
-    ({
-      High: "text-error",
-      Medium: "text-on-surface",
-      Low: "text-secondary",
-    }[level] || "text-on-surface");
+  const riskColor = (level) => ({
+    High: "text-error",
+    Medium: "text-amber-600 dark:text-amber-400",
+    Low: "text-secondary",
+  }[level] || "text-on-surface");
 
-  const barColor = (level) =>
-    ({
-      High: "bg-error",
-      Medium: "bg-primary-dim",
-      Low: "bg-secondary",
-    }[level] || "bg-secondary");
+  const barColor = (level) => ({
+    High: "bg-error",
+    Medium: "bg-amber-500",
+    Low: "bg-secondary",
+  }[level] || "bg-secondary");
 
   const handleScheduleService = (pred) => {
-    toast(`Service scheduled for ${pred.component} on ${pred.vehicle}`, "success");
+    toast(`Service request created for ${pred.component} on ${pred.vehicle}`, "success");
   };
+
+  const chartData = chartRange === "6M" ? MOCK_WEAR_DATA_6M : MOCK_WEAR_DATA_12M;
+
+  // Use API predictions if available, otherwise show demo predictions
+  const displayPredictions = predictions.length > 0 ? predictions : [
+    { component: "Transmission Plate", vehicle: "My Vehicle", confidence: 88, riskLevel: "Low", estimatedFailure: "18,000 cycles" },
+    { component: "Hydraulic Actuator", vehicle: "My Vehicle", confidence: 55, riskLevel: "Medium", estimatedFailure: "6,500 cycles" },
+    { component: "Auxiliary Cooling Fan", vehicle: "My Vehicle", confidence: 12, riskLevel: "High", estimatedFailure: "Immediate" },
+    { component: "Primary Drive Shaft", vehicle: "My Vehicle", confidence: 95, riskLevel: "Low", estimatedFailure: "24,000 cycles" },
+  ];
 
   return (
     <PageTransition>
-      <div className="space-y-10">
+      <div className="space-y-8">
         {/* Header */}
         <motion.header
           className="flex flex-col md:flex-row md:items-end justify-between gap-6"
@@ -53,44 +80,50 @@ export default function AIMaintenanceTrends() {
           animate="animate"
         >
           <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter font-headline text-on-surface dark:text-white mb-2">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-secondary mb-2">
+              <Icon name="auto_awesome" className="text-sm" />
+              AI-Powered Diagnostics
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tighter font-headline text-on-surface dark:text-white mb-2">
               Predictive Diagnostics
             </h1>
-            <p className="text-on-surface-variant dark:text-stone-400 text-lg">
-              Real-time analytical forecast for your fleet. Machine learning models projecting component life cycles based on operational telemetry.
+            <p className="text-on-surface-variant dark:text-stone-400 text-base sm:text-lg">
+              Real-time analytical forecast for your fleet, projecting component life cycles based on operational telemetry.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 bg-surface-container-low dark:bg-stone-800 rounded-lg flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-secondary" />
-              <span className="text-sm font-medium text-secondary uppercase tracking-tight">AI Status: Active</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className={`px-4 py-2 rounded-lg flex items-center gap-2 ${loading ? "bg-amber-100 dark:bg-amber-500/10" : "bg-surface-container-low dark:bg-stone-800"}`}>
+              <span className={`w-2 h-2 rounded-full ${loading ? "bg-amber-500 animate-pulse" : "bg-secondary"}`} />
+              <span className={`text-sm font-medium uppercase tracking-tight ${loading ? "text-amber-600 dark:text-amber-400" : "text-secondary"}`}>
+                {loading ? "Loading…" : "AI Status: Active"}
+              </span>
             </div>
           </div>
         </motion.header>
 
-        {/* Main Bento Grid */}
+        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Aggregate Wear Index */}
+          {/* Wear Index Chart */}
           <motion.section
-            className="lg:col-span-8 bg-surface-container-lowest dark:bg-stone-900 p-8 rounded-xl shadow-sm relative overflow-hidden group"
+            className="lg:col-span-8 bg-surface-container-lowest dark:bg-stone-900 p-6 sm:p-8 rounded-xl shadow-sm border border-surface-container dark:border-stone-800"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
             transition={{ delay: 0.1 }}
           >
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-xl font-bold font-headline text-on-surface dark:text-white">Aggregate Wear Index</h3>
-                <p className="text-sm text-on-surface-variant">Projected 12-month degradation curve</p>
+                <p className="text-sm text-on-surface-variant">Projected degradation curve</p>
               </div>
               <div className="flex gap-2">
                 {["6M", "12M"].map((r) => (
                   <button
                     key={r}
                     onClick={() => setChartRange(r)}
-                    className={`px-3 py-1 text-xs font-bold rounded transition-colors ${
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
                       chartRange === r
-                        ? "bg-primary dark:bg-secondary text-on-primary"
+                        ? "bg-secondary text-on-primary"
                         : "bg-surface-container dark:bg-stone-800 text-on-surface-variant"
                     }`}
                   >
@@ -99,123 +132,77 @@ export default function AIMaintenanceTrends() {
                 ))}
               </div>
             </div>
-
-            {/* SVG Chart */}
-            <div className="h-64 w-full relative mt-4">
-              <svg className="w-full h-full" viewBox="0 0 800 200">
-                <line stroke="currentColor" strokeDasharray="4" className="text-surface-container" x1="0" x2="800" y1="50" y2="50" />
-                <line stroke="currentColor" strokeDasharray="4" className="text-surface-container" x1="0" x2="800" y1="100" y2="100" />
-                <line stroke="currentColor" strokeDasharray="4" className="text-surface-container" x1="0" x2="800" y1="150" y2="150" />
-                <path className="text-secondary/5" d="M0,30 Q200,35 400,70 T800,150 L800,170 T400,90 Q200,55 0,50 Z" fill="currentColor" />
-                <path className="text-secondary" d="M0,40 Q200,45 400,80 T800,160" fill="none" stroke="currentColor" strokeWidth="4" />
-                <circle cx="400" cy="80" r="6" fill="#4d6172" />
-                <text className="text-[10px] font-bold fill-on-surface" x="415" y="75">Current Threshold (82%)</text>
-              </svg>
-              <div className="flex justify-between mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">
-                <span>JAN</span><span>MAR</span><span>MAY</span><span>JUL</span><span>SEP</span><span>NOV</span><span>DEC</span>
-              </div>
-            </div>
-
-            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-surface-container-low dark:border-stone-800 pt-6">
-              <div>
-                <p className="text-xs text-on-surface-variant uppercase font-bold tracking-wider mb-1">Health Status</p>
-                <p className="text-xl font-extrabold font-headline text-on-surface dark:text-white">Optimal</p>
-              </div>
-              <div>
-                <p className="text-xs text-on-surface-variant uppercase font-bold tracking-wider mb-1">Next Downtime</p>
-                <p className="text-xl font-extrabold font-headline text-on-surface dark:text-white">24 Days</p>
-              </div>
-              <div>
-                <p className="text-xs text-on-surface-variant uppercase font-bold tracking-wider mb-1">Efficiency Loss</p>
-                <p className="text-xl font-extrabold font-headline text-error">-0.4%</p>
-              </div>
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="wearGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--md-sys-color-secondary)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--md-sys-color-secondary)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+                  <Tooltip formatter={(v) => [`${v}%`, "Wear"]} />
+                  <Area type="monotone" dataKey="wear" stroke="var(--md-sys-color-secondary)" fill="url(#wearGrad)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </motion.section>
 
-          {/* Critical Components */}
+          {/* Component Health */}
           <motion.section
-            className="lg:col-span-4 bg-surface-container-low dark:bg-stone-900 p-8 rounded-xl flex flex-col"
+            className="lg:col-span-4 bg-surface-container-lowest dark:bg-stone-900 p-6 sm:p-8 rounded-xl shadow-sm border border-surface-container dark:border-stone-800 flex flex-col"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.15 }}
           >
-            <h3 className="text-xl font-bold font-headline text-on-surface dark:text-white mb-6">Critical Components</h3>
-            <div className="space-y-8 flex-1">
-              {predictions.length > 0 ? (
-                predictions.slice(0, 4).map((pred, i) => (
-                  <motion.div
-                    key={pred.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                  >
-                    <div className="flex justify-between mb-2">
-                      <span className={`text-sm font-semibold ${pred.riskLevel === "High" ? "text-error" : "text-on-surface dark:text-white"}`}>
-                        {pred.component}
-                      </span>
-                      <span className={`text-sm font-bold ${riskColor(pred.riskLevel)}`}>
-                        {pred.confidence}%
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-surface-container dark:bg-stone-700 rounded-full overflow-hidden">
-                      <motion.div
-                        className={`h-full ${barColor(pred.riskLevel)} rounded-full`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pred.confidence}%` }}
-                        transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
-                      />
-                    </div>
-                    <p className={`text-[10px] mt-1.5 uppercase font-medium tracking-tight ${
-                      pred.riskLevel === "High" ? "text-error font-bold" : "text-on-surface-variant"
-                    }`}>
-                      {pred.riskLevel === "High"
-                        ? "Critical Warning: Immediate Inspection"
-                        : `Est. Failure: ${pred.estimatedFailure}`}
-                    </p>
-                  </motion.div>
-                ))
-              ) : (
-                [
-                  { name: "Transmission Thermal Plate", pct: 88, color: "bg-secondary" },
-                  { name: "Hydraulic Pressure Actuator", pct: 42, color: "bg-primary-dim" },
-                  { name: "Auxiliary Cooling Fan", pct: 12, color: "bg-error", critical: true },
-                  { name: "Primary Drive Shaft", pct: 95, color: "bg-secondary" },
-                ].map((item) => (
-                  <div key={item.name}>
-                    <div className="flex justify-between mb-2">
-                      <span className={`text-sm font-semibold ${item.critical ? "text-error" : "text-on-surface dark:text-white"}`}>
-                        {item.name}
-                      </span>
-                      <span className={`text-sm font-bold ${item.critical ? "text-error" : "text-on-surface dark:text-white"}`}>
-                        {item.pct}%
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-surface-container dark:bg-stone-700 rounded-full overflow-hidden">
-                      <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.pct}%` }} />
-                    </div>
-                    <p className={`text-[10px] mt-1.5 uppercase font-medium tracking-tight ${
-                      item.critical ? "text-error font-bold" : "text-on-surface-variant"
-                    }`}>
-                      {item.critical ? "Critical Warning: Immediate Inspection" : `Est. Failure: ${(item.pct * 170).toLocaleString()} Cycles`}
-                    </p>
+            <h3 className="text-xl font-bold font-headline text-on-surface dark:text-white mb-1">Component Health</h3>
+            <p className="text-sm text-on-surface-variant mb-6">Remaining service life prediction</p>
+            <div className="space-y-5 flex-1">
+              {displayPredictions.map((pred, i) => (
+                <motion.div
+                  key={pred.component || i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.1 }}
+                >
+                  <div className="flex justify-between mb-1.5">
+                    <span className={`text-sm font-semibold ${pred.riskLevel === "High" ? "text-error" : "text-on-surface dark:text-white"}`}>
+                      {pred.component}
+                    </span>
+                    <span className={`text-sm font-bold ${riskColor(pred.riskLevel)}`}>
+                      {pred.confidence}%
+                    </span>
                   </div>
-                ))
-              )}
+                  <div className="h-2 w-full bg-surface-container dark:bg-stone-700 rounded-full overflow-hidden">
+                    <motion.div
+                      className={`h-full ${barColor(pred.riskLevel)} rounded-full`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pred.confidence}%` }}
+                      transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
+                    />
+                  </div>
+                  <p className={`text-[10px] mt-1 uppercase font-medium tracking-tight ${
+                    pred.riskLevel === "High" ? "text-error font-bold" : "text-on-surface-variant"
+                  }`}>
+                    {pred.riskLevel === "High" ? "⚠ Critical — Immediate Inspection" : `Est. Remaining: ${pred.estimatedFailure}`}
+                  </p>
+                </motion.div>
+              ))}
             </div>
-            <button className="mt-8 w-full py-3 bg-surface-container-highest dark:bg-stone-700 text-on-surface dark:text-white font-bold text-sm rounded-lg hover:bg-surface-variant dark:hover:bg-stone-600 transition-colors">
-              View Full Inventory Report
-            </button>
           </motion.section>
         </div>
 
         {/* AI-Driven Insights */}
         <section>
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 mb-6">
             <h2 className="text-2xl font-extrabold tracking-tight font-headline text-on-surface dark:text-white">AI-Driven Insights</h2>
             <div className="h-px flex-1 bg-surface-container-high dark:bg-stone-700" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               {
                 icon: "trending_up",
@@ -230,7 +217,7 @@ export default function AIMaintenanceTrends() {
                 bg: "bg-secondary-container",
                 text: "text-on-secondary-container",
                 title: "Vibration Analysis",
-                desc: "Harmonic resonance detected in chassis frame C-4. Scheduled bolt retightening in the next service window is advised to prevent fatigue cracks.",
+                desc: "Harmonic resonance detected in chassis frame. Scheduled bolt retightening in the next service window is advised to prevent fatigue cracks.",
                 action: "Schedule Service",
               },
               {
@@ -244,70 +231,53 @@ export default function AIMaintenanceTrends() {
             ].map((insight, i) => (
               <motion.article
                 key={insight.title}
-                className="bg-surface-container-lowest dark:bg-stone-900 p-6 rounded-xl border border-transparent hover:border-outline-variant/20 transition-all"
+                className="bg-surface-container-lowest dark:bg-stone-900 p-6 rounded-xl border border-surface-container dark:border-stone-800 hover:shadow-md transition-shadow"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + i * 0.1 }}
               >
-                <div className={`w-10 h-10 ${insight.bg} ${insight.text} rounded-lg flex items-center justify-center mb-6`}>
+                <div className={`w-12 h-12 rounded-xl ${insight.bg} ${insight.text} flex items-center justify-center mb-4`}>
                   <Icon name={insight.icon} />
                 </div>
-                <h4 className="text-lg font-bold font-headline mb-2">{insight.title}</h4>
-                <p className="text-sm text-on-surface-variant leading-relaxed mb-6">{insight.desc}</p>
+                <h4 className="text-base font-bold font-headline text-on-surface dark:text-white mb-2">{insight.title}</h4>
+                <p className="text-sm text-on-surface-variant leading-relaxed mb-4">{insight.desc}</p>
                 <button
-                  className="flex items-center gap-2 text-secondary font-bold text-xs uppercase tracking-widest cursor-pointer hover:gap-3 transition-all"
-                  onClick={() => toast(`${insight.action} applied`, "success")}
+                  className="text-sm font-bold text-secondary hover:underline"
+                  onClick={() => toast(`${insight.action} — request submitted`, "success")}
                 >
-                  {insight.action} <Icon name="arrow_forward" className="text-sm" />
+                  {insight.action} →
                 </button>
               </motion.article>
             ))}
           </div>
         </section>
 
-        {/* Technical Telemetry Log */}
-        <motion.section
-          className="overflow-hidden rounded-xl bg-surface-container-low dark:bg-stone-900"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.5 }}
-        >
-          <div className="px-8 py-6 bg-surface-container dark:bg-stone-800">
-            <h3 className="text-sm font-extrabold font-headline uppercase tracking-widest text-on-surface dark:text-white">
-              Technical Telemetry Log
-            </h3>
-          </div>
-          <table className="w-full text-left">
-            <thead className="bg-surface-container-high/50 dark:bg-stone-800/50 text-[10px] uppercase font-bold text-on-surface-variant tracking-widest">
-              <tr>
-                <th className="px-8 py-4">Sensor ID</th>
-                <th className="px-8 py-4">Parameter</th>
-                <th className="px-8 py-4">Current Value</th>
-                <th className="px-8 py-4">ML Prediction</th>
-                <th className="px-8 py-4">Risk Level</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {[
-                { id: "SYS-TH-009", param: "Core Temperature", val: "84.2°C", pred: "Stable", risk: "LOW", riskColor: "text-green-600" },
-                { id: "SYS-PR-112", param: "Line Pressure", val: "12,400 PSI", pred: "Declining (-2%)", risk: "MODERATE", riskColor: "text-amber-600" },
-                { id: "SYS-VB-445", param: "Radial Oscillation", val: "0.02 mm", pred: "Stable", risk: "LOW", riskColor: "text-green-600" },
-                { id: "SYS-FL-088", param: "Oxidation Level", val: "4.2 ppm", pred: "Rising (+12%)", risk: "HIGH", riskColor: "text-error" },
-              ].map((row, i) => (
-                <tr key={row.id} className={i % 2 === 0 ? "bg-background dark:bg-stone-950/50" : "bg-surface-container-low dark:bg-stone-900"}>
-                  <td className="px-8 py-4 font-semibold text-on-surface dark:text-white">{row.id}</td>
-                  <td className="px-8 py-4">{row.param}</td>
-                  <td className="px-8 py-4">{row.val}</td>
-                  <td className="px-8 py-4">{row.pred}</td>
-                  <td className={`px-8 py-4 font-bold ${row.riskColor}`}>{row.risk}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </motion.section>
+        {/* Predictive Actions */}
+        {displayPredictions.filter(p => p.riskLevel === "High").length > 0 && (
+          <motion.section
+            className="bg-error-container/20 dark:bg-red-900/20 border border-error/20 rounded-xl p-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="flex items-start gap-4">
+              <Icon name="error" className="text-error text-2xl shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-bold font-headline text-error text-lg mb-1">Action Required</h3>
+                <p className="text-sm text-on-surface-variant mb-4">
+                  {displayPredictions.filter(p => p.riskLevel === "High").length} component(s) require immediate inspection based on predictive analysis.
+                </p>
+                <Button
+                  className="bg-error text-on-error hover:bg-error/90"
+                  onClick={() => toast("Service request submitted for critical components", "success")}
+                >
+                  <Icon name="build" className="text-sm" /> Schedule Emergency Service
+                </Button>
+              </div>
+            </div>
+          </motion.section>
+        )}
       </div>
     </PageTransition>
   );
 }
-     

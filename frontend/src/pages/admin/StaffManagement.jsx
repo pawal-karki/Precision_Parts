@@ -139,7 +139,7 @@ export default function StaffManagement() {
 
   return (
     <PageTransition className="space-y-10">
-      <section className="flex justify-between items-end">
+      <section className="flex flex-col md:flex-row justify-between md:items-end items-start gap-4">
         <div>
           <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
             Staff Management
@@ -155,7 +155,7 @@ export default function StaffManagement() {
       </section>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mt-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-8">
         <div className="flex-1 max-w-md">
           <div className="relative">
             <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

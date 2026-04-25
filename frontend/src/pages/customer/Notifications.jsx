@@ -104,7 +104,7 @@ export default function Notifications() {
   return (
     <PageTransition>
       <div className="space-y-8 max-w-4xl mx-auto">
-        <motion.section variants={fadeInUp} className="flex justify-between items-end">
+        <motion.section variants={fadeInUp} initial="initial" animate="animate" className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-on-surface dark:text-white tracking-tight font-headline">
               Notifications & Alerts

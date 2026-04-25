@@ -136,7 +136,7 @@ export default function PurchaseInvoice() {
   return (
     <PageTransition className="space-y-10">
       <motion.section
-        className="flex justify-between items-end"
+        className="flex flex-col md:flex-row justify-between md:items-end items-start gap-4"
         variants={fadeInUp}
         initial="initial"
         animate="animate"

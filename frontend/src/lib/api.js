@@ -91,9 +91,18 @@ class ApiClient {
   // ── Customer: Orders ─────────────────────────────────────────
   getOrderHistory()        { return this._get("/customer/orders"); }
 
+  // ── Customer: Profile ────────────────────────────────────────
+  updateProfile(dto)       { return this._put("/customer/profile", dto); }
+
+  // ── Customer: Vehicles ────────────────────────────────────────
+  getVehicles()            { return this._get("/customer/vehicles"); }
+  addVehicle(dto)          { return this._post("/customer/vehicles", dto); }
+  deleteVehicle(id)        { return this._delete(`/customer/vehicles/${id}`); }
+
   // ── Customer: Appointments ───────────────────────────────────
   createAppointment(dto)   { return this._post("/customer/appointments", dto); }
   getAppointments()        { return this._get("/customer/appointments"); }
+  cancelAppointment(id)    { return this._patch(`/customer/appointments/${id}/cancel`, {}); }
 
   // ── Customer: Reviews ────────────────────────────────────────
   createReview(dto)        { return this._post("/customer/reviews", dto); }
@@ -107,10 +116,8 @@ class ApiClient {
   getAiRecommendation(vehicleId, prompt) {
     return this._post("/customer/ai/recommend", { vehicleId, prompt });
   }
-
-  // ── Customer: Vehicles ────────────────────────────────────────
-  getVehicles()            { return this._get("/customer/vehicles"); }
-  addVehicle(dto)          { return this._post("/customer/vehicles", dto); }
+  getAiPredictions()       { return this._get("/customer/ai/predictions"); }
+  getMaintenanceTrends()   { return this._get("/customer/ai/trends"); }
 
   // ── Notifications ─────────────────────────────────────────────
   getNotifications()       { return this._get("/notifications"); }
