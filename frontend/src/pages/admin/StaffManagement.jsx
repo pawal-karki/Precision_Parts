@@ -16,6 +16,7 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -137,7 +138,7 @@ export default function StaffManagement() {
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <PageTransition>
+    <PageTransition className="space-y-10">
       <section className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
@@ -184,79 +185,81 @@ export default function StaffManagement() {
       </div>
 
       {/* Staff Table */}
-      <div className="bg-white dark:bg-[#1C1C1C] rounded-xl overflow-hidden border border-surface-container-low dark:border-neutral-800/50 mt-6">
-        <Table>
-          <TableHeader>
-            <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
-              <TableHead className="px-6">Name</TableHead>
-              <TableHead className="px-6">Role</TableHead>
-              <TableHead className="px-6">Department</TableHead>
-              <TableHead className="px-6">Email</TableHead>
-              <TableHead className="px-6">Status</TableHead>
-              <TableHead className="px-6 text-right">Actions</TableHead>
-            </tr>
-          </TableHeader>
-          <TableBody>
-            <AnimatePresence mode="popLayout">
-              {filtered.map((member, i) => (
-                <motion.tr
-                  key={member.id}
-                  layout
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: i * 0.04 } }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="border-b border-surface-container-low/50 dark:border-neutral-800/30 hover:bg-surface-container-low/30 dark:hover:bg-neutral-800/30 transition-colors"
-                >
-                  <TableCell className="px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-neutral-300">
-                        {member.name.split(" ").map((n) => n[0]).join("")}
+      <div className="overflow-x-auto bg-white dark:bg-[#1C1C1C] rounded-xl border border-surface-container-low dark:border-neutral-800/50 mt-6 shadow-sm">
+        <div className="min-w-[800px]">
+          <Table>
+            <TableHeader>
+              <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
+                <TableHead className="px-6">Name</TableHead>
+                <TableHead className="px-6">Role</TableHead>
+                <TableHead className="px-6">Department</TableHead>
+                <TableHead className="px-6">Email</TableHead>
+                <TableHead className="px-6">Status</TableHead>
+                <TableHead className="px-6 text-right">Actions</TableHead>
+              </tr>
+            </TableHeader>
+            <TableBody>
+              <AnimatePresence mode="popLayout">
+                {filtered.map((member, i) => (
+                  <motion.tr
+                    key={member.id}
+                    layout
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: i * 0.04 } }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="border-b border-surface-container-low/50 dark:border-neutral-800/30 hover:bg-surface-container-low/30 dark:hover:bg-neutral-800/30 transition-colors"
+                  >
+                    <TableCell className="px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-neutral-300">
+                          {member.name.split(" ").map((n) => n[0]).join("")}
+                        </div>
+                        <span className="font-semibold text-on-surface dark:text-neutral-200">
+                          {member.name}
+                        </span>
                       </div>
-                      <span className="font-semibold text-on-surface dark:text-neutral-200">
-                        {member.name}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
-                    {member.role}
-                  </TableCell>
-                  <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
-                    {member.department}
-                  </TableCell>
-                  <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400 font-mono text-xs">
-                    {member.email}
-                  </TableCell>
-                  <TableCell className="px-6">
-                    <Badge variant={statusVariant(member.status)}>{member.status}</Badge>
-                  </TableCell>
-                  <TableCell className="px-6 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openEdit(member)}
-                        className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-surface-container-low dark:hover:bg-neutral-800 hover:text-on-surface dark:hover:text-white transition-colors"
-                      >
-                        <Icon name="edit" className="text-base" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(member)}
-                        className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-error/10 hover:text-error transition-colors"
-                      >
-                        <Icon name="delete" className="text-base" />
-                      </button>
-                    </div>
-                  </TableCell>
-                </motion.tr>
-              ))}
-            </AnimatePresence>
-          </TableBody>
-        </Table>
+                    </TableCell>
+                    <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
+                      {member.role}
+                    </TableCell>
+                    <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
+                      {member.department}
+                    </TableCell>
+                    <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400 font-mono text-xs">
+                      {member.email}
+                    </TableCell>
+                    <TableCell className="px-6">
+                      <Badge variant={statusVariant(member.status)}>{member.status}</Badge>
+                    </TableCell>
+                    <TableCell className="px-6 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openEdit(member)}
+                          className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-surface-container-low dark:hover:bg-neutral-800 hover:text-on-surface dark:hover:text-white transition-colors"
+                        >
+                          <Icon name="edit" className="text-base" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(member)}
+                          className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-error/10 hover:text-error transition-colors"
+                        >
+                          <Icon name="delete" className="text-base" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </TableBody>
+          </Table>
+        </div>
+      </div>
         {filtered.length === 0 && (
           <div className="py-12 text-center text-on-surface-variant dark:text-neutral-500">
             <Icon name="search_off" className="text-4xl mb-2" />
             <p className="text-sm font-medium">No staff members found</p>
           </div>
         )}
-      </div>
 
       {/* Add / Edit Modal */}
       <Modal
@@ -287,15 +290,14 @@ export default function StaffManagement() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Status</label>
-              <select
+              <Select
                 value={form.status}
                 onChange={(e) => setField("status", e.target.value)}
-                className="w-full rounded-lg border border-surface-container dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-2 text-sm text-on-surface dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-secondary/40"
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Join Date</label>

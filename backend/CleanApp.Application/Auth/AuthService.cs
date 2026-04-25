@@ -1,9 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CleanApp.Application.Email;
 using CleanApp.Domain.Entities;
 using CleanApp.Domain.Enums;
 using CleanApp.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -13,13 +15,22 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _users;
     private readonly ICustomerRepository _customers;
+    private readonly IEmailService _emails;
     private readonly JwtSettings _jwt;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUserRepository users, ICustomerRepository customers, IOptions<JwtSettings> jwt)
+    public AuthService(
+        IUserRepository users, 
+        ICustomerRepository customers, 
+        IEmailService emails,
+        IOptions<JwtSettings> jwt,
+        ILogger<AuthService> logger)
     {
         _users = users;
         _customers = customers;
+        _emails = emails;
         _jwt = jwt.Value;
+        _logger = logger;
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto, CancellationToken ct)
@@ -88,6 +99,64 @@ public class AuthService : IAuthService
     {
         var user = await _users.GetByIdAsync(userId, ct);
         return user is null ? null : BuildResponse(user, includeToken: false);
+    }
+
+    public async Task<(bool Success, string Message)> RequestPasswordResetAsync(string email, CancellationToken ct)
+    {
+        var user = await _users.GetByEmailAsync(email.ToLowerInvariant(), ct);
+        if (user is null)
+        {
+            _logger.LogWarning("Password reset requested for non-existent email: {Email}", email);
+            return (false, "No account was found with this email address.");
+        }
+
+        var otp = new Random().Next(100000, 999999).ToString();
+        user.ResetPasswordOtp = otp;
+        user.ResetPasswordOtpExpiryUtc = DateTime.UtcNow.AddMinutes(15);
+
+        await _users.SaveChangesAsync(ct);
+
+        try
+        {
+            await _emails.SendResetPasswordOtpAsync(user.Email, user.FullName, otp, ct);
+            return (true, "OTP has been sent to your email.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send password reset OTP to {Email}", user.Email);
+            
+            // Helpful message for the Resend Sandbox restriction
+            if (ex.Message.Contains("only send testing emails to your own email address") || ex.ToString().Contains("403"))
+            {
+                return (false, "Email delivery restricted. The server is in testing mode and can only send emails to verified domains or the account owner.");
+            }
+
+            return (false, "Failed to deliver reset email. Please try again later.");
+        }
+    }
+
+    public async Task<bool> VerifyOtpAsync(string email, string otp, CancellationToken ct)
+    {
+        var user = await _users.GetByEmailAsync(email.ToLowerInvariant(), ct);
+        if (user is null) return false;
+
+        return user.ResetPasswordOtp == otp && user.ResetPasswordOtpExpiryUtc >= DateTime.UtcNow;
+    }
+
+    public async Task<bool> ResetPasswordAsync(string email, string otp, string newPassword, CancellationToken ct)
+    {
+        var user = await _users.GetByEmailAsync(email.ToLowerInvariant(), ct);
+        if (user is null) return false;
+
+        if (user.ResetPasswordOtp != otp) return false;
+        if (user.ResetPasswordOtpExpiryUtc < DateTime.UtcNow) return false;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        user.ResetPasswordOtp = null;
+        user.ResetPasswordOtpExpiryUtc = null;
+
+        await _users.SaveChangesAsync(ct);
+        return true;
     }
 
     private AuthResponseDto BuildResponse(User user, bool includeToken = true)

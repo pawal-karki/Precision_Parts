@@ -9,6 +9,7 @@ import {
   staggerContainer,
 } from "@/components/ui/motion";
 import { generateReportPdf, downloadPdf } from "@/lib/pdf";
+import { formatCurrency } from "@/lib/currency";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/ui/kpi-card";
@@ -56,7 +57,13 @@ export default function FinancialReports() {
     }
     try {
       const columns = ["Period", "Revenue", "Expenses", "Profit", "Margin"];
-      const rows = reports.map((r) => [r.period, r.revenue, r.expenses, r.profit, r.margin]);
+      const rows = reports.map((r) => [
+        r.period,
+        formatCurrency(parseAmt(r.revenue)),
+        formatCurrency(parseAmt(r.expenses)),
+        formatCurrency(parseAmt(r.profit)),
+        r.margin,
+      ]);
       const doc = generateReportPdf("Financial Report — Quarterly Summary", columns, rows);
       downloadPdf(doc, `Financial_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
       toast("PDF exported successfully", "success");
@@ -74,8 +81,10 @@ export default function FinancialReports() {
     );
   }
 
+  const parseAmt = (val) => typeof val === 'number' ? val : Number(String(val).replace(/[^0-9.-]+/g, ""));
+
   return (
-    <PageTransition>
+    <PageTransition className="space-y-10">
       <section className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
@@ -100,13 +109,13 @@ export default function FinancialReports() {
       {/* Summary KPIs */}
       <StaggerList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
         <FadeInItem>
-          <KpiCard icon="payments" label="Total Revenue" value={summary.revenue} trend="+12.4%" trendType="up" />
+          <KpiCard icon="payments" label="Total Revenue" value={formatCurrency(parseAmt(summary.revenue))} trend="+12.4%" trendType="up" />
         </FadeInItem>
         <FadeInItem>
-          <KpiCard icon="account_balance" label="Total Expenses" value={summary.expenses} trend="+6.2%" trendType="down" />
+          <KpiCard icon="account_balance" label="Total Expenses" value={formatCurrency(parseAmt(summary.expenses))} trend="+6.2%" trendType="down" />
         </FadeInItem>
         <FadeInItem>
-          <KpiCard icon="trending_up" label="Net Profit" value={summary.profit} trend="+18.1%" trendType="up" />
+          <KpiCard icon="trending_up" label="Net Profit" value={formatCurrency(parseAmt(summary.profit))} trend="+18.1%" trendType="up" />
         </FadeInItem>
         <FadeInItem>
           <KpiCard icon="percent" label="Profit Margin" value={summary.margin} trend="Healthy" trendType="neutral" />
@@ -176,33 +185,37 @@ export default function FinancialReports() {
             Download PDF
           </Button>
         </div>
-        <Table>
-          <TableHeader>
-            <tr className="border-b border-surface-container dark:border-neutral-800">
-              <TableHead className="px-4">Period</TableHead>
-              <TableHead className="px-4 text-right">Revenue</TableHead>
-              <TableHead className="px-4 text-right">Expenses</TableHead>
-              <TableHead className="px-4 text-right">Profit</TableHead>
-              <TableHead className="px-4 text-right">Margin</TableHead>
-            </tr>
-          </TableHeader>
-          <TableBody>
-            {reports.map((row, i) => (
-              <motion.tr
-                key={row.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: 0.3 + i * 0.06 } }}
-                className="border-b border-surface-container-low/50 dark:border-neutral-800/30"
-              >
-                <TableCell className="px-4 font-semibold">{row.period}</TableCell>
-                <TableCell className="px-4 text-right font-semibold">{row.revenue}</TableCell>
-                <TableCell className="px-4 text-right text-on-surface-variant">{row.expenses}</TableCell>
-                <TableCell className="px-4 text-right font-bold text-emerald-600">{row.profit}</TableCell>
-                <TableCell className="px-4 text-right font-semibold">{row.margin}</TableCell>
-              </motion.tr>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <div className="min-w-[800px]">
+            <Table>
+              <TableHeader>
+                <tr className="border-b border-surface-container dark:border-neutral-800">
+                  <TableHead className="px-6">Period</TableHead>
+                  <TableHead className="px-6 text-right">Revenue</TableHead>
+                  <TableHead className="px-6 text-right">Expenses</TableHead>
+                  <TableHead className="px-6 text-right">Profit</TableHead>
+                  <TableHead className="px-6 text-right">Margin</TableHead>
+                </tr>
+              </TableHeader>
+              <TableBody>
+                {reports.map((row, i) => (
+                  <motion.tr
+                    key={row.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: 0.3 + i * 0.06 } }}
+                    className="border-b border-surface-container-low/50 dark:border-neutral-800/30 group hover:bg-background dark:hover:bg-neutral-800/20 transition-colors"
+                  >
+                    <TableCell className="px-6 font-semibold">{row.period}</TableCell>
+                    <TableCell className="px-6 text-right font-semibold">{formatCurrency(parseAmt(row.revenue))}</TableCell>
+                    <TableCell className="px-6 text-right text-on-surface-variant dark:text-neutral-400">{formatCurrency(parseAmt(row.expenses))}</TableCell>
+                    <TableCell className="px-6 text-right font-bold text-emerald-600">{formatCurrency(parseAmt(row.profit))}</TableCell>
+                    <TableCell className="px-6 text-right font-semibold">{row.margin}</TableCell>
+                  </motion.tr>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </motion.div>
     </PageTransition>
   );

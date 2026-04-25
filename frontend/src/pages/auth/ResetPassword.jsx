@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/toast";
+import { api } from "@/lib/api";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addToast } = useToast();
+  const addToast = useToast();
   const email = location.state?.email || "user@example.com";
+  const otp = location.state?.otp || "";
 
   const [form, setForm] = useState({ password: "", confirm: "" });
   const [showPw, setShowPw] = useState(false);
@@ -43,15 +45,20 @@ export default function ResetPassword() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await api.resetPassword({ email, otp, newPassword: form.password });
       setSuccess(true);
       addToast("Password reset successfully!", "success");
-    }, 1500);
+    } catch (err) {
+      setErrors({ server: err.message || "Failed to reset password" });
+      addToast(err.message || "Failed to reset password", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {
@@ -136,7 +143,7 @@ export default function ResetPassword() {
                 <Input
                   type={showPw ? "text" : "password"}
                   placeholder="Create a strong password"
-                  className={`pl-10 pr-10 ${errors.password ? "border-error ring-error/30 ring-2" : ""}`}
+                  className={`pl-11 pr-11 ${errors.password ? "border-error ring-error/30 ring-2" : ""}`}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                 />
@@ -164,7 +171,7 @@ export default function ResetPassword() {
                 <Input
                   type={showPw ? "text" : "password"}
                   placeholder="Re-enter your password"
-                  className={`pl-10 ${errors.confirm ? "border-error ring-error/30 ring-2" : ""}`}
+                  className={`pl-11 pr-11 ${errors.confirm ? "border-error ring-error/30 ring-2" : ""}`}
                   value={form.confirm}
                   onChange={(e) => setForm({ ...form, confirm: e.target.value })}
                 />

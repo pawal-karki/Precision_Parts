@@ -24,6 +24,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/data-table";
+import { Combobox } from "@/components/ui/combobox";
 
 const emptyForm = {
   name: "",
@@ -49,16 +50,17 @@ const statusVariant = (status) =>
 
 export default function PartsManagement() {
   const { list: parts } = useList("partsInventory");
+  const { list: vendors } = useList("vendors");
   const toast = useToast();
 
   const reloadParts = useCallback(() => {
-    return api
-      .getParts()
-      .then((rows) => {
+    return Promise.all([api.getParts(), api.getVendors()])
+      .then(([rows, vends]) => {
         store.set("partsInventory", Array.isArray(rows) ? rows : []);
+        store.set("vendors", Array.isArray(vends) ? vends : []);
       })
       .catch(() => {
-        toast("Could not load parts from API", "error");
+        toast("Could not load inventory data", "error");
       });
   }, [toast]);
 
@@ -380,7 +382,12 @@ export default function PartsManagement() {
                         </div>
                         <div>
                           <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-1">Vendor</label>
-                          <Input value={form.vendor} onChange={(e) => setField("vendor", e.target.value)} />
+                          <Combobox
+                            options={vendors.map(v => ({ label: v.name, value: v.name }))}
+                            value={form.vendor}
+                            onChange={(val) => setField("vendor", val)}
+                            placeholder="Select vendor..."
+                          />
                         </div>
                       </div>
                       <div>
@@ -503,7 +510,12 @@ export default function PartsManagement() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Vendor</label>
-              <Input value={form.vendor} onChange={(e) => setField("vendor", e.target.value)} placeholder="Vendor name" />
+              <Combobox
+                options={vendors.map(v => ({ label: v.name, value: v.name }))}
+                value={form.vendor}
+                onChange={(val) => setField("vendor", val)}
+                placeholder="Search vendor..."
+              />
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Location</label>

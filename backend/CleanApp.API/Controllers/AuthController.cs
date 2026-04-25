@@ -61,6 +61,34 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("request-reset")]
+    public async Task<IActionResult> RequestReset([FromBody] RequestResetDto dto, CancellationToken ct)
+    {
+        var (success, message) = await _auth.RequestPasswordResetAsync(dto.Email, ct);
+        if (!success) 
+            return BadRequest(new { message });
+        
+        return Ok(new { message });
+    }
+
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto, CancellationToken ct)
+    {
+        var result = await _auth.VerifyOtpAsync(dto.Email, dto.Otp, ct);
+        if (!result) return BadRequest(new { message = "Invalid or expired verification code." });
+        
+        return Ok(new { message = "Code verified successfully." });
+    }
+
+    [HttpPost("reset")]
+    public async Task<IActionResult> Reset([FromBody] ResetPasswordRequestDto dto, CancellationToken ct)
+    {
+        var result = await _auth.ResetPasswordAsync(dto.Email, dto.Otp, dto.NewPassword, ct);
+        if (!result) return BadRequest(new { message = "Invalid email, OTP, or expired code." });
+
+        return Ok(new { message = "Password has been successfully reset." });
+    }
+
     private void SetAuthCookie(string token)
     {
         Response.Cookies.Append("pp_auth", token, new CookieOptions
@@ -73,3 +101,7 @@ public class AuthController : ControllerBase
         });
     }
 }
+
+public record RequestResetDto(string Email);
+public record VerifyOtpDto(string Email, string Otp);
+public record ResetPasswordRequestDto(string Email, string Otp, string NewPassword);

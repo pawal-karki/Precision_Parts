@@ -178,7 +178,7 @@ export default function Signup() {
                   <Icon name="person" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" />
                   <Input
                     placeholder="John Smith"
-                    className={`pl-10 ${errors.name ? "border-error ring-error/30 ring-2" : ""}`}
+                    className={`pl-11 ${errors.name ? "border-error ring-error/30 ring-2" : ""}`}
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
@@ -193,7 +193,7 @@ export default function Signup() {
                   <Input
                     type="email"
                     placeholder="you@example.com"
-                    className={`pl-10 ${errors.email ? "border-error ring-error/30 ring-2" : ""}`}
+                    className={`pl-11 ${errors.email ? "border-error ring-error/30 ring-2" : ""}`}
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                   />
@@ -207,7 +207,7 @@ export default function Signup() {
                   <Icon name="directions_car" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" />
                   <Input
                     placeholder="Honda City 2022"
-                    className="pl-10"
+                    className="pl-11"
                     value={form.vehicle}
                     onChange={(e) => setForm({ ...form, vehicle: e.target.value })}
                   />
@@ -228,7 +228,7 @@ export default function Signup() {
                   <Input
                     type={showPw ? "text" : "password"}
                     placeholder="Create a strong password"
-                    className={`pl-10 pr-10 ${errors.password ? "border-error ring-error/30 ring-2" : ""}`}
+                    className={`pl-11 pr-11 ${errors.password ? "border-error ring-error/30 ring-2" : ""}`}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                   />
@@ -256,7 +256,7 @@ export default function Signup() {
                   <Input
                     type={showPw ? "text" : "password"}
                     placeholder="Re-enter your password"
-                    className={`pl-10 ${errors.confirm ? "border-error ring-error/30 ring-2" : ""}`}
+                    className={`pl-11 ${errors.confirm ? "border-error ring-error/30 ring-2" : ""}`}
                     value={form.confirm}
                     onChange={(e) => setForm({ ...form, confirm: e.target.value })}
                   />

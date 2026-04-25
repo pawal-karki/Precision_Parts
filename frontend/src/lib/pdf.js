@@ -131,12 +131,13 @@ export function generateReportPdf(title, columns, rows) {
   doc.setTextColor(90, 96, 94);
   doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 33);
   doc.text("Precision Atelier Industrial Inventory", pageWidth - 20, 33, { align: "right" });
+  doc.text("accounts@precision-parts.com.np", pageWidth - 20, 38, { align: "right" });
 
   doc.setDrawColor(236, 239, 236);
-  doc.line(20, 38, pageWidth - 20, 38);
+  doc.line(20, 42, pageWidth - 20, 42);
 
   autoTable(doc, {
-    startY: 45,
+    startY: 48,
     head: [columns],
     body: rows,
     theme: "striped",

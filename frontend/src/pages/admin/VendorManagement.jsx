@@ -15,6 +15,7 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -148,7 +149,7 @@ export default function VendorManagement() {
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <PageTransition>
+    <PageTransition className="space-y-10">
       <section className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
@@ -174,15 +175,16 @@ export default function VendorManagement() {
         />
       </div>
 
-      <div className="bg-white dark:bg-[#1C1C1C] rounded-xl overflow-hidden border border-surface-container-low dark:border-neutral-800/50 mt-6">
-        <Table>
+      <div className="overflow-x-auto bg-white dark:bg-[#1C1C1C] rounded-xl border border-surface-container-low dark:border-neutral-800/50 mt-6 shadow-sm">
+        <div className="min-w-[800px]">
+          <Table>
           <TableHeader>
             <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
               <TableHead className="px-6">Vendor</TableHead>
               <TableHead className="px-6">Contact</TableHead>
               <TableHead className="px-6">Location</TableHead>
-              <TableHead className="px-6">Total Orders</TableHead>
-              <TableHead className="px-6">Total Spend</TableHead>
+              <TableHead className="px-6 hidden md:table-cell">Total Orders</TableHead>
+              <TableHead className="px-6 hidden lg:table-cell">Total Spend</TableHead>
               <TableHead className="px-6">Rating</TableHead>
               <TableHead className="px-6">Status</TableHead>
               <TableHead className="px-6 text-right">Actions</TableHead>
@@ -208,13 +210,13 @@ export default function VendorManagement() {
                     </Link>
                   </TableCell>
                   <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
-                    {vendor.contact}
+                    {vendor.contact || vendor.contactName || "—"}
                   </TableCell>
                   <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
-                    {vendor.location}
+                    {vendor.location || [vendor.city, vendor.country].filter(Boolean).join(", ") || "—"}
                   </TableCell>
-                  <TableCell className="px-6 font-semibold">{vendor.totalOrders}</TableCell>
-                  <TableCell className="px-6 font-semibold">{vendor.totalSpend}</TableCell>
+                  <TableCell className="px-6 font-semibold hidden md:table-cell">{vendor.totalOrders || 0}</TableCell>
+                  <TableCell className="px-6 font-semibold hidden lg:table-cell">{vendor.totalSpend || "Rs. 0"}</TableCell>
                   <TableCell className="px-6">
                     <div className="flex items-center gap-1">
                       <Icon name="star" filled className="text-amber-400 text-sm" />
@@ -222,8 +224,8 @@ export default function VendorManagement() {
                     </div>
                   </TableCell>
                   <TableCell className="px-6">
-                    <Badge variant={vendor.status === "Active" ? "success" : vendor.status === "Under Review" ? "warning" : "neutral"}>
-                      {vendor.status}
+                    <Badge variant={(vendor.status === "Active" || vendor.isActive) ? "success" : vendor.status === "Under Review" ? "warning" : "neutral"}>
+                      {vendor.status || (vendor.isActive ? "Active" : "Inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-6 text-right">
@@ -253,13 +255,14 @@ export default function VendorManagement() {
             </AnimatePresence>
           </TableBody>
         </Table>
-        {filtered.length === 0 && (
-          <div className="py-12 text-center text-on-surface-variant dark:text-neutral-500">
-            <Icon name="search_off" className="text-4xl mb-2" />
-            <p className="text-sm font-medium">No vendors found</p>
-          </div>
-        )}
       </div>
+    </div>
+    {filtered.length === 0 && (
+      <div className="py-12 text-center text-on-surface-variant dark:text-neutral-500">
+        <Icon name="search_off" className="text-4xl mb-2" />
+        <p className="text-sm font-medium">No vendors found</p>
+      </div>
+    )}
 
       {/* Add / Edit Modal */}
       <Modal
@@ -296,15 +299,14 @@ export default function VendorManagement() {
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Status</label>
-              <select
+              <Select
                 value={form.status}
                 onChange={(e) => setField("status", e.target.value)}
-                className="w-full rounded-lg border border-surface-container dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-2 text-sm text-on-surface dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-secondary/40"
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
           <div>

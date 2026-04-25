@@ -138,7 +138,7 @@ export default function Login() {
                 <Input
                   type="email"
                   placeholder="you@example.com"
-                  className={`pl-10 ${errors.email ? "border-error ring-error/30 ring-2" : ""}`}
+                  className={`pl-11 ${errors.email ? "border-error ring-error/30 ring-2" : ""}`}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
@@ -156,7 +156,7 @@ export default function Login() {
                 <Input
                   type={showPw ? "text" : "password"}
                   placeholder="Enter your password"
-                  className={`pl-10 pr-10 ${errors.password ? "border-error ring-error/30 ring-2" : ""}`}
+                  className={`pl-11 pr-11 ${errors.password ? "border-error ring-error/30 ring-2" : ""}`}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                 />

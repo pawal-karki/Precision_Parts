@@ -4,13 +4,14 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/toast";
+import { api } from "@/lib/api";
 
 const CODE_LENGTH = 6;
 
 export default function VerifyOTP() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addToast } = useToast();
+  const addToast = useToast();
   const email = location.state?.email || "user@example.com";
   const from = location.state?.from || "forgot";
   const intent = location.state?.intent;
@@ -63,27 +64,41 @@ export default function VerifyOTP() {
     inputRefs.current[nextIdx]?.focus();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const otp = code.join("");
     if (otp.length < CODE_LENGTH) { setError("Please enter the complete code"); return; }
+    
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError("");
+
+    try {
       if (from === "signup") {
+        // Implementation for signup verification if needed
         addToast("Email verified! Welcome aboard.", "success");
         navigate("/login", { state: { intent } });
       } else {
+        await api.verifyOtp({ email, otp });
         addToast("Code verified! Set your new password.", "success");
         navigate("/reset-password", { state: { email, otp } });
       }
-    }, 1200);
+    } catch (err) {
+      setError(err.message || "Invalid or expired verification code");
+      addToast(err.message || "Verification failed", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const resend = () => {
+  const resend = async () => {
     if (countdown > 0) return;
-    setCountdown(60);
-    addToast("New code sent!", "success");
+    try {
+      await api.requestPasswordReset(email);
+      setCountdown(60);
+      addToast("New code sent!", "success");
+    } catch (err) {
+      addToast(err.message || "Failed to resend code", "error");
+    }
   };
 
   const filled = code.every((d) => d !== "");
@@ -117,7 +132,7 @@ export default function VerifyOTP() {
           </p>
 
           <form onSubmit={handleSubmit}>
-            <div className="flex gap-3 justify-center mb-2" onPaste={handlePaste}>
+            <div className="flex gap-2 sm:gap-3 justify-center mb-2" onPaste={handlePaste}>
               {code.map((digit, i) => (
                 <motion.input
                   key={i}
@@ -128,8 +143,8 @@ export default function VerifyOTP() {
                   value={digit}
                   onChange={(e) => handleChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
-                  className={`w-12 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all duration-200 bg-surface-container-lowest focus:outline-none otp-input
-                    ${error ? "border-error" : digit ? "border-secondary" : "border-outline-variant/50"}
+                  className={`w-10 sm:w-12 h-12 sm:h-14 text-center text-xl font-bold rounded-xl border-2 transition-all duration-200 bg-surface-container-lowest focus:outline-none otp-input
+                    ${error ? "border-error focus:border-error" : digit ? "border-secondary" : "border-outline-variant/50 focus:border-secondary"}
                     ${digit ? "bg-secondary/5" : ""}
                   `}
                   initial={{ opacity: 0, y: 10 }}

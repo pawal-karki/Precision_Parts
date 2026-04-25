@@ -5,26 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/toast";
+import { api } from "@/lib/api";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const addToast = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) { setError("Email is required"); return; }
     if (!/\S+@\S+\.\S+/.test(email)) { setError("Invalid email address"); return; }
+    
     setError("");
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      await api.requestPasswordReset(email);
       setSent(true);
       addToast("Verification code sent to your email", "success");
-    }, 1200);
+    } catch (err) {
+      setError(err.message || "Failed to send reset code");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const goToOtp = () => {
@@ -64,7 +71,7 @@ export default function ForgotPassword() {
                     <Input
                       type="email"
                       placeholder="you@workshop.com"
-                      className={`pl-10 ${error ? "border-error ring-error/30 ring-2" : ""}`}
+                      className={`pl-11 ${error ? "border-error ring-error/30 ring-2" : ""}`}
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setError(""); }}
                     />

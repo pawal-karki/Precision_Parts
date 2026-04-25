@@ -18,6 +18,8 @@ public class User : BaseEntity
     public string? Department { get; set; }
     /// <summary>Job title shown in staff directory (e.g. Senior Technician).</summary>
     public string? PositionTitle { get; set; }
+    public string? ResetPasswordOtp { get; set; }
+    public DateTime? ResetPasswordOtpExpiryUtc { get; set; }
 
     public CustomerProfile? CustomerProfile { get; set; }
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();

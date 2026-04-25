@@ -13,7 +13,7 @@ export const pageTransition = {
   duration: 0.25,
 };
 
-export function PageTransition({ children }) {
+export function PageTransition({ children, className }) {
   return (
     <motion.div
       initial="initial"
@@ -21,6 +21,7 @@ export function PageTransition({ children }) {
       exit="exit"
       variants={pageVariants}
       transition={pageTransition}
+      className={className}
     >
       {children}
     </motion.div>

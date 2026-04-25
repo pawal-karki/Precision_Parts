@@ -12,11 +12,11 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-on-secondary hover:bg-secondary-dim",
         destructive: "bg-error text-on-error hover:bg-error-dim",
         outline:
-          "border border-outline-variant bg-transparent text-on-surface hover:bg-surface-container-low",
-        ghost: "text-on-surface hover:bg-surface-container-low",
-        link: "text-secondary underline-offset-4 hover:underline",
+          "border border-outline-variant dark:border-neutral-800 bg-transparent text-on-surface dark:text-neutral-300 hover:bg-surface-container-low dark:hover:bg-neutral-800",
+        ghost: "text-on-surface dark:text-neutral-400 hover:bg-surface-container-low dark:hover:bg-neutral-800",
+        link: "text-secondary dark:text-slate-400 underline-offset-4 hover:underline",
         surface:
-          "bg-surface-container-low text-on-surface hover:bg-surface-container-high",
+          "bg-surface-container-low dark:bg-neutral-900 text-on-surface dark:text-neutral-300 hover:bg-surface-container-high dark:hover:bg-neutral-800",
       },
       size: {
         default: "h-10 px-4 py-2",

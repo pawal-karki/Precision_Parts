@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -47,8 +48,8 @@ function Pagination({ page, totalPages, onPageChange }) {
             onClick={() => onPageChange(p)}
             className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
               p === page
-                ? "bg-sky-600 text-white shadow"
-                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                ? "bg-secondary text-white shadow-lg shadow-secondary/20"
+                : "text-slate-700 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800"
             }`}
           >
             {p}
@@ -132,20 +133,20 @@ export default function AdminAuditLog() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-on-surface-variant">
-        <Icon name="sync" className="text-3xl animate-spin text-sky-600" />
+        <Icon name="progress_activity" className="text-3xl animate-spin text-secondary" />
       </div>
     );
   }
 
   return (
-    <PageTransition>
+    <PageTransition className="space-y-10">
       <motion.section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between" variants={fadeInUp} initial="initial" animate="animate">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400 mb-2">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-secondary dark:text-secondary-fixed mb-2">
             <Icon name="verified_user" className="text-sm" />
             Operational · Secure encrypted layer · Timestamps in NPT (UTC+05:45)
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold font-headline text-slate-900 dark:text-neutral-100 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-extrabold font-headline text-slate-900 dark:text-white tracking-tight">
             Audit Log
           </h1>
           <p className="text-slate-500 dark:text-neutral-400 mt-1 max-w-xl">
@@ -186,9 +187,9 @@ export default function AdminAuditLog() {
           <label htmlFor="audit-action" className="text-sm text-slate-500 whitespace-nowrap">
             Action
           </label>
-          <select
+          <Select
             id="audit-action"
-            className="h-10 rounded-lg border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 text-sm text-slate-800 dark:text-neutral-200 min-w-[200px]"
+            className="min-w-[200px]"
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
           >
@@ -196,7 +197,7 @@ export default function AdminAuditLog() {
             {actionTypes.map((a) => (
               <option key={a} value={a}>{a}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <p className="text-sm text-slate-500 md:ml-auto">
           Showing <span className="font-bold text-slate-800 dark:text-neutral-200">{paginated.length}</span> of{" "}
@@ -205,53 +206,58 @@ export default function AdminAuditLog() {
       </motion.div>
 
       <motion.div
-        className="mt-6"
+        className="overflow-x-auto bg-white dark:bg-[#1C1C1C] rounded-xl border border-surface-container-low dark:border-neutral-800/50 shadow-sm"
         variants={fadeInUp}
         initial="initial"
         animate="animate"
         transition={{ delay: 0.1 }}
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Time (NPT)</TableHead>
-              <TableHead>Actor</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity</TableHead>
-              <TableHead>Details</TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead className="text-right">Severity</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginated.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="font-mono text-xs text-slate-500 whitespace-nowrap">
-                  {formatNpt(r.timestamp)}
-                </TableCell>
-                <TableCell className="font-medium text-slate-900 dark:text-slate-100">{r.actor}</TableCell>
-                <TableCell>
-                  <Badge variant="primary">{r.action}</Badge>
-                </TableCell>
-                <TableCell>{r.entity}</TableCell>
-                <TableCell className="max-w-sm text-slate-600 dark:text-slate-300">{r.details}</TableCell>
-                <TableCell className="font-mono text-xs text-slate-500">{r.reference}</TableCell>
-                <TableCell className="text-right">
-                  <Badge variant={r.badge === "error" ? "error" : r.badge === "warning" ? "warning" : "neutral"}>
-                    {r.severity}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="min-w-[1000px]">
+          <Table>
+            <TableHeader>
+              <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
+                <TableHead className="px-6">Time (NPT)</TableHead>
+                <TableHead className="px-6">Actor</TableHead>
+                <TableHead className="px-6">Action</TableHead>
+                <TableHead className="px-6">Entity</TableHead>
+                <TableHead className="px-6">Details</TableHead>
+                <TableHead className="px-6">Reference</TableHead>
+                <TableHead className="px-6 text-right">Severity</TableHead>
+              </tr>
+            </TableHeader>
+            <TableBody>
+              {paginated.map((r) => (
+                <TableRow key={r.id} className="border-b border-surface-container-low/50 dark:border-neutral-800/30 hover:bg-surface-container-low/30 dark:hover:bg-neutral-800/20 transition-colors">
+                  <TableCell className="px-6 font-mono text-xs text-on-surface-variant dark:text-neutral-500 whitespace-nowrap">
+                    {formatNpt(r.timestamp)}
+                  </TableCell>
+                  <TableCell className="px-6 font-semibold text-on-surface dark:text-neutral-200">{r.actor}</TableCell>
+                  <TableCell className="px-6">
+                    <Badge variant="primary">{r.action}</Badge>
+                  </TableCell>
+                  <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">{r.entity}</TableCell>
+                  <TableCell className="px-6 max-w-sm text-on-surface-variant dark:text-neutral-400 text-xs leading-relaxed">{r.details}</TableCell>
+                  <TableCell className="px-6 font-mono text-xs text-on-surface-variant dark:text-neutral-500">{r.reference}</TableCell>
+                  <TableCell className="px-6 text-right">
+                    <Badge variant={r.badge === "error" || r.severity?.toLowerCase() === "error" ? "error" : r.badge === "warning" ? "warning" : "neutral"}>
+                      {r.severity}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
         {filtered.length === 0 && (
-          <div className="p-12 text-center text-slate-500 text-sm">No entries match your filters.</div>
+          <div className="p-12 text-center text-on-surface-variant dark:text-neutral-500 text-sm">
+            <Icon name="search_off" className="text-4xl mb-2 opacity-20" />
+            <p>No entries match your filters.</p>
+          </div>
         )}
+      </motion.div>
 
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-      </motion.div>
     </PageTransition>
   );
 }

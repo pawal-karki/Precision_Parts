@@ -29,6 +29,9 @@ class ApiClient {
   login(dto)               { return this._post("/auth/login", dto); }
   register(dto)            { return this._post("/auth/register", dto); }
   logout()                 { return this._post("/auth/logout", {}); }
+  requestPasswordReset(email) { return this._post("/auth/request-reset", { email }); }
+  verifyOtp(dto)           { return this._post("/auth/verify-otp", dto); }
+  resetPassword(dto)       { return this._post("/auth/reset", dto); }
 
   // ── Admin: Dashboard ─────────────────────────────────────────
   getAdminKpis()           { return this._get("/admin/dashboard/kpis"); }

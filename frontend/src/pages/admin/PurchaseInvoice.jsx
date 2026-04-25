@@ -5,6 +5,7 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Combobox } from "@/components/ui/combobox";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { useList } from "@/lib/store";
@@ -133,7 +134,7 @@ export default function PurchaseInvoice() {
   };
 
   return (
-    <PageTransition>
+    <PageTransition className="space-y-10">
       <motion.section
         className="flex justify-between items-end"
         variants={fadeInUp}
@@ -154,9 +155,9 @@ export default function PurchaseInvoice() {
         </Button>
       </motion.section>
 
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Invoice List */}
-        <div className="col-span-4 space-y-4">
+        <div className="lg:col-span-4 space-y-4">
           <AnimatePresence>
             {invoices.map((inv) => (
               <motion.div
@@ -174,16 +175,16 @@ export default function PurchaseInvoice() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-mono font-bold text-sm">{inv.id}</p>
-                    <p className="text-on-surface-variant text-xs mt-1">{inv.vendor}</p>
+                    <p className="font-mono font-bold text-sm text-on-surface dark:text-neutral-200">{inv.id}</p>
+                    <p className="text-on-surface-variant dark:text-neutral-400 text-xs mt-1">{inv.vendor}</p>
                   </div>
                   <Badge variant={inv.status === "Completed" ? "success" : "warning"}>
                     {inv.status}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-end mt-3">
-                  <span className="text-xs text-on-surface-variant">{inv.date}</span>
-                  <span className="font-extrabold">{formatCurrency(inv.total)}</span>
+                  <span className="text-xs text-on-surface-variant dark:text-neutral-500">{inv.date}</span>
+                  <span className="font-extrabold text-on-surface dark:text-white">{formatCurrency(inv.total)}</span>
                 </div>
               </motion.div>
             ))}
@@ -195,7 +196,7 @@ export default function PurchaseInvoice() {
           {selectedInvoice && (
             <motion.div
               key={selectedInvoice.id}
-              className="col-span-8 bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-8 border border-surface-container-low dark:border-neutral-800/50"
+              className="lg:col-span-8 bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-2xl p-6 md:p-10 border border-surface-container-low dark:border-neutral-800/50 shadow-xl shadow-black/10"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -203,9 +204,9 @@ export default function PurchaseInvoice() {
             >
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <h2 className="text-2xl font-extrabold font-headline">{selectedInvoice.id}</h2>
-                  <p className="text-on-surface-variant mt-1">
-                    Vendor: <span className="font-semibold text-on-surface">{selectedInvoice.vendor}</span>
+                  <h2 className="text-2xl font-extrabold font-headline text-on-surface dark:text-white">{selectedInvoice.id}</h2>
+                  <p className="text-on-surface-variant dark:text-neutral-400 mt-1">
+                    Vendor: <span className="font-semibold text-on-surface dark:text-neutral-200">{selectedInvoice.vendor}</span>
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -233,11 +234,11 @@ export default function PurchaseInvoice() {
                 <TableBody>
                   {selectedInvoice.items.map((item, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="px-4 font-semibold">{item.name}</TableCell>
-                      <TableCell className="px-4 font-mono text-on-surface-variant">{item.sku}</TableCell>
-                      <TableCell className="px-4 text-right">{item.qty}</TableCell>
-                      <TableCell className="px-4 text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                      <TableCell className="px-4 text-right font-bold">{formatCurrency(item.total)}</TableCell>
+                      <TableCell className="px-4 font-semibold text-on-surface dark:text-neutral-200">{item.name}</TableCell>
+                      <TableCell className="px-4 font-mono text-on-surface-variant dark:text-neutral-400">{item.sku}</TableCell>
+                      <TableCell className="px-4 text-right text-on-surface dark:text-neutral-200">{item.qty}</TableCell>
+                      <TableCell className="px-4 text-right text-on-surface dark:text-neutral-200">{formatCurrency(item.unitPrice)}</TableCell>
+                      <TableCell className="px-4 text-right font-bold text-on-surface dark:text-neutral-100">{formatCurrency(item.total)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -245,14 +246,14 @@ export default function PurchaseInvoice() {
 
               <div className="mt-6 pt-6 border-t border-surface-container dark:border-neutral-800 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-on-surface-variant">Subtotal</span>
-                  <span className="font-semibold">{formatCurrency(selectedInvoice.subtotal)}</span>
+                  <span className="text-on-surface-variant dark:text-neutral-400">Subtotal</span>
+                  <span className="font-semibold text-on-surface dark:text-neutral-200">{formatCurrency(selectedInvoice.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-on-surface-variant">VAT (13%)</span>
-                  <span className="font-semibold">{formatCurrency(selectedInvoice.tax)}</span>
+                  <span className="text-on-surface-variant dark:text-neutral-400">VAT (13%)</span>
+                  <span className="font-semibold text-on-surface dark:text-neutral-200">{formatCurrency(selectedInvoice.tax)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-extrabold pt-2 border-t border-surface-container dark:border-neutral-800">
+                <div className="flex justify-between text-lg font-extrabold pt-2 border-t border-surface-container dark:border-neutral-800 text-on-surface dark:text-white">
                   <span>Total</span>
                   <span>{formatCurrency(selectedInvoice.total)}</span>
                 </div>
@@ -274,16 +275,12 @@ export default function PurchaseInvoice() {
             <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-2 block">
               Vendor *
             </label>
-            <select
+            <Combobox
+              options={vendors.map((v) => ({ label: v.name, value: v.name }))}
               value={newPo.vendor}
-              onChange={(e) => setNewPo((p) => ({ ...p, vendor: e.target.value }))}
-              className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
-            >
-              <option value="">Select vendor...</option>
-              {vendors.map((v) => (
-                <option key={v.id} value={v.name}>{v.name}</option>
-              ))}
-            </select>
+              onChange={(val) => setNewPo((p) => ({ ...p, vendor: val }))}
+              placeholder="Search or select vendor..."
+            />
           </div>
 
           <div>
