@@ -5,8 +5,6 @@ namespace CleanApp.Application.CustomerPortal;
 
 public class CustomerDashboardService : ICustomerDashboardService
 {
-    private const string DemoCustomerEmail = "e.schmidt@email.de";
-
     private readonly ICustomerRepository _customers;
     private readonly IInvoiceRepository _invoices;
 
@@ -16,14 +14,17 @@ public class CustomerDashboardService : ICustomerDashboardService
         _invoices = invoices;
     }
 
-    public async Task<CustomerDashboardDto?> GetDemoCustomerDashboardAsync(CancellationToken cancellationToken = default)
+    public async Task<CustomerDashboardDto?> GetCustomerDashboardAsync(Guid customerId, CancellationToken cancellationToken = default)
     {
-        var user = await _customers.GetCustomerByEmailWithDetailsAsync(DemoCustomerEmail, cancellationToken);
-        if (user?.CustomerProfile == null)
+        var user = await _customers.GetCustomerByIdWithDetailsAsync(customerId, cancellationToken);
+        if (user == null)
             return null;
 
         var p = user.CustomerProfile;
-        var pending = p.OutstandingCredit > 0 ? p.OutstandingCredit : 0;
+        var totalSpent = p?.TotalSpent ?? 0m;
+        var outstanding = p?.OutstandingCredit ?? 0m;
+        
+        var pending = outstanding > 0 ? outstanding : 0;
         var unpaid = await _invoices.CountForCustomerExcludingPaidAsync(user.Id, cancellationToken);
 
         var recent = await _invoices.ListByCustomerIdWithItemsAsync(user.Id, 3, cancellationToken);
@@ -51,10 +52,10 @@ public class CustomerDashboardService : ICustomerDashboardService
             v.HealthScore ?? 0)).ToList();
 
         return new CustomerDashboardDto(
-            DisplayMoney.Format(p.TotalSpent),
+            DisplayMoney.Format(totalSpent),
             DisplayMoney.Format(pending),
             unpaid > 0 ? unpaid : 2,
-            (int)Math.Min(99999, p.TotalSpent * 0.28m),
+            (int)Math.Min(99999, totalSpent * 0.28m),
             vehicles,
             activity);
     }

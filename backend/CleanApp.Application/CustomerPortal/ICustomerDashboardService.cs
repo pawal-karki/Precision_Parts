@@ -2,6 +2,6 @@ namespace CleanApp.Application.CustomerPortal;
 
 public interface ICustomerDashboardService
 {
-    Task<CustomerDashboardDto?> GetDemoCustomerDashboardAsync(CancellationToken cancellationToken = default);
+    Task<CustomerDashboardDto?> GetCustomerDashboardAsync(Guid customerId, CancellationToken cancellationToken = default);
 }
           

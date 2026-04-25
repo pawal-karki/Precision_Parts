@@ -110,7 +110,7 @@ export default function PaymentsBalance() {
             <h1 className="font-headline text-3xl sm:text-4xl font-extrabold tracking-tight text-on-surface dark:text-white">
               Payments &amp; Ledger
             </h1>
-            <p className="text-on-surface-variant dark:text-stone-400 mt-2">
+            <p className="text-on-surface-variant dark:text-neutral-400 mt-2">
               Financial overview and statement management.
             </p>
           </div>
@@ -125,7 +125,7 @@ export default function PaymentsBalance() {
         {/* Balance Card */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <motion.div
-            className="lg:col-span-8 bg-surface-container-lowest dark:bg-stone-900 p-6 sm:p-8 rounded-xl shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[260px] border border-surface-container dark:border-stone-800"
+            className="lg:col-span-8 bg-surface-container-lowest dark:bg-[#1C1C1C] p-6 sm:p-8 rounded-xl shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[260px] border border-surface-container dark:border-neutral-800/50"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
@@ -153,13 +153,13 @@ export default function PaymentsBalance() {
                 </button>
                 <button
                   onClick={handleDownloadStatement}
-                  className="px-5 py-2 border border-outline-variant/30 dark:border-stone-700 rounded-lg text-sm font-bold hover:bg-surface-container dark:hover:bg-stone-800 transition-colors"
+                  className="px-5 py-2 border border-outline-variant/30 dark:border-neutral-700/50 rounded-lg text-sm font-bold hover:bg-surface-container dark:hover:bg-neutral-800 transition-colors"
                 >
                   Download Statement
                 </button>
               </div>
             </div>
-            <div className="mt-6 pt-6 border-t border-surface-container dark:border-stone-800 relative z-10">
+            <div className="mt-6 pt-6 border-t border-surface-container dark:border-neutral-800/50 relative z-10">
               <div className="flex flex-wrap gap-6">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-outline">Invoices Pending</span>
@@ -175,7 +175,7 @@ export default function PaymentsBalance() {
 
           {/* Credit Score */}
           <motion.div
-            className="lg:col-span-4 bg-surface-container-lowest dark:bg-stone-900 p-6 sm:p-8 rounded-xl flex flex-col items-center justify-center shadow-sm border border-surface-container dark:border-stone-800 min-h-[200px]"
+            className="lg:col-span-4 bg-surface-container-lowest dark:bg-[#1C1C1C] p-6 sm:p-8 rounded-xl flex flex-col items-center justify-center shadow-sm border border-surface-container dark:border-neutral-800/50 min-h-[200px]"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
@@ -222,7 +222,7 @@ export default function PaymentsBalance() {
             </div>
             <div className="space-y-3">
               {invoices.length === 0 ? (
-                <div className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-10 text-center text-on-surface-variant border border-surface-container dark:border-stone-800">
+                <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-10 text-center text-on-surface-variant border border-surface-container dark:border-neutral-800/50">
                   <Icon name="check_circle" className="text-5xl text-emerald-500 mb-3" />
                   <p className="font-semibold">No outstanding invoices</p>
                   <p className="text-sm mt-1">You're all caught up — great work!</p>
@@ -231,11 +231,11 @@ export default function PaymentsBalance() {
                 invoices.map((inv) => (
                   <motion.div
                     key={inv.id}
-                    className="bg-surface-container-lowest dark:bg-stone-900 p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow border border-surface-container dark:border-stone-800"
+                    className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow border border-surface-container dark:border-neutral-800/50"
                     whileHover={{ y: -2 }}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-surface-container-low dark:bg-stone-800 flex items-center justify-center rounded-lg shrink-0">
+                      <div className="w-12 h-12 bg-surface-container-low dark:bg-neutral-800 flex items-center justify-center rounded-lg shrink-0">
                         <Icon name="description" className="text-secondary" />
                       </div>
                       <div>
@@ -267,11 +267,11 @@ export default function PaymentsBalance() {
             transition={{ delay: 0.3 }}
           >
             <h2 className="font-headline text-xl font-bold text-on-surface dark:text-white mb-5">Recent Activity</h2>
-            <div className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl border border-surface-container dark:border-stone-800 overflow-hidden">
+            <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl border border-surface-container dark:border-neutral-800/50 overflow-hidden">
               {activity.length === 0 ? (
                 <p className="p-6 text-sm text-on-surface-variant text-center">No ledger activity yet.</p>
               ) : (
-                <div className="divide-y divide-surface-container dark:divide-stone-800">
+                <div className="divide-y divide-surface-container dark:divide-neutral-800/50">
                   {activity.map((act) => (
                     <div key={act.id} className="p-4 flex gap-4 items-start">
                       <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
@@ -297,7 +297,7 @@ export default function PaymentsBalance() {
 
         {/* Footer Stats */}
         <motion.div
-          className="flex flex-wrap gap-6 sm:gap-8 py-6 sm:py-8 border-t border-surface-container dark:border-stone-800"
+          className="flex flex-wrap gap-6 sm:gap-8 py-6 sm:py-8 border-t border-surface-container dark:border-neutral-800/50"
           variants={fadeInUp}
           initial="initial"
           animate="animate"

@@ -22,7 +22,7 @@ function StarInput({ value, onChange }) {
           <Icon
             name="star"
             filled
-            className={`text-2xl transition-colors ${s <= (hovered || value) ? "text-amber-400" : "text-surface-container-highest dark:text-stone-700"}`}
+            className={`text-2xl transition-colors ${s <= (hovered || value) ? "text-amber-400" : "text-surface-container-highest dark:text-neutral-700"}`}
           />
         </button>
       ))}
@@ -33,7 +33,7 @@ function StarInput({ value, onChange }) {
 function ReviewCard({ review, idx }) {
   return (
     <motion.div
-      className="bg-surface-container-lowest dark:bg-stone-900 p-6 rounded-xl border border-surface-container dark:border-stone-800"
+      className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-6 rounded-xl border border-surface-container dark:border-neutral-800/50"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.07 }}
@@ -51,7 +51,7 @@ function ReviewCard({ review, idx }) {
                   key={s}
                   name="star"
                   filled
-                  className={`text-sm ${s <= Math.round(review.rating) ? "text-amber-400" : "text-surface-container-highest dark:text-stone-700"}`}
+                  className={`text-sm ${s <= Math.round(review.rating) ? "text-amber-400" : "text-surface-container-highest dark:text-neutral-700"}`}
                 />
               ))}
             </div>
@@ -140,7 +140,7 @@ export default function ReviewsFeedback() {
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tighter font-headline text-on-surface dark:text-white">
             Experience Review
           </h1>
-          <p className="text-on-surface-variant dark:text-stone-400 leading-relaxed">
+          <p className="text-on-surface-variant dark:text-neutral-400 leading-relaxed">
             Help us maintain the standard of excellence. Share your feedback on recent services and orders.
           </p>
         </motion.header>
@@ -150,7 +150,7 @@ export default function ReviewsFeedback() {
           <div className="lg:col-span-5 space-y-6">
             {/* Rating Stats */}
             <motion.div
-              className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-6 border border-surface-container dark:border-stone-800"
+              className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 border border-surface-container dark:border-neutral-800/50"
               variants={fadeInUp}
               initial="initial"
               animate="animate"
@@ -178,7 +178,7 @@ export default function ReviewsFeedback() {
                     return (
                       <div key={star} className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-on-surface-variant w-4">{star}</span>
-                        <div className="flex-1 h-1.5 bg-surface-container dark:bg-stone-700 rounded-full overflow-hidden">
+                        <div className="flex-1 h-1.5 bg-surface-container dark:bg-neutral-700 rounded-full overflow-hidden">
                           <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="text-[10px] text-on-surface-variant w-4">{count}</span>
@@ -192,7 +192,7 @@ export default function ReviewsFeedback() {
             {/* Submit Form */}
             <motion.form
               onSubmit={handleSubmit}
-              className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-6 border border-surface-container dark:border-stone-800 space-y-5"
+              className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 border border-surface-container dark:border-neutral-800/50 space-y-5"
               variants={fadeInUp}
               initial="initial"
               animate="animate"
@@ -215,7 +215,7 @@ export default function ReviewsFeedback() {
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="Describe your experience with the service or product quality..."
-                  className="w-full bg-surface-container-low dark:bg-stone-800 border border-outline-variant/20 dark:border-stone-700 rounded-xl p-4 text-sm text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all resize-none placeholder:text-on-surface-variant/50"
+                  className="w-full bg-surface-container-low dark:bg-neutral-800 border border-outline-variant/20 dark:border-neutral-700/50 rounded-xl p-4 text-sm text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all resize-none placeholder:text-on-surface-variant/50"
                 />
                 <p className="text-[10px] text-on-surface-variant text-right mt-1">{feedback.length} characters</p>
               </div>
@@ -253,7 +253,7 @@ export default function ReviewsFeedback() {
               </div>
             ) : reviews.length === 0 ? (
               <motion.div
-                className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-low dark:bg-stone-900 rounded-2xl border border-dashed border-outline-variant/20"
+                className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-low dark:bg-[#1C1C1C] rounded-2xl border border-dashed border-outline-variant/20"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >

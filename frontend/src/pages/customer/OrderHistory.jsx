@@ -119,7 +119,7 @@ export default function OrderHistory() {
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-headline text-on-surface dark:text-white">
             Order History
           </h1>
-          <p className="text-on-surface-variant dark:text-stone-400 font-medium mt-1">
+          <p className="text-on-surface-variant dark:text-neutral-400 font-medium mt-1">
             Audit log of precision components and maintenance workflows.
           </p>
         </motion.header>
@@ -134,7 +134,7 @@ export default function OrderHistory() {
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
-              className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-5 border border-surface-container dark:border-stone-800"
+              className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-5 border border-surface-container dark:border-neutral-800/50"
               variants={fadeInUp}
               initial="initial"
               animate="animate"
@@ -152,7 +152,7 @@ export default function OrderHistory() {
         {/* Spending Chart */}
         {spendingData.length > 0 && (
           <motion.div
-            className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-6 border border-surface-container dark:border-stone-800"
+            className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 border border-surface-container dark:border-neutral-800/50"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
@@ -175,18 +175,18 @@ export default function OrderHistory() {
 
         {/* Order Table */}
         <motion.section
-          className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl overflow-hidden shadow-sm border border-surface-container dark:border-stone-800"
+          className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl overflow-hidden shadow-sm border border-surface-container dark:border-neutral-800/50"
           variants={fadeInUp}
           initial="initial"
           animate="animate"
           transition={{ delay: 0.3 }}
         >
-          <div className="px-6 py-5 flex flex-col md:flex-row gap-4 justify-between md:items-center border-b border-surface-container dark:border-stone-800">
+          <div className="px-6 py-5 flex flex-col md:flex-row gap-4 justify-between md:items-center border-b border-surface-container dark:border-neutral-800/50">
             <h3 className="text-xl font-bold font-headline text-on-surface dark:text-white">Detailed Order Log</h3>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleExportCSV}
-                className="px-4 py-2 text-xs font-bold border border-outline-variant/30 dark:border-stone-700 rounded-lg hover:bg-surface-container dark:hover:bg-stone-800 transition-colors"
+                className="px-4 py-2 text-xs font-bold border border-outline-variant/30 dark:border-neutral-700/50 rounded-lg hover:bg-surface-container dark:hover:bg-neutral-800 transition-colors"
               >
                 Export CSV
               </button>
@@ -198,7 +198,7 @@ export default function OrderHistory() {
                     className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
                       activeFilter === f
                         ? "bg-primary dark:bg-secondary text-on-primary"
-                        : "bg-surface-container-high dark:bg-stone-800 text-on-surface-variant hover:bg-surface-container-highest dark:hover:bg-stone-700"
+                        : "bg-surface-container-high dark:bg-neutral-800 text-on-surface-variant hover:bg-surface-container-highest dark:hover:bg-neutral-700"
                     }`}
                   >
                     {f}
@@ -211,7 +211,7 @@ export default function OrderHistory() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[560px]">
               <thead>
-                <tr className="bg-surface-container-low dark:bg-stone-800/50">
+                <tr className="bg-surface-container-low dark:bg-neutral-800/50">
                   <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Date</th>
                   <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Order ID</th>
                   <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Item / Service</th>
@@ -219,7 +219,7 @@ export default function OrderHistory() {
                   <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-right">Value</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-container dark:divide-stone-800">
+              <tbody className="divide-y divide-surface-container dark:divide-neutral-800/50">
                 <AnimatePresence mode="popLayout">
                   {paginatedOrders.length === 0 && (
                     <motion.tr key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -238,10 +238,10 @@ export default function OrderHistory() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
                         exit={{ opacity: 0 }}
-                        className="hover:bg-background dark:hover:bg-stone-800/50 transition-colors cursor-pointer"
+                        className="hover:bg-background dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
                         onClick={() => setSelectedOrder(order)}
                       >
-                        <td className="px-6 py-4 text-sm text-on-surface dark:text-stone-200">{order.date}</td>
+                        <td className="px-6 py-4 text-sm text-on-surface dark:text-neutral-200">{order.date}</td>
                         <td className="px-6 py-4 text-sm font-mono text-secondary">{order.id}</td>
                         <td className="px-6 py-4 text-sm font-medium text-on-surface dark:text-white">{order.items}</td>
                         <td className="px-6 py-4">
@@ -263,7 +263,7 @@ export default function OrderHistory() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-surface-container dark:border-stone-800">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-surface-container dark:border-neutral-800/50">
               <p className="text-sm text-on-surface-variant">
                 Page {currentPage} of {totalPages} · {filtered.length} orders
               </p>
@@ -271,14 +271,14 @@ export default function OrderHistory() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(p => p - 1)}
-                  className="px-3 py-1.5 text-sm rounded-lg text-on-surface-variant hover:bg-surface-container dark:hover:bg-stone-800 disabled:opacity-40 transition-colors"
+                  className="px-3 py-1.5 text-sm rounded-lg text-on-surface-variant hover:bg-surface-container dark:hover:bg-neutral-800 disabled:opacity-40 transition-colors"
                 >
                   <Icon name="chevron_left" className="text-sm" />
                 </button>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(p => p + 1)}
-                  className="px-3 py-1.5 text-sm rounded-lg text-on-surface-variant hover:bg-surface-container dark:hover:bg-stone-800 disabled:opacity-40 transition-colors"
+                  className="px-3 py-1.5 text-sm rounded-lg text-on-surface-variant hover:bg-surface-container dark:hover:bg-neutral-800 disabled:opacity-40 transition-colors"
                 >
                   <Icon name="chevron_right" className="text-sm" />
                 </button>
@@ -315,7 +315,7 @@ export default function OrderHistory() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-3 pt-4 border-t border-surface-container dark:border-stone-800">
+            <div className="flex gap-3 pt-4 border-t border-surface-container dark:border-neutral-800/50">
               <Button variant="ghost" className="flex-1" onClick={() => setSelectedOrder(null)}>Close</Button>
             </div>
           </div>

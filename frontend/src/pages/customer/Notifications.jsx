@@ -109,7 +109,7 @@ export default function Notifications() {
             <h1 className="text-3xl font-extrabold text-on-surface dark:text-white tracking-tight font-headline">
               Notifications & Alerts
             </h1>
-            <p className="text-on-surface-variant dark:text-stone-400 mt-1">
+            <p className="text-on-surface-variant dark:text-neutral-400 mt-1">
               {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
             </p>
           </div>
@@ -162,9 +162,9 @@ export default function Notifications() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0, transition: { delay: i * 0.04 } }}
                   exit={{ opacity: 0, x: -80, transition: { duration: 0.25 } }}
-                  className={`bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-6 border border-surface-container-low dark:border-stone-800 border-l-4 ${config.borderColor} ${
+                  className={`bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 border border-surface-container-low dark:border-neutral-800/50 border-l-4 ${config.borderColor} ${
                     !notification.isRead
-                      ? "ring-1 ring-surface-container-highest dark:ring-stone-700"
+                      ? "ring-1 ring-surface-container-highest dark:ring-neutral-700"
                       : "opacity-75"
                   } transition-all`}
                 >

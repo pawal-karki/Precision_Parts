@@ -6,8 +6,6 @@ namespace CleanApp.Application.CustomerPortal;
 
 public class CustomerOrdersService : ICustomerOrdersService
 {
-    private const string DemoCustomerEmail = "e.schmidt@email.de";
-
     private readonly IUserRepository _users;
     private readonly IInvoiceRepository _invoices;
 
@@ -17,9 +15,9 @@ public class CustomerOrdersService : ICustomerOrdersService
         _invoices = invoices;
     }
 
-    public async Task<IReadOnlyList<CustomerOrderRow>> ListDemoCustomerOrdersAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CustomerOrderRow>> ListCustomerOrdersAsync(Guid customerId, CancellationToken cancellationToken = default)
     {
-        var user = await _users.GetByEmailAsync(DemoCustomerEmail, cancellationToken);
+        var user = await _users.GetByIdAsync(customerId, cancellationToken);
         if (user == null)
             return Array.Empty<CustomerOrderRow>();
 

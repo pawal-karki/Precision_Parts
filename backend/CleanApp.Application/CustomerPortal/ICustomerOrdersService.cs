@@ -2,5 +2,5 @@ namespace CleanApp.Application.CustomerPortal;
 
 public interface ICustomerOrdersService
 {
-    Task<IReadOnlyList<CustomerOrderRow>> ListDemoCustomerOrdersAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CustomerOrderRow>> ListCustomerOrdersAsync(Guid customerId, CancellationToken cancellationToken = default);
 }

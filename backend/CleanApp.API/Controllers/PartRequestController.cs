@@ -36,6 +36,25 @@ public class PartRequestController : ControllerBase
         _db.Set<PartRequest>().Add(request);
         await _db.SaveChangesAsync(ct);
 
+        // Notify Admins and Procurement Staff
+        var staffToNotify = await _db.Users
+            .Where(u => u.Role == CleanApp.Domain.Enums.UserRole.Admin || u.Department == "Procurement")
+            .ToListAsync(ct);
+
+        foreach (var staff in staffToNotify)
+        {
+            _db.Notifications.Add(new Notification
+            {
+                UserId = staff.Id,
+                Title = "New Part Request",
+                Message = $"A new part request for '{request.PartName}' was submitted by a customer. Priority: {request.Urgency}.",
+                Severity = CleanApp.Domain.Enums.NotificationSeverity.Info,
+                Category = "part_requests",
+                IsRead = false
+            });
+        }
+        await _db.SaveChangesAsync(ct);
+
         return Ok(new { request.Id, request.PartName, request.Status, createdAt = request.CreatedAtUtc });
     }
 

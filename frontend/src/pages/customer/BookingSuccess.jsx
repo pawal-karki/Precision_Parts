@@ -65,13 +65,13 @@ export default function BookingSuccess() {
 
         {/* Booking Details Card */}
         <motion.div
-          className="bg-surface-container-lowest dark:bg-stone-900 rounded-2xl border border-surface-container-low dark:border-stone-800 overflow-hidden shadow-sm"
+          className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-2xl border border-surface-container-low dark:border-neutral-800/50 overflow-hidden shadow-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
           {/* Card header */}
-          <div className="bg-secondary/5 dark:bg-secondary/10 px-8 py-5 border-b border-surface-container-low dark:border-stone-800">
+          <div className="bg-secondary/5 dark:bg-secondary/10 px-8 py-5 border-b border-surface-container-low dark:border-neutral-800/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
@@ -120,7 +120,7 @@ export default function BookingSuccess() {
                   {booking.services.map((service, i) => (
                     <motion.div
                       key={i}
-                      className="flex items-center justify-between py-2.5 px-4 bg-surface-container-low dark:bg-stone-800 rounded-lg"
+                      className="flex items-center justify-between py-2.5 px-4 bg-surface-container-low dark:bg-neutral-800 rounded-lg"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.8 + i * 0.1 }}
@@ -140,7 +140,7 @@ export default function BookingSuccess() {
 
             {/* Total */}
             {booking.total !== undefined && (
-              <div className="flex items-center justify-between pt-4 border-t border-surface-container-low dark:border-stone-800">
+              <div className="flex items-center justify-between pt-4 border-t border-surface-container-low dark:border-neutral-800/50">
                 <span className="text-on-surface-variant font-semibold">Estimated Total</span>
                 <span className="text-2xl font-extrabold font-headline text-on-surface dark:text-white">
                   {formatCurrency(booking.total)}
@@ -161,7 +161,7 @@ export default function BookingSuccess() {
           </div>
 
           {/* Card footer */}
-          <div className="px-8 py-5 bg-surface-container-low/50 dark:bg-stone-800/50 border-t border-surface-container-low dark:border-stone-800">
+          <div className="px-8 py-5 bg-surface-container-low/50 dark:bg-neutral-800/50 border-t border-surface-container-low dark:border-neutral-800/50">
             <div className="flex items-center gap-2 text-xs text-on-surface-variant">
               <Icon name="schedule" className="text-sm" />
               <span>You'll receive a confirmation email shortly. We'll send reminders before your appointment.</span>
@@ -206,7 +206,7 @@ export default function BookingSuccess() {
             { icon: "smart_toy", title: "AI Diagnostics", desc: "View predictive maintenance insights" },
             { icon: "support_agent", title: "Need Help?", desc: "Contact us at support@precision.com" },
           ].map((item) => (
-            <div key={item.title} className="p-4 rounded-xl bg-surface-container-low dark:bg-stone-900 text-center">
+            <div key={item.title} className="p-4 rounded-xl bg-surface-container-low dark:bg-[#1C1C1C] text-center">
               <Icon name={item.icon} className="text-2xl text-secondary mb-2" />
               <h4 className="text-sm font-bold text-on-surface dark:text-white mb-1">{item.title}</h4>
               <p className="text-xs text-on-surface-variant">{item.desc}</p>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Icon } from "@/components/ui/icon";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
@@ -6,13 +6,7 @@ import { motion, PageTransition, fadeInUp } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const MOCK_WEAR_DATA_12M = [
-  { month: "May", wear: 12 }, { month: "Jun", wear: 18 }, { month: "Jul", wear: 22 },
-  { month: "Aug", wear: 19 }, { month: "Sep", wear: 28 }, { month: "Oct", wear: 35 },
-  { month: "Nov", wear: 40 }, { month: "Dec", wear: 38 }, { month: "Jan", wear: 45 },
-  { month: "Feb", wear: 52 }, { month: "Mar", wear: 61 }, { month: "Apr", wear: 68 },
-];
-const MOCK_WEAR_DATA_6M = MOCK_WEAR_DATA_12M.slice(-6);
+
 
 export default function AIMaintenanceTrends() {
   const [predictions, setPredictions] = useState([]);
@@ -59,15 +53,12 @@ export default function AIMaintenanceTrends() {
     toast(`Service request created for ${pred.component} on ${pred.vehicle}`, "success");
   };
 
-  const chartData = chartRange === "6M" ? MOCK_WEAR_DATA_6M : MOCK_WEAR_DATA_12M;
+  const chartData = useMemo(() => {
+    if (!trends || trends.length === 0) return [];
+    return chartRange === "6M" ? trends.slice(-6) : trends;
+  }, [trends, chartRange]);
 
-  // Use API predictions if available, otherwise show demo predictions
-  const displayPredictions = predictions.length > 0 ? predictions : [
-    { component: "Transmission Plate", vehicle: "My Vehicle", confidence: 88, riskLevel: "Low", estimatedFailure: "18,000 cycles" },
-    { component: "Hydraulic Actuator", vehicle: "My Vehicle", confidence: 55, riskLevel: "Medium", estimatedFailure: "6,500 cycles" },
-    { component: "Auxiliary Cooling Fan", vehicle: "My Vehicle", confidence: 12, riskLevel: "High", estimatedFailure: "Immediate" },
-    { component: "Primary Drive Shaft", vehicle: "My Vehicle", confidence: 95, riskLevel: "Low", estimatedFailure: "24,000 cycles" },
-  ];
+  const displayPredictions = predictions || [];
 
   return (
     <PageTransition>
@@ -87,12 +78,12 @@ export default function AIMaintenanceTrends() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tighter font-headline text-on-surface dark:text-white mb-2">
               Predictive Diagnostics
             </h1>
-            <p className="text-on-surface-variant dark:text-stone-400 text-base sm:text-lg">
+            <p className="text-on-surface-variant dark:text-neutral-400 text-base sm:text-lg">
               Real-time analytical forecast for your fleet, projecting component life cycles based on operational telemetry.
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <div className={`px-4 py-2 rounded-lg flex items-center gap-2 ${loading ? "bg-amber-100 dark:bg-amber-500/10" : "bg-surface-container-low dark:bg-stone-800"}`}>
+            <div className={`px-4 py-2 rounded-lg flex items-center gap-2 ${loading ? "bg-amber-100 dark:bg-amber-500/10" : "bg-surface-container-low dark:bg-neutral-800"}`}>
               <span className={`w-2 h-2 rounded-full ${loading ? "bg-amber-500 animate-pulse" : "bg-secondary"}`} />
               <span className={`text-sm font-medium uppercase tracking-tight ${loading ? "text-amber-600 dark:text-amber-400" : "text-secondary"}`}>
                 {loading ? "Loading…" : "AI Status: Active"}
@@ -105,7 +96,7 @@ export default function AIMaintenanceTrends() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Wear Index Chart */}
           <motion.section
-            className="lg:col-span-8 bg-surface-container-lowest dark:bg-stone-900 p-6 sm:p-8 rounded-xl shadow-sm border border-surface-container dark:border-stone-800"
+            className="lg:col-span-8 bg-surface-container-lowest dark:bg-[#1C1C1C] p-6 sm:p-8 rounded-xl shadow-sm border border-surface-container dark:border-neutral-800/50"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
@@ -124,7 +115,7 @@ export default function AIMaintenanceTrends() {
                     className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
                       chartRange === r
                         ? "bg-secondary text-on-primary"
-                        : "bg-surface-container dark:bg-stone-800 text-on-surface-variant"
+                        : "bg-surface-container dark:bg-neutral-800 text-on-surface-variant"
                     }`}
                   >
                     {r}
@@ -132,28 +123,34 @@ export default function AIMaintenanceTrends() {
                 ))}
               </div>
             </div>
-            <div className="h-52">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="wearGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--md-sys-color-secondary)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="var(--md-sys-color-secondary)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
-                  <Tooltip formatter={(v) => [`${v}%`, "Wear"]} />
-                  <Area type="monotone" dataKey="wear" stroke="var(--md-sys-color-secondary)" fill="url(#wearGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="h-52 font-medium">
+              {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="wearGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--md-sys-color-secondary)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--md-sys-color-secondary)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+                    <Tooltip formatter={(v) => [`${v}%`, "Wear"]} />
+                    <Area type="monotone" dataKey="wear" stroke="var(--md-sys-color-secondary)" fill="url(#wearGrad)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-on-surface-variant/70 border border-dashed border-outline-variant/30 rounded-xl">
+                  <p className="text-sm">Not enough data to project wear curves.</p>
+                </div>
+              )}
             </div>
           </motion.section>
 
           {/* Component Health */}
           <motion.section
-            className="lg:col-span-4 bg-surface-container-lowest dark:bg-stone-900 p-6 sm:p-8 rounded-xl shadow-sm border border-surface-container dark:border-stone-800 flex flex-col"
+            className="lg:col-span-4 bg-surface-container-lowest dark:bg-[#1C1C1C] p-6 sm:p-8 rounded-xl shadow-sm border border-surface-container dark:border-neutral-800/50 flex flex-col"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
@@ -162,7 +159,7 @@ export default function AIMaintenanceTrends() {
             <h3 className="text-xl font-bold font-headline text-on-surface dark:text-white mb-1">Component Health</h3>
             <p className="text-sm text-on-surface-variant mb-6">Remaining service life prediction</p>
             <div className="space-y-5 flex-1">
-              {displayPredictions.map((pred, i) => (
+              {displayPredictions.length > 0 ? displayPredictions.map((pred, i) => (
                 <motion.div
                   key={pred.component || i}
                   initial={{ opacity: 0, x: -10 }}
@@ -177,7 +174,7 @@ export default function AIMaintenanceTrends() {
                       {pred.confidence}%
                     </span>
                   </div>
-                  <div className="h-2 w-full bg-surface-container dark:bg-stone-700 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-surface-container dark:bg-neutral-700 rounded-full overflow-hidden">
                     <motion.div
                       className={`h-full ${barColor(pred.riskLevel)} rounded-full`}
                       initial={{ width: 0 }}
@@ -191,7 +188,13 @@ export default function AIMaintenanceTrends() {
                     {pred.riskLevel === "High" ? "⚠ Critical — Immediate Inspection" : `Est. Remaining: ${pred.estimatedFailure}`}
                   </p>
                 </motion.div>
-              ))}
+              )) : (
+                <div className="text-center mt-6">
+                  <Icon name="check_circle" className="text-emerald-500 text-3xl mb-2" />
+                  <p className="text-sm font-bold text-on-surface">No predictions</p>
+                  <p className="text-xs text-on-surface-variant">All components operating nominally</p>
+                </div>
+              )}
             </div>
           </motion.section>
         </div>
@@ -200,7 +203,7 @@ export default function AIMaintenanceTrends() {
         <section>
           <div className="flex items-center gap-4 mb-6">
             <h2 className="text-2xl font-extrabold tracking-tight font-headline text-on-surface dark:text-white">AI-Driven Insights</h2>
-            <div className="h-px flex-1 bg-surface-container-high dark:bg-stone-700" />
+            <div className="h-px flex-1 bg-surface-container-high dark:bg-neutral-700" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
@@ -231,7 +234,7 @@ export default function AIMaintenanceTrends() {
             ].map((insight, i) => (
               <motion.article
                 key={insight.title}
-                className="bg-surface-container-lowest dark:bg-stone-900 p-6 rounded-xl border border-surface-container dark:border-stone-800 hover:shadow-md transition-shadow"
+                className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-6 rounded-xl border border-surface-container dark:border-neutral-800/50 hover:shadow-md transition-shadow"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + i * 0.1 }}

@@ -5,13 +5,9 @@ import { motion, PageTransition, fadeInUp } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/icon";
 import { formatCurrency, VAT_RATE } from "@/lib/currency";
 import { api } from "@/lib/api";
+import { generateServiceInvoicePdf, downloadPdf } from "@/lib/pdf";
 
-const services = [
-  { id: 1, name: "Precision Oil Change", price: 2500, desc: "Synthetic high-performance lubricant with magnetic filter replacement." },
-  { id: 2, name: "Brake Calibration", price: 3500, desc: "Full hydraulic check and ceramic pad thickness measurement." },
-  { id: 3, name: "Engine Diagnostics", price: 1800, desc: "Complete system scan with industrial-grade telemetry tools." },
-  { id: 4, name: "Suspension Tuning", price: 4500, desc: "Shock absorber alignment and dampening optimization." },
-];
+// Services dynamically loaded from API
 
 const timeSlots = ["09:00 AM", "11:30 AM", "02:15 PM", "04:45 PM"];
 
@@ -35,20 +31,47 @@ export default function ServiceBooking() {
   const [selectedServices, setSelectedServices] = useState([1, 3]);
   const [pastBookings, setPastBookings] = useState([]);
 
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    api.getAppointments()
-      .then(res => {
-        if (Array.isArray(res)) {
-          const formatted = res.map(book => ({
-            id: book.referenceNumber,
-            date: new Date(book.scheduledAtUtc).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-            services: book.services?.join(", ") || "General Service",
-            status: book.status
-          }));
-          setPastBookings(formatted);
+    let cancelled = false;
+    (async () => {
+      try {
+        const [appts, svcs] = await Promise.all([
+          api.getAppointments(),
+          api.getAvailableServices()
+        ]);
+        if (!cancelled) {
+          if (Array.isArray(appts)) {
+            const formatted = appts.map(book => ({
+              id: book.referenceNumber,
+              realId: book.id,
+              date: new Date(book.scheduledAtUtc).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+              services: book.services?.join(", ") || "General Service",
+              status: book.status
+            }));
+            setPastBookings(formatted);
+          }
+          if (Array.isArray(svcs)) {
+            setServices(svcs.map(s => ({
+              id: s.id,
+              name: s.name,
+              price: s.price || 0,
+              desc: s.description || "Precision auto care service."
+            })));
+            if (svcs.length > 0) setSelectedServices([svcs[0].id]);
+          }
         }
-      })
-      .catch(() => {});
+      } catch {
+        if (!cancelled) {
+          toast("Error loading booking availability.", "error");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -88,7 +111,7 @@ export default function ServiceBooking() {
         scheduledAt: new Date(calYear, calMonth, selectedDay).toISOString(),
         pickupRequired: false,
         notes: `Services: ${selectedItems.map(s => s.name).join(", ")}`,
-        serviceTypeIds: [],
+        serviceTypeIds: selectedItems.map(s => s.id),
       });
       navigate("/customer/booking-success", {
         state: {
@@ -102,23 +125,20 @@ export default function ServiceBooking() {
           }
         }
       });
-    } catch {
-      toast(`Booking confirmed for ${monthNames[calMonth]} ${selectedDay} at ${selectedTime}!`, "success");
-      navigate("/customer/booking-success", {
-        state: {
-          booking: {
-            date: `${monthNames[calMonth]} ${selectedDay}, ${calYear}`,
-            time: selectedTime,
-            vehicle: "My Vehicle",
-            services: selectedItems.map(s => ({ name: s.name, price: s.price })),
-            total,
-          }
-        }
-      });
+    } catch (err) {
+      toast(err.message || "Failed to confirm booking. Please try again.", "error");
     }
   };
 
   const prevMonthDays = getDaysInMonth(calYear, calMonth === 0 ? 11 : calMonth - 1);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Icon name="progress_activity" className="text-secondary text-4xl animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <PageTransition>
@@ -128,7 +148,7 @@ export default function ServiceBooking() {
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-headline text-on-surface dark:text-white mb-2">
             Service Booking
           </h1>
-          <p className="text-on-surface-variant dark:text-stone-400 max-w-2xl">
+          <p className="text-on-surface-variant dark:text-neutral-400 max-w-2xl">
             Configure your industrial maintenance schedule with precision. Select your required services and preferred timeline.
           </p>
         </motion.header>
@@ -137,7 +157,7 @@ export default function ServiceBooking() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Calendar */}
           <motion.div
-            className="lg:col-span-4 bg-surface-container-low dark:bg-stone-900 rounded-xl p-6"
+            className="lg:col-span-4 bg-surface-container-low dark:bg-[#1C1C1C] rounded-xl p-6"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
@@ -147,16 +167,16 @@ export default function ServiceBooking() {
               <Icon name="event" className="text-secondary" />
               Select Date
             </h2>
-            <div className="bg-surface-container-lowest dark:bg-stone-800 rounded-lg p-4 shadow-sm">
+            <div className="bg-surface-container-lowest dark:bg-neutral-800 rounded-lg p-4 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <span className="font-bold font-headline text-on-surface dark:text-white">
                   {monthNames[calMonth]} {calYear}
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={prevMonth} className="p-1 hover:bg-surface-container dark:hover:bg-stone-700 rounded transition-colors">
+                  <button onClick={prevMonth} className="p-1 hover:bg-surface-container dark:hover:bg-neutral-700 rounded transition-colors">
                     <Icon name="chevron_left" className="text-sm" />
                   </button>
-                  <button onClick={nextMonth} className="p-1 hover:bg-surface-container dark:hover:bg-stone-700 rounded transition-colors">
+                  <button onClick={nextMonth} className="p-1 hover:bg-surface-container dark:hover:bg-neutral-700 rounded transition-colors">
                     <Icon name="chevron_right" className="text-sm" />
                   </button>
                 </div>
@@ -182,7 +202,7 @@ export default function ServiceBooking() {
                       className={`aspect-square flex items-center justify-center text-sm transition-colors rounded-full ${
                         isSelected
                           ? "bg-secondary text-on-secondary font-bold"
-                          : "text-on-surface dark:text-stone-300 hover:bg-surface-container dark:hover:bg-stone-700"
+                          : "text-on-surface dark:text-neutral-300 hover:bg-surface-container dark:hover:bg-neutral-700"
                       }`}
                     >
                       {day}
@@ -202,7 +222,7 @@ export default function ServiceBooking() {
                       className={`py-2 text-xs font-bold rounded transition-colors ${
                         selectedTime === slot
                           ? "bg-secondary-fixed text-on-secondary-fixed border border-secondary-dim/20"
-                          : "bg-surface-container dark:bg-stone-700 text-on-surface-variant hover:bg-secondary-container"
+                          : "bg-surface-container dark:bg-neutral-700 text-on-surface-variant hover:bg-secondary-container"
                       }`}
                     >
                       {slot}
@@ -221,7 +241,7 @@ export default function ServiceBooking() {
             animate="animate"
             transition={{ delay: 0.2 }}
           >
-            <div className="bg-surface-container-low dark:bg-stone-900 rounded-xl p-6 h-full">
+            <div className="bg-surface-container-low dark:bg-[#1C1C1C] rounded-xl p-6 h-full">
               <h2 className="font-bold font-headline text-lg mb-4 flex items-center gap-2 dark:text-white">
                 <Icon name="build" className="text-secondary" />
                 Service Selection
@@ -234,8 +254,8 @@ export default function ServiceBooking() {
                       key={svc.id}
                       className={`group relative flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all ${
                         isChecked
-                          ? "bg-secondary-container/30 dark:bg-stone-800 ring-2 ring-secondary/20"
-                          : "bg-surface-container-lowest dark:bg-stone-800 ring-1 ring-transparent hover:ring-outline-variant/30 hover:bg-stone-100 dark:hover:bg-stone-700"
+                          ? "bg-secondary-container/30 dark:bg-neutral-800 ring-2 ring-secondary/20"
+                          : "bg-surface-container-lowest dark:bg-neutral-800 ring-1 ring-transparent hover:ring-outline-variant/30 hover:bg-stone-100 dark:hover:bg-neutral-700"
                       }`}
                     >
                       <input
@@ -266,7 +286,7 @@ export default function ServiceBooking() {
             animate="animate"
             transition={{ delay: 0.3 }}
           >
-            <div className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-6 shadow-[0_12px_40px_rgba(45,52,50,0.06)] sticky top-24 border border-stone-200/50 dark:border-stone-700">
+            <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 shadow-[0_12px_40px_rgba(45,52,50,0.06)] sticky top-24 border border-stone-200/50 dark:border-neutral-700/50">
               <h2 className="font-extrabold font-headline text-xl mb-6 dark:text-white">Booking Summary</h2>
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-start">
@@ -277,7 +297,7 @@ export default function ServiceBooking() {
                     <span className="text-secondary">{selectedTime}</span>
                   </div>
                 </div>
-                <div className="space-y-2 border-t border-stone-100 dark:border-stone-700 pt-4">
+                <div className="space-y-2 border-t border-stone-100 dark:border-neutral-700/50 pt-4">
                   {selectedItems.map((s) => (
                     <div key={s.id} className="flex justify-between text-sm">
                       <span className="text-on-surface-variant">{s.name.split(" ").slice(-1)[0]}</span>
@@ -289,7 +309,7 @@ export default function ServiceBooking() {
                       <span className="font-semibold dark:text-white">{formatCurrency(vat)}</span>
                     </div>
                 </div>
-                <div className="flex justify-between border-t-2 border-stone-100 dark:border-stone-700 pt-4 items-baseline">
+                <div className="flex justify-between border-t-2 border-stone-100 dark:border-neutral-700/50 pt-4 items-baseline">
                   <span className="font-bold font-headline text-on-surface dark:text-white">Total Est.</span>
                   <span className="text-2xl font-extrabold font-headline text-secondary">
                     {selectedItems.length > 0 ? formatCurrency(total) : "Rs. 0.00"}
@@ -299,17 +319,17 @@ export default function ServiceBooking() {
               <div className="space-y-3">
                 <button
                   onClick={handleConfirm}
-                  className="w-full py-4 bg-primary dark:bg-stone-700 text-on-primary dark:text-white rounded-lg font-bold text-sm tracking-wide hover:bg-primary-dim transition-all active:scale-[0.98]"
+                  className="w-full py-4 bg-primary dark:bg-neutral-700 text-on-primary dark:text-white rounded-lg font-bold text-sm tracking-wide hover:bg-primary-dim transition-all active:scale-[0.98]"
                 >
                   Confirm Booking
                 </button>
-                <button className="w-full py-3 bg-surface-container-low dark:bg-stone-800 text-on-surface-variant rounded-lg font-bold text-xs tracking-wide hover:bg-surface-container transition-all">
+                <button className="w-full py-3 bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant rounded-lg font-bold text-xs tracking-wide hover:bg-surface-container transition-all">
                   Save for Later
                 </button>
               </div>
-              <div className="mt-6 p-3 bg-tertiary-container/40 dark:bg-stone-800 rounded-lg flex gap-3 items-center">
+              <div className="mt-6 p-3 bg-tertiary-container/40 dark:bg-neutral-800 rounded-lg flex gap-3 items-center">
                 <Icon name="verified_user" className="text-tertiary text-lg" />
-                <p className="text-[10px] text-on-tertiary-container dark:text-stone-400 leading-tight">
+                <p className="text-[10px] text-on-tertiary-container dark:text-neutral-400 leading-tight">
                   Your service is backed by our Precision Guarantee. Full data reports included.
                 </p>
               </div>
@@ -331,43 +351,67 @@ export default function ServiceBooking() {
               <p className="text-on-surface-variant text-sm">Track past maintenance and booked appointments.</p>
             </div>
           </div>
-          <div className="bg-surface-container-low dark:bg-stone-900 rounded-2xl overflow-x-auto">
+          <div className="bg-surface-container-low dark:bg-[#1C1C1C] rounded-2xl overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[520px]">
-              <thead className="bg-surface-container-high dark:bg-stone-800">
+              <thead className="bg-surface-container-high dark:bg-neutral-800">
                 <tr>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Service ID</th>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Date</th>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Services Performed</th>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider text-right">Invoice</th>
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-container dark:divide-stone-800">
+              <tbody className="divide-y divide-surface-container dark:divide-neutral-800/50">
                 {pastBookings.map((booking, i) => (
-                  <tr key={booking.id} className={`hover:bg-surface-container dark:hover:bg-stone-800 transition-colors ${i % 2 === 1 ? "bg-white/40 dark:bg-stone-950/30" : ""}`}>
+                  <tr key={booking.id} className={`hover:bg-surface-container dark:hover:bg-neutral-800 transition-colors ${i % 2 === 1 ? "bg-white/40 dark:bg-[#0A0A0A]/30" : ""}`}>
                     <td className="px-6 py-4 font-bold font-headline text-sm dark:text-white">{booking.id}</td>
                     <td className="px-6 py-4 text-sm text-on-surface-variant">{booking.date}</td>
-                    <td className="px-6 py-4 text-sm text-on-surface dark:text-stone-200">{booking.services}</td>
+                    <td className="px-6 py-4 text-sm text-on-surface dark:text-neutral-200">{booking.services}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${
                         booking.status === "Completed"
                           ? "bg-tertiary-container text-on-tertiary-container"
-                          : "bg-stone-200 dark:bg-stone-700 text-stone-500"
+                          : "bg-stone-200 dark:bg-neutral-700 text-stone-500"
                       }`}>
                         {booking.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                      {booking.status !== "Cancelled" && booking.status !== "Completed" && (
+                        <button
+                          className="px-3 py-1 bg-error-container text-on-error-container text-xs font-bold rounded hover:bg-error hover:text-white transition-colors"
+                          onClick={async () => {
+                            try {
+                              await api.cancelAppointment(booking.realId);
+                              setPastBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: "Cancelled" } : b));
+                              toast("Appointment cancelled successfully", "success");
+                            } catch (err) {
+                              toast(err.message || "Failed to cancel appointment", "error");
+                            }
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      )}
                       <button
                         className={`p-2 rounded-lg transition-colors ${
                           booking.status === "Cancelled"
                             ? "opacity-30 cursor-not-allowed"
-                            : "hover:bg-stone-200 dark:hover:bg-stone-700"
+                            : "hover:bg-stone-200 dark:hover:bg-neutral-700"
                         }`}
                         disabled={booking.status === "Cancelled"}
-                        onClick={() => booking.status !== "Cancelled" && toast("Invoice downloaded", "success")}
+                        onClick={() => {
+                          if (booking.status !== "Cancelled") {
+                            // In a real app we'd pass the auth user context here
+                            const user = { fullName: "Valued Customer", email: "" };
+                            const doc = generateServiceInvoicePdf(booking, user);
+                            downloadPdf(doc, `Invoice_${booking.id}.pdf`);
+                            toast("Invoice downloaded as PDF", "success");
+                          }
+                        }}
                       >
-                        <Icon name="download" className="text-stone-600 dark:text-stone-400" />
+                        <Icon name="download" className="text-stone-600 dark:text-neutral-400" />
                       </button>
                     </td>
                   </tr>

@@ -120,7 +120,7 @@ export default function ProfileManagement() {
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight font-headline text-on-surface dark:text-white mb-2">
               Profile &amp; Garage
             </h1>
-            <p className="text-on-surface-variant dark:text-stone-400 max-w-2xl">
+            <p className="text-on-surface-variant dark:text-neutral-400 max-w-2xl">
               Manage your vehicle collection and precision contact details from one central hub.
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function ProfileManagement() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Personal Info */}
           <motion.section
-            className="lg:col-span-4 bg-surface-container-low dark:bg-stone-900 rounded-xl p-6 sm:p-8 h-fit"
+            className="lg:col-span-4 bg-surface-container-low dark:bg-[#1C1C1C] rounded-xl p-6 sm:p-8 h-fit"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
@@ -222,7 +222,7 @@ export default function ProfileManagement() {
               </div>
             ) : vehicles.length === 0 ? (
               <motion.div
-                className="flex flex-col items-center justify-center h-48 bg-surface-container-low dark:bg-stone-900 rounded-xl text-on-surface-variant gap-4"
+                className="flex flex-col items-center justify-center h-48 bg-surface-container-low dark:bg-[#1C1C1C] rounded-xl text-on-surface-variant gap-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
@@ -241,7 +241,7 @@ export default function ProfileManagement() {
                   {vehicles.map((vehicle, idx) => (
                     <motion.div
                       key={vehicle.id || idx}
-                      className="group bg-surface-container-lowest dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm border border-surface-container dark:border-stone-800 hover:shadow-md transition-all"
+                      className="group bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-2xl overflow-hidden shadow-sm border border-surface-container dark:border-neutral-800/50 hover:shadow-md transition-all"
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
@@ -263,19 +263,19 @@ export default function ProfileManagement() {
 
                       <div className="p-5">
                         <div className="grid grid-cols-3 gap-3 mb-4">
-                          <div className="bg-surface-container-low dark:bg-stone-800 p-2 rounded-lg text-center">
+                          <div className="bg-surface-container-low dark:bg-neutral-800 p-2 rounded-lg text-center">
                             <p className="text-[10px] uppercase font-bold text-on-surface-variant">Mileage</p>
                             <p className="text-sm font-bold text-on-surface dark:text-white mt-1">
                               {(vehicle.mileageKm ?? 0).toLocaleString()} km
                             </p>
                           </div>
-                          <div className="bg-surface-container-low dark:bg-stone-800 p-2 rounded-lg text-center">
+                          <div className="bg-surface-container-low dark:bg-neutral-800 p-2 rounded-lg text-center">
                             <p className="text-[10px] uppercase font-bold text-on-surface-variant">Health</p>
                             <p className={`text-sm font-bold mt-1 ${(vehicle.healthScore || 100) >= 90 ? "text-emerald-600" : (vehicle.healthScore || 100) >= 70 ? "text-amber-600" : "text-error"}`}>
                               {vehicle.healthScore || 100}%
                             </p>
                           </div>
-                          <div className="bg-surface-container-low dark:bg-stone-800 p-2 rounded-lg text-center">
+                          <div className="bg-surface-container-low dark:bg-neutral-800 p-2 rounded-lg text-center">
                             <p className="text-[10px] uppercase font-bold text-on-surface-variant">Status</p>
                             <p className={`text-[10px] font-bold mt-1.5 ${(vehicle.healthScore || 100) >= 90 ? "text-emerald-600" : "text-amber-600"}`}>
                               {(vehicle.healthScore || 100) >= 90 ? "OPTIMAL" : "SVC DUE"}

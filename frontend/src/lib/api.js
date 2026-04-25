@@ -102,6 +102,7 @@ class ApiClient {
   // ── Customer: Appointments ───────────────────────────────────
   createAppointment(dto)   { return this._post("/customer/appointments", dto); }
   getAppointments()        { return this._get("/customer/appointments"); }
+  getAvailableServices()   { return this._get("/customer/appointments/services"); }
   cancelAppointment(id)    { return this._patch(`/customer/appointments/${id}/cancel`, {}); }
 
   // ── Customer: Reviews ────────────────────────────────────────

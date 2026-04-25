@@ -9,6 +9,16 @@ public static class DatabaseSeeder
 {
     public static async Task SeedAsync(AppDbContext db)
     {
+        if (!await db.ServiceTypes.AnyAsync())
+        {
+            var stGeneral = new ServiceType { Code = "SVC-GEN", Name = "General Service", Description = "Routine checks, oil change, and basic diagnostics.", BasePrice = 150m, EstimatedMinutes = 120 };
+            var stBrake = new ServiceType { Code = "SVC-BRK", Name = "Brake Inspection & Repair", Description = "Full brake system diagnostic, pad and rotor replacements.", BasePrice = 300m, EstimatedMinutes = 180 };
+            var stTransmission = new ServiceType { Code = "SVC-TRN", Name = "Transmission Overhaul", Description = "Deep transmission diagnostics and parts replacement.", BasePrice = 850m, EstimatedMinutes = 360 };
+            var stEngine = new ServiceType { Code = "SVC-ENG", Name = "Engine Performance Tuning", Description = "ECU tuning and engine health diagnostics.", BasePrice = 450m, EstimatedMinutes = 240 };
+            db.ServiceTypes.AddRange(stGeneral, stBrake, stTransmission, stEngine);
+            await db.SaveChangesAsync();
+        }
+
         if (await db.Users.AnyAsync(u => u.Email == "admin@precision-parts.com"))
             return;
 

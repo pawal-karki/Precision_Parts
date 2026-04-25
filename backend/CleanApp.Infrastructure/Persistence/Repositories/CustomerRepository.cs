@@ -35,6 +35,12 @@ public class CustomerRepository : ICustomerRepository
             .Include(u => u.Vehicles)
             .FirstOrDefaultAsync(u => u.Role == UserRole.Customer && u.Email == email, cancellationToken);
 
+    public Task<User?> GetCustomerByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.Users
+            .Include(u => u.CustomerProfile)
+            .Include(u => u.Vehicles)
+            .FirstOrDefaultAsync(u => u.Id == id && u.Role == UserRole.Customer, cancellationToken);
+
     public Task<bool> EmailExistsNormalizedAsync(string normalizedEmail, CancellationToken cancellationToken = default) =>
         _db.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
 

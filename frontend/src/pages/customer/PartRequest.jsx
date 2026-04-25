@@ -15,7 +15,7 @@ const STATUS_CONFIG = {
   Pending: { color: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/20", label: "Pending" },
   Sourcing: { color: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/20", label: "Sourcing" },
   Available: { color: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/20", label: "Available" },
-  Cancelled: { color: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700", label: "Cancelled" },
+  Cancelled: { color: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700/50", label: "Cancelled" },
 };
 
 const empty = { partName: "", partNumber: "", vehicleModel: "", description: "", urgency: "Normal" };
@@ -107,7 +107,7 @@ export default function PartRequest() {
             initial={{ opacity: 0, scale: 0.97, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97 }}
-            className="bg-surface-container-lowest dark:bg-stone-900 rounded-2xl p-6 sm:p-8 border border-surface-container dark:border-stone-800 shadow-xl"
+            className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-2xl p-6 sm:p-8 border border-surface-container dark:border-neutral-800/50 shadow-xl"
           >
             <h2 className="text-xl font-bold font-headline text-on-surface dark:text-white mb-6">
               Submit Part Request
@@ -120,7 +120,7 @@ export default function PartRequest() {
                   </label>
                   <input
                     required
-                    className="w-full bg-surface-container-low dark:bg-stone-800 border border-outline-variant/20 dark:border-stone-700 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all placeholder:text-on-surface-variant/50"
+                    className="w-full bg-surface-container-low dark:bg-neutral-800 border border-outline-variant/20 dark:border-neutral-700/50 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all placeholder:text-on-surface-variant/50"
                     placeholder="e.g. Carbon Fiber Intake Manifold"
                     value={formData.partName}
                     onChange={setField("partName")}
@@ -131,7 +131,7 @@ export default function PartRequest() {
                     Part Number (optional)
                   </label>
                   <input
-                    className="w-full bg-surface-container-low dark:bg-stone-800 border border-outline-variant/20 dark:border-stone-700 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all placeholder:text-on-surface-variant/50"
+                    className="w-full bg-surface-container-low dark:bg-neutral-800 border border-outline-variant/20 dark:border-neutral-700/50 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all placeholder:text-on-surface-variant/50"
                     placeholder="e.g. CF-9921-X"
                     value={formData.partNumber}
                     onChange={setField("partNumber")}
@@ -142,7 +142,7 @@ export default function PartRequest() {
                     Vehicle Model (optional)
                   </label>
                   <input
-                    className="w-full bg-surface-container-low dark:bg-stone-800 border border-outline-variant/20 dark:border-stone-700 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all placeholder:text-on-surface-variant/50"
+                    className="w-full bg-surface-container-low dark:bg-neutral-800 border border-outline-variant/20 dark:border-neutral-700/50 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all placeholder:text-on-surface-variant/50"
                     placeholder="e.g. Toyota Land Cruiser 200"
                     value={formData.vehicleModel}
                     onChange={setField("vehicleModel")}
@@ -161,7 +161,7 @@ export default function PartRequest() {
                           className={`py-3 rounded-xl font-bold text-sm transition-all ${
                             formData.urgency === level
                               ? `${cfg.color} shadow-lg`
-                              : "bg-surface-container-high dark:bg-stone-800 text-on-surface hover:bg-surface-container-highest dark:hover:bg-stone-700"
+                              : "bg-surface-container-high dark:bg-neutral-800 text-on-surface hover:bg-surface-container-highest dark:hover:bg-neutral-700"
                           }`}
                         >
                           {level}
@@ -177,13 +177,13 @@ export default function PartRequest() {
                 </label>
                 <textarea
                   rows={4}
-                  className="w-full bg-surface-container-low dark:bg-stone-800 border border-outline-variant/20 dark:border-stone-700 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all resize-none placeholder:text-on-surface-variant/50"
+                  className="w-full bg-surface-container-low dark:bg-neutral-800 border border-outline-variant/20 dark:border-neutral-700/50 rounded-xl p-4 text-on-surface dark:text-white focus:ring-2 focus:ring-secondary outline-none transition-all resize-none placeholder:text-on-surface-variant/50"
                   placeholder="Describe your requirement, usage context, or any specifications..."
                   value={formData.description}
                   onChange={setField("description")}
                 />
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-surface-container dark:border-stone-800">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-surface-container dark:border-neutral-800/50">
                 <Button
                   type="button"
                   variant="ghost"
@@ -221,7 +221,7 @@ export default function PartRequest() {
             </div>
           ) : requests.length === 0 ? (
             <motion.div
-              className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-low dark:bg-stone-900 rounded-2xl border border-dashed border-outline-variant/20"
+              className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-low dark:bg-[#1C1C1C] rounded-2xl border border-dashed border-outline-variant/20"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -242,7 +242,7 @@ export default function PartRequest() {
                 return (
                   <motion.div
                     key={req.id || idx}
-                    className="bg-surface-container-lowest dark:bg-stone-900 rounded-xl p-6 border border-surface-container dark:border-stone-800 hover:shadow-md transition-all"
+                    className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 border border-surface-container dark:border-neutral-800/50 hover:shadow-md transition-all"
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.06 }}

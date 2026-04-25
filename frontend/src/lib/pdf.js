@@ -183,3 +183,93 @@ export function printPdf(doc) {
     }, 1000);
   };
 }
+
+export function generateServiceInvoicePdf(booking, user) {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(77, 97, 114);
+  doc.text("SERVICE INVOICE", pageWidth - 20, 30, { align: "right" });
+
+  doc.setFontSize(10);
+  doc.setTextColor(94, 94, 94);
+  doc.text(booking.id, pageWidth - 20, 38, { align: "right" });
+
+  doc.setFontSize(14);
+  doc.setTextColor(45, 52, 50);
+  doc.text("Precision Parts", 20, 30);
+  doc.setFontSize(9);
+  doc.setTextColor(90, 96, 94);
+  doc.text("Kathmandu, Nepal", 20, 36);
+  doc.text("New Baneshwor, Kathmandu 44600", 20, 41);
+  doc.text("service@precision-parts.com", 20, 46);
+
+  doc.setDrawColor(236, 239, 236);
+  doc.line(20, 55, pageWidth - 20, 55);
+
+  doc.setFillColor(242, 244, 242);
+  doc.rect(20, 60, pageWidth - 40, 25, "F");
+  
+  doc.setFontSize(8);
+  doc.setTextColor(90, 96, 94);
+  doc.text("BILL TO / SERVICE RECIPEINT", 25, 67);
+  doc.setFontSize(11);
+  doc.setTextColor(45, 52, 50);
+  doc.text(user?.fullName || "Precision Parts Customer", 25, 74);
+  doc.setFontSize(9);
+  doc.setTextColor(90, 96, 94);
+  doc.text(user?.email || "N/A", 25, 80);
+
+  doc.setFontSize(9);
+  doc.text(`Service Date: ${booking.date}`, pageWidth - 25, 67, { align: "right" });
+  doc.text(`Status: ${booking.status}`, pageWidth - 25, 73, { align: "right" });
+
+  autoTable(doc, {
+    startY: 95,
+    head: [["Service Performed", "Reference"]],
+    body: [
+      [booking.services, booking.id]
+    ],
+    theme: "plain",
+    headStyles: {
+      fillColor: [242, 244, 242],
+      textColor: [90, 96, 94],
+      fontStyle: "bold",
+      fontSize: 8,
+    },
+    bodyStyles: { fontSize: 9, textColor: [45, 52, 50] },
+    columnStyles: {
+      0: { cellWidth: 100 },
+      1: { halign: "right" }
+    },
+    margin: { left: 20, right: 20 },
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 15;
+  const rightX = pageWidth - 25;
+
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(90, 96, 94);
+  doc.text("Estimated Cost Not Included - See finalized branch invoice.", 20, finalY);
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(150, 150, 150);
+  doc.text(
+    "Thank you for choosing Precision Parts. All services are guaranteed.",
+    pageWidth / 2,
+    280,
+    { align: "center" }
+  );
+  doc.text(
+    "Precision Parts • Kathmandu, Nepal",
+    pageWidth / 2,
+    285,
+    { align: "center" }
+  );
+
+  return doc;
+}

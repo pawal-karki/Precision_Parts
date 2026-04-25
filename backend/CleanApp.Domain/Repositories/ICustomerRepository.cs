@@ -7,6 +7,7 @@ public interface ICustomerRepository
     Task<IReadOnlyList<User>> ListCustomersWithProfileAndVehiclesOrderedAsync(CancellationToken cancellationToken = default);
     Task<User?> GetCustomerByPublicIdWithDetailsAsync(int publicId, CancellationToken cancellationToken = default);
     Task<User?> GetCustomerByEmailWithDetailsAsync(string email, CancellationToken cancellationToken = default);
+    Task<User?> GetCustomerByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> EmailExistsNormalizedAsync(string normalizedEmail, CancellationToken cancellationToken = default);
     Task<int> CountActiveCustomersAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CustomerProfile>> ListProfilesWithOutstandingCreditTakeAsync(int take, CancellationToken cancellationToken = default);
