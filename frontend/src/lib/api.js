@@ -74,6 +74,10 @@ class ApiClient {
   updateCustomer(pid, dto) { return this._put(`/staff/customers/${pid}`, dto); }
   deleteCustomer(pid)      { return this._delete(`/staff/customers/${pid}`); }
 
+  getCustomerDetailedReport(pid)                          { return this._get(`/staff/customers/${pid}/detailed-report`); }
+  getCustomerActivityLog(pid, page = 1, size = 10)        { return this._get(`/staff/customers/${pid}/activity?page=${page}&size=${size}`); }
+  getCustomerLoginActivity(pid, page = 1, size = 10)      { return this._get(`/staff/customers/${pid}/login-activity?page=${page}&size=${size}`); }
+
   // ── Staff: POS & Invoice ──────────────────────────────────────
   getPosProducts()         { return this._get("/staff/pos/products"); }
   getInvoice()             { return this._get("/staff/invoice"); }

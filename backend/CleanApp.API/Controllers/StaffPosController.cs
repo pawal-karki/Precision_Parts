@@ -1,10 +1,12 @@
 using CleanApp.Application.Staff;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/staff/pos")]
+[Authorize(Roles = "Admin,Staff")]
 public class StaffPosController : ControllerBase
 {
     private readonly IStaffPosService _pos;

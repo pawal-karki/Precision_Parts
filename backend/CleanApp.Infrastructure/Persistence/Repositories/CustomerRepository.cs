@@ -53,6 +53,38 @@ public class CustomerRepository : ICustomerRepository
         return list;
     }
 
+    public Task<User?> GetCustomerFullCrmAsync(int publicId, CancellationToken cancellationToken = default) =>
+        _db.Users
+            .Include(u => u.CustomerProfile)
+            .Include(u => u.Vehicles)
+            .Include(u => u.Invoices.OrderByDescending(i => i.IssueDate).Take(5))
+            .Include(u => u.Appointments)
+            .FirstOrDefaultAsync(u => u.PublicId == publicId && u.Role == UserRole.Customer, cancellationToken);
+
+    public async Task<(List<Appointment> appointments, List<Invoice> invoices, List<PartRequest> partRequests)>
+        GetActivityDataAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var appointments = await _db.Appointments
+            .AsNoTracking()
+            .Where(a => a.CustomerId == userId)
+            .OrderByDescending(a => a.ScheduledAtUtc)
+            .ToListAsync(cancellationToken);
+
+        var invoices = await _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.CustomerId == userId)
+            .OrderByDescending(i => i.IssueDate)
+            .ToListAsync(cancellationToken);
+
+        var partRequests = await _db.PartRequests
+            .AsNoTracking()
+            .Where(pr => pr.CustomerId == userId)
+            .OrderByDescending(pr => pr.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        return (appointments, invoices, partRequests);
+    }
+
     public void Add(User user) => _db.Users.Add(user);
 
     public void AddProfile(CustomerProfile profile) => _db.CustomerProfiles.Add(profile);
@@ -65,5 +97,4 @@ public class CustomerRepository : ICustomerRepository
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _db.SaveChangesAsync(cancellationToken);
-}
-    
+}

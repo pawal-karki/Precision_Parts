@@ -6,4 +6,7 @@ public interface ICustomersService
     Task<int> CreateAsync(CustomerCreateDto dto, CancellationToken cancellationToken = default);
     Task UpdateAsync(int publicId, CustomerUpdateDto dto, CancellationToken cancellationToken = default);
     Task DeleteAsync(int publicId, CancellationToken cancellationToken = default);
+    Task<CustomerDetailReportDto> GetDetailedReportAsync(int publicId, CancellationToken cancellationToken = default);
+    Task<PagedResult<ActivityLogItemDto>> GetActivityLogAsync(int publicId, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<PagedResult<LoginActivityItemDto>> GetLoginActivityAsync(int publicId, int page, int pageSize, CancellationToken cancellationToken = default);
 }

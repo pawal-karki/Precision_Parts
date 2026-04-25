@@ -7,13 +7,14 @@ import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { to: "/admin", icon: "dashboard", label: "Dashboard", end: true },
-  { to: "/admin/audit-log", icon: "fact_check", label: "Audit log" },
+  { to: "/admin/audit-log", icon: "fact_check", label: "Audit Log" },
   { to: "/admin/inventory", icon: "inventory_2", label: "Inventory" },
-  { to: "/admin/sales", icon: "payments", label: "Sales" },
+  { to: "/admin/purchase-invoices", icon: "local_shipping", label: "Purchases" },
+  { to: "/staff/sales", icon: "point_of_sale", label: "Sales / POS" },
   { to: "/admin/staff", icon: "badge", label: "Staff" },
   { to: "/admin/customers", icon: "group", label: "Customers" },
   { to: "/admin/reports", icon: "analytics", label: "Reports" },
-  { to: "/admin/vendors", icon: "local_shipping", label: "Vendors" },
+  { to: "/admin/vendors", icon: "storefront", label: "Vendors" },
 ];
 
 export default function AdminLayout() {

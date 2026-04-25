@@ -15,12 +15,64 @@ import {
 } from "@/components/ui/data-table";
 import { PageTransition, motion, fadeInUp } from "@/components/ui/motion";
 import { useToast } from "@/components/ui/toast";
+import { formatNpt } from "@/lib/utils";
+
+const PAGE_SIZE = 20;
+
+function Pagination({ page, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null;
+  const pages = Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+    if (totalPages <= 7) return i + 1;
+    if (page <= 4) return i + 1 <= 5 ? i + 1 : i === 5 ? "…" : totalPages;
+    if (page >= totalPages - 3) return i === 0 ? 1 : i === 1 ? "…" : totalPages - (6 - i);
+    return i === 0 ? 1 : i === 1 ? "…" : i === 5 ? "…" : i === 6 ? totalPages : page - 2 + (i - 2);
+  });
+
+  return (
+    <div className="flex items-center justify-center gap-1 mt-6 flex-wrap">
+      <button
+        className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-40 transition-colors"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+      >
+        <Icon name="chevron_left" className="text-sm" /> Previous
+      </button>
+
+      {pages.map((p, i) =>
+        p === "…" ? (
+          <span key={`ellipsis-${i}`} className="px-3 py-1.5 text-slate-400 text-sm">…</span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onPageChange(p)}
+            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+              p === page
+                ? "bg-sky-600 text-white shadow"
+                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-40 transition-colors"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page === totalPages}
+      >
+        Next <Icon name="chevron_right" className="text-sm" />
+      </button>
+    </div>
+  );
+}
 
 export default function AdminAuditLog() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [actionFilter, setActionFilter] = useState("");
+  const [page, setPage] = useState(1);
   const toast = useToast();
 
   useEffect(() => {
@@ -38,10 +90,11 @@ export default function AdminAuditLog() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
+
+  // Reset page on filter change
+  useEffect(() => { setPage(1); }, [q, actionFilter]);
 
   const actionTypes = useMemo(() => {
     const s = new Set(rows.map((r) => r.action).filter(Boolean));
@@ -57,6 +110,9 @@ export default function AdminAuditLog() {
       return hay.includes(qq);
     });
   }, [rows, q, actionFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const exportCsv = () => {
     const headers = ["id", "timestamp", "actor", "action", "entity", "details", "reference", "severity"];
@@ -76,7 +132,7 @@ export default function AdminAuditLog() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-on-surface-variant">
-        <Icon name="sync" className="text-3xl animate-spin text-secondary" />
+        <Icon name="sync" className="text-3xl animate-spin text-sky-600" />
       </div>
     );
   }
@@ -85,15 +141,15 @@ export default function AdminAuditLog() {
     <PageTransition>
       <motion.section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between" variants={fadeInUp} initial="initial" animate="animate">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-secondary mb-2">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400 mb-2">
             <Icon name="verified_user" className="text-sm" />
-            Operational · Secure encrypted layer
+            Operational · Secure encrypted layer · Timestamps in NPT (UTC+05:45)
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold font-headline text-on-surface dark:text-neutral-100 tracking-tight">
-            Audit log
+          <h1 className="text-3xl md:text-4xl font-extrabold font-headline text-slate-900 dark:text-neutral-100 tracking-tight">
+            Audit Log
           </h1>
-          <p className="text-on-surface-variant dark:text-neutral-400 mt-1 max-w-xl">
-            Immutable-style ledger of security, inventory, and billing events (demo dataset from API).
+          <p className="text-slate-500 dark:text-neutral-400 mt-1 max-w-xl">
+            Immutable-style ledger of security, inventory, and billing events. All times shown in Nepal Standard Time.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -118,7 +174,7 @@ export default function AdminAuditLog() {
         transition={{ delay: 0.05 }}
       >
         <div className="relative flex-1 max-w-md">
-          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" />
+          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
           <Input
             className="pl-10"
             placeholder="Search actor, action, entity, reference…"
@@ -127,31 +183,29 @@ export default function AdminAuditLog() {
           />
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="audit-action" className="text-sm text-on-surface-variant whitespace-nowrap">
+          <label htmlFor="audit-action" className="text-sm text-slate-500 whitespace-nowrap">
             Action
           </label>
           <select
             id="audit-action"
-            className="h-10 rounded-lg border border-surface-container-highest dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 text-sm text-on-surface dark:text-neutral-200 min-w-[200px]"
+            className="h-10 rounded-lg border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 text-sm text-slate-800 dark:text-neutral-200 min-w-[200px]"
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
           >
             <option value="">All actions</option>
             {actionTypes.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
+              <option key={a} value={a}>{a}</option>
             ))}
           </select>
         </div>
-        <p className="text-sm text-on-surface-variant md:ml-auto">
-          Showing <span className="font-bold text-on-surface dark:text-neutral-200">{filtered.length}</span> of{" "}
-          {rows.length} entries
+        <p className="text-sm text-slate-500 md:ml-auto">
+          Showing <span className="font-bold text-slate-800 dark:text-neutral-200">{paginated.length}</span> of{" "}
+          {filtered.length} entries (page {page}/{totalPages})
         </p>
       </motion.div>
 
       <motion.div
-        className="mt-6 bg-white dark:bg-[#1C1C1C] rounded-xl border border-surface-container-low dark:border-neutral-800 overflow-hidden"
+        className="mt-6"
         variants={fadeInUp}
         initial="initial"
         animate="animate"
@@ -159,8 +213,8 @@ export default function AdminAuditLog() {
       >
         <Table>
           <TableHeader>
-            <TableRow className="text-[10px] font-bold uppercase text-on-surface-variant border-b border-surface-container dark:border-neutral-800">
-              <TableHead>Time (UTC)</TableHead>
+            <TableRow>
+              <TableHead>Time (NPT)</TableHead>
               <TableHead>Actor</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Entity</TableHead>
@@ -170,19 +224,18 @@ export default function AdminAuditLog() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((r) => (
-              <TableRow
-                key={r.id}
-                className="hover:bg-background dark:hover:bg-neutral-800/30 border-b border-surface-container-low/80 dark:border-neutral-800/80"
-              >
-                <TableCell className="text-xs font-mono text-on-surface-variant whitespace-nowrap">{r.timestamp}</TableCell>
-                <TableCell className="text-sm font-medium">{r.actor}</TableCell>
+            {paginated.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="font-mono text-xs text-slate-500 whitespace-nowrap">
+                  {formatNpt(r.timestamp)}
+                </TableCell>
+                <TableCell className="font-medium text-slate-900 dark:text-slate-100">{r.actor}</TableCell>
                 <TableCell>
                   <Badge variant="primary">{r.action}</Badge>
                 </TableCell>
-                <TableCell className="text-sm">{r.entity}</TableCell>
-                <TableCell className="text-sm max-w-md">{r.details}</TableCell>
-                <TableCell className="text-xs font-mono text-on-surface-variant">{r.reference}</TableCell>
+                <TableCell>{r.entity}</TableCell>
+                <TableCell className="max-w-sm text-slate-600 dark:text-slate-300">{r.details}</TableCell>
+                <TableCell className="font-mono text-xs text-slate-500">{r.reference}</TableCell>
                 <TableCell className="text-right">
                   <Badge variant={r.badge === "error" ? "error" : r.badge === "warning" ? "warning" : "neutral"}>
                     {r.severity}
@@ -192,11 +245,13 @@ export default function AdminAuditLog() {
             ))}
           </TableBody>
         </Table>
+
         {filtered.length === 0 && (
-          <div className="p-12 text-center text-on-surface-variant text-sm">No entries match your filters.</div>
+          <div className="p-12 text-center text-slate-500 text-sm">No entries match your filters.</div>
         )}
+
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </motion.div>
     </PageTransition>
   );
 }
-       

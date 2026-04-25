@@ -1,10 +1,12 @@
 using CleanApp.Application.Customers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/staff/customers")]
+[Authorize(Roles = "Admin,Staff")]
 public class StaffCustomersController : ControllerBase
 {
     private readonly ICustomersService _customers;
@@ -54,6 +56,56 @@ public class StaffCustomersController : ControllerBase
         {
             await _customers.DeleteAsync(publicId, cancellationToken);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpGet("{publicId:int}/detailed-report")]
+    public async Task<IActionResult> DetailedReport(int publicId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var report = await _customers.GetDetailedReportAsync(publicId, cancellationToken);
+            return Ok(report);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpGet("{publicId:int}/activity")]
+    public async Task<IActionResult> ActivityLog(
+        int publicId,
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 10,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var result = await _customers.GetActivityLogAsync(publicId, page, size, cancellationToken);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpGet("{publicId:int}/login-activity")]
+    public async Task<IActionResult> LoginActivity(
+        int publicId,
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 10,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var result = await _customers.GetLoginActivityAsync(publicId, page, size, cancellationToken);
+            return Ok(result);
         }
         catch (KeyNotFoundException)
         {
