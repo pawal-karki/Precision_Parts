@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import { motion, fadeInUp, AnimatePresence, PageTransition } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
@@ -8,18 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/currency";
 import { api } from "@/lib/api";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/data-table";
+import { Calendar } from "@/components/ui/calendar";
 
 const timeSlots = ["09:00 AM", "11:30 AM", "02:15 PM", "04:45 PM"];
 const statuses = ["Booked", "Confirmed", "InProgress", "Completed", "Cancelled"];
-
-function getDaysInMonth(year, month) {
-  return new Date(year, month + 1, 0).getDate();
-}
-
-function getFirstDayOfMonth(year, month) {
-  const d = new Date(year, month, 1).getDay();
-  return d === 0 ? 6 : d - 1;
-}
 
 export default function BookingsManagement({ role = "Admin" }) {
   const toast = useToast();
@@ -144,13 +137,10 @@ export default function BookingsManagement({ role = "Admin" }) {
     setNotes("");
   };
 
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const daysInMonth = getDaysInMonth(calYear, calMonth);
-  const firstDay = getFirstDayOfMonth(calYear, calMonth);
-
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
@@ -215,41 +205,78 @@ export default function BookingsManagement({ role = "Admin" }) {
         </Button>
       </section>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-8">
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-              placeholder="Search by customer name or reference..."
-            />
-          </div>
-        </div>
-        <div className="relative w-48">
+      {/* Filters & Search */}
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center bg-surface-container-lowest dark:bg-[#1C1C1C] p-2 rounded-2xl border border-outline-variant shadow-sm backdrop-blur-sm">
+        <div className="relative flex-1 max-w-md group">
+          <Icon name="search" className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors" />
           <Input 
-            type="date" 
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full"
+            placeholder="Search by customer name or reference..." 
+            className="pl-12 h-12 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {["All", ...statuses].map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-3 py-1.5 text-xs font-bold uppercase rounded-full transition-colors ${
-                activeFilter === filter
-                  ? "bg-secondary text-white"
-                  : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant dark:text-neutral-400 hover:bg-surface-container dark:hover:bg-neutral-700"
-              }`}
+        <div className="flex items-center gap-2 pr-2">
+          <div className="relative">
+            <Button 
+              variant="outline" 
+              className={cn(
+                "w-56 justify-start text-left font-medium h-12 text-sm border-outline-variant hover:border-secondary/50 transition-all",
+                !dateFilter && "text-on-surface-variant/50"
+              )}
+              onClick={() => setShowDatePicker(!showDatePicker)}
             >
-              {filter}
-            </button>
-          ))}
+              <Icon name="calendar_today" className="mr-3 h-4 w-4 text-secondary" />
+              {dateFilter ? new Date(dateFilter).toLocaleDateString(undefined, { dateStyle: 'medium' }) : <span>Filter by date</span>}
+            </Button>
+
+            {showDatePicker && (
+              <div className="absolute top-full left-0 z-50 mt-2">
+                <div 
+                  className="fixed inset-0" 
+                  onClick={() => setShowDatePicker(false)} 
+                />
+                <Calendar
+                  className="relative animate-in fade-in zoom-in-95 duration-200"
+                  selected={dateFilter ? new Date(dateFilter) : null}
+                  onSelect={(date) => {
+                    setDateFilter(date.toISOString().split("T")[0]);
+                    setShowDatePicker(false);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {dateFilter && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 text-outline-variant hover:text-error hover:bg-error/10"
+              onClick={() => setDateFilter("")}
+            >
+              <Icon name="close" className="h-4 w-4" />
+            </Button>
+          )}
+
+          <div className="h-8 w-[1px] bg-outline-variant mx-2 hidden lg:block" />
+
+          <div className="flex gap-1">
+            {["All", ...statuses].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={cn(
+                  "px-4 py-2 text-[10px] font-extrabold uppercase tracking-widest rounded-lg transition-all",
+                  activeFilter === filter
+                    ? "bg-secondary text-white shadow-lg shadow-secondary/20"
+                    : "text-on-surface-variant hover:bg-surface-container dark:hover:bg-neutral-800"
+                )}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -293,55 +320,50 @@ export default function BookingsManagement({ role = "Admin" }) {
 
             {/* Step 2: Date & Time */}
             <div className="space-y-4">
-              <div className="bg-surface-container-lowest dark:bg-neutral-800 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="font-bold text-sm dark:text-white">{monthNames[calMonth]} {calYear}</span>
-                  <div className="flex gap-1">
-                    <button onClick={() => setCalMonth(m => m === 0 ? 11 : m - 1)} className="p-1"><Icon name="chevron_left" /></button>
-                    <button onClick={() => setCalMonth(m => m === 11 ? 0 : m + 1)} className="p-1"><Icon name="chevron_right" /></button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-outline uppercase mb-1">
-                  {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => <span key={d}>{d}</span>)}
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {Array.from({ length: firstDay }).map((_, i) => <div key={i} />)}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const d = i + 1;
+              <Calendar
+                selected={new Date(calYear, calMonth, selectedDay)}
+                onSelect={(date) => {
+                  setSelectedDay(date.getDate());
+                  setCalMonth(date.getMonth());
+                  setCalYear(date.getFullYear());
+                }}
+              />
+              
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-outline uppercase tracking-wider ml-1">Select Time Slot</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {timeSlots.map(slot => {
+                    const occ = getSlotOccupancy(slot);
                     return (
                       <button 
-                        key={d} 
-                        onClick={() => setSelectedDay(d)}
-                        className={`p-1 text-xs rounded-full ${d === selectedDay ? "bg-secondary text-white" : "hover:bg-surface-container dark:text-neutral-300"}`}
+                        key={slot}
+                        onClick={() => setSelectedTime(slot)}
+                        className={cn(
+                          "px-3 py-2 text-xs border rounded-lg flex flex-col items-center justify-center transition-all duration-200",
+                          selectedTime === slot 
+                            ? "bg-secondary text-white border-secondary shadow-md scale-[1.02]" 
+                            : "bg-surface-container-lowest dark:bg-neutral-800 border-outline-variant dark:text-neutral-300 hover:border-secondary/50",
+                          occ.full && "opacity-50 grayscale cursor-not-allowed bg-slate-100 dark:bg-neutral-900"
+                        )}
+                        disabled={occ.full}
                       >
-                        {d}
+                        <span className="font-bold">{slot}</span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <div className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            occ.full ? "bg-error" : (occ.count > 5 ? "bg-amber-400" : "bg-emerald-400")
+                          )} />
+                          <span className={cn(
+                            "text-[9px] tracking-tight",
+                            selectedTime === slot ? "text-white/80" : "text-outline"
+                          )}>
+                            {occ.count}/7 Booked
+                          </span>
+                        </div>
                       </button>
                     );
                   })}
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2">
-                {timeSlots.map(slot => {
-                  const occ = getSlotOccupancy(slot);
-                  return (
-                    <button 
-                      key={slot}
-                      onClick={() => setSelectedTime(slot)}
-                      className={`p-2 text-xs border rounded flex flex-col items-center transition-all ${
-                        selectedTime === slot 
-                          ? "bg-secondary text-white border-secondary" 
-                          : "bg-surface-container-lowest dark:bg-neutral-800 border-outline-variant dark:text-neutral-300"
-                      } ${occ.full ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
-                      disabled={occ.full}
-                    >
-                      <span className="font-bold">{slot}</span>
-                      <span className={`text-[9px] ${selectedTime === slot ? "text-white/80" : "text-outline"}`}>
-                        {occ.count}/7 Booked {occ.full && "(Full)"}
-                      </span>
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
