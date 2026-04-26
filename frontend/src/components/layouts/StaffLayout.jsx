@@ -15,7 +15,7 @@ const navItems = [
 
 export default function StaffLayout() {
   const { dark, toggle } = useTheme();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <div className="flex min-h-screen">
@@ -126,17 +126,17 @@ export default function StaffLayout() {
             <NavLink to="/staff/profile" className="flex items-center gap-3 pl-4 border-l border-surface-container-highest dark:border-zinc-800 group">
               <div className="text-right">
                 <p className="font-bold text-slate-900 dark:text-neutral-200 leading-none group-hover:text-secondary transition-colors">
-                  Sarah Mitchell
+                  {user?.fullName || "Staff Member"}
                 </p>
                 <p className="text-[10px] text-slate-500 uppercase tracking-tighter">
-                  Senior Technician
+                  {user?.positionTitle || "Technician"}
                 </p>
               </div>
               <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
                 {user?.imageUrl ? (
                   <img src={user.imageUrl} alt="Staff" className="w-full h-full object-cover" />
                 ) : (
-                  "SM"
+                  user?.fullName?.split(' ').map(n => n[0]).join('') || "SM"
                 )}
               </div>
             </NavLink>
