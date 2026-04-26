@@ -20,6 +20,7 @@ public class AdminFinancialController : ControllerBase
         Ok(await _financial.GetProfitLossAsync(cancellationToken));
 
     [HttpGet("reports")]
-    public IActionResult Reports() => Ok(_financial.GetReportRows());
+    public async Task<IActionResult> Reports(CancellationToken cancellationToken) => 
+        Ok(await _financial.GetFinancialReportsAsync(cancellationToken));
 }
     

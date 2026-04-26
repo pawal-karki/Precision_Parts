@@ -20,6 +20,16 @@ public class InvoiceRepository : IInvoiceRepository
         return list;
     }
 
+    public async Task<IReadOnlyList<Invoice>> ListPaidWithItemsAsync(CancellationToken cancellationToken = default)
+    {
+        var list = await _db.Invoices
+            .AsNoTracking()
+            .Include(i => i.Items)
+            .Where(i => i.Status == InvoiceStatus.Paid)
+            .ToListAsync(cancellationToken);
+        return list;
+    }
+
     public async Task<IReadOnlyList<Invoice>> ListByIssueDateFromAsync(DateTime fromInclusive, CancellationToken cancellationToken = default)
     {
         var list = await _db.Invoices

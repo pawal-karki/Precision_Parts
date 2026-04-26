@@ -59,9 +59,9 @@ export default function FinancialReports() {
       const columns = ["Period", "Revenue", "Expenses", "Profit", "Margin"];
       const rows = reports.map((r) => [
         r.period,
-        formatCurrency(parseAmt(r.revenue)),
-        formatCurrency(parseAmt(r.expenses)),
-        formatCurrency(parseAmt(r.profit)),
+        formatCurrency(r.revenue),
+        formatCurrency(r.expenses),
+        formatCurrency(r.profit),
         r.margin,
       ]);
       const doc = generateReportPdf("Financial Report — Quarterly Summary", columns, rows);
@@ -97,7 +97,7 @@ export default function FinancialReports() {
         <div className="flex gap-3">
           <Button variant="surface">
             <Icon name="calendar_today" className="text-sm" />
-            FY 2024
+            FY {new Date().getFullYear()}
           </Button>
           <Button variant="secondary" onClick={handleExport}>
             <Icon name="download" className="text-sm" />
@@ -109,16 +109,16 @@ export default function FinancialReports() {
       {/* Summary KPIs */}
       <StaggerList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
         <FadeInItem>
-          <KpiCard icon="payments" label="Total Revenue" value={formatCurrency(parseAmt(summary.revenue))} trend="+12.4%" trendType="up" />
+          <KpiCard icon="payments" label="Total Revenue" value={formatCurrency(summary.revenue)} trend="Current" trendType="neutral" />
         </FadeInItem>
         <FadeInItem>
-          <KpiCard icon="account_balance" label="Total Expenses" value={formatCurrency(parseAmt(summary.expenses))} trend="+6.2%" trendType="down" />
+          <KpiCard icon="account_balance" label="Total Expenses" value={formatCurrency(summary.expenses)} trend="Calculated" trendType="neutral" />
         </FadeInItem>
         <FadeInItem>
-          <KpiCard icon="trending_up" label="Net Profit" value={formatCurrency(parseAmt(summary.profit))} trend="+18.1%" trendType="up" />
+          <KpiCard icon="trending_up" label="Net Profit" value={formatCurrency(summary.profit)} trend="Actual" trendType="neutral" />
         </FadeInItem>
         <FadeInItem>
-          <KpiCard icon="percent" label="Profit Margin" value={summary.margin} trend="Healthy" trendType="neutral" />
+          <KpiCard icon="percent" label="Profit Margin" value={summary.margin} trend="Overall" trendType="neutral" />
         </FadeInItem>
       </StaggerList>
 
@@ -206,9 +206,9 @@ export default function FinancialReports() {
                     className="border-b border-surface-container-low/50 dark:border-neutral-800/30 group hover:bg-background dark:hover:bg-neutral-800/20 transition-colors"
                   >
                     <TableCell className="px-6 font-semibold">{row.period}</TableCell>
-                    <TableCell className="px-6 text-right font-semibold">{formatCurrency(parseAmt(row.revenue))}</TableCell>
-                    <TableCell className="px-6 text-right text-on-surface-variant dark:text-neutral-400">{formatCurrency(parseAmt(row.expenses))}</TableCell>
-                    <TableCell className="px-6 text-right font-bold text-emerald-600">{formatCurrency(parseAmt(row.profit))}</TableCell>
+                    <TableCell className="px-6 text-right font-semibold">{formatCurrency(row.revenue)}</TableCell>
+                    <TableCell className="px-6 text-right text-on-surface-variant dark:text-neutral-400">{formatCurrency(row.expenses)}</TableCell>
+                    <TableCell className="px-6 text-right font-bold text-emerald-600">{formatCurrency(row.profit)}</TableCell>
                     <TableCell className="px-6 text-right font-semibold">{row.margin}</TableCell>
                   </motion.tr>
                 ))}
