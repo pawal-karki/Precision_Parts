@@ -21,6 +21,7 @@ public class CustomersService : ICustomersService
             return new CustomerListItemDto
             {
                 Id = u.PublicId,
+                UserId = u.Id,
                 Name = u.FullName,
                 Type = p?.AccountKind ?? "Individual",
                 Email = u.Email,

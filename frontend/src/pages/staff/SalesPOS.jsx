@@ -28,6 +28,7 @@ export default function SalesPOS() {
   const [cart, setCart] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState({
+    userId: null,
     name: "Walk-in Customer",
     loyaltyTier: "None",
     email: "",
@@ -94,7 +95,7 @@ export default function SalesPOS() {
 
     try {
       const dto = {
-        customerId: selectedCustomer.id || null,
+        customerId: selectedCustomer.userId || null,
         subtotal,
         tax,
         discount: loyaltyDiscount,
