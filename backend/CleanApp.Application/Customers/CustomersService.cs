@@ -279,13 +279,12 @@ public class CustomersService : ICustomersService
             });
         }
 
-        // Generate synthetic history entries based on CreatedAtUtc
+        // Generate synthetic history entries backwards
         var rng = new Random(user.Id.GetHashCode());
-        var current = user.CreatedAtUtc;
-        while (current < DateTime.UtcNow.AddDays(-1))
+        var current = DateTime.UtcNow.AddDays(-rng.Next(1, 5));
+        int mockCount = rng.Next(5, 15);
+        for (int i = 0; i < mockCount; i++)
         {
-            current = current.AddDays(rng.Next(1, 14));
-            if (current >= DateTime.UtcNow) break;
             logs.Add(new LoginActivityItemDto
             {
                 TimestampUtc = current,
@@ -293,6 +292,7 @@ public class CustomersService : ICustomersService
                 Device = rng.Next(2) == 0 ? "Chrome / Windows" : "Safari / iOS",
                 IsActive = false
             });
+            current = current.AddDays(-rng.Next(1, 14));
         }
 
         logs = logs.OrderByDescending(x => x.TimestampUtc).ToList();

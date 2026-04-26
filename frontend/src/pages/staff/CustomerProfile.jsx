@@ -61,7 +61,7 @@ function OverviewTab({ customer, report, reportLoading }) {
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Spent", value: `$${(report?.totalSpent ?? 0).toLocaleString()}`, icon: "payments", color: "text-sky-600" },
+          { label: "Total Spent", value: `$${(report?.totalSpent ?? 0).toLocaleString()}`, icon: "payments", color: "text-secondary" },
           { label: "Outstanding Credit", value: `$${(report?.outstandingCredit ?? 0).toLocaleString()}`, icon: "account_balance", color: report?.outstandingCredit > 0 ? "text-red-500" : "text-emerald-600" },
           { label: "Appointments", value: report?.appointmentCount ?? "—", icon: "calendar_month", color: "text-violet-600" },
           { label: "Vehicles", value: report?.vehicleCount ?? customer?.vehicles?.length ?? "—", icon: "directions_car", color: "text-amber-600" },
@@ -100,7 +100,7 @@ function OverviewTab({ customer, report, reportLoading }) {
             <TableBody>
               {recentPurchases.map(p => (
                 <TableRow key={p.invoiceNumber}>
-                  <TableCell className="font-mono text-sky-700 dark:text-sky-400">{p.invoiceNumber}</TableCell>
+                  <TableCell className="font-mono text-secondary dark:text-secondary">{p.invoiceNumber}</TableCell>
                   <TableCell>{formatDate(p.issueDate)}</TableCell>
                   <TableCell className="font-bold">${p.totalAmount?.toLocaleString()}</TableCell>
                   <TableCell>
@@ -177,7 +177,7 @@ function ServiceHistoryTab({ publicId }) {
           <TableBody>
             {appointments.map(a => (
               <TableRow key={a.id}>
-                <TableCell className="font-mono text-sky-700 dark:text-sky-400">{a.referenceNumber}</TableCell>
+                <TableCell className="font-mono text-secondary dark:text-secondary">{a.referenceNumber}</TableCell>
                 <TableCell className="whitespace-nowrap">{formatNpt(a.scheduledAtUtc)}</TableCell>
                 <TableCell>{a.vehicleName}</TableCell>
                 <TableCell className="max-w-[200px] truncate" title={a.services.join(", ")}>
@@ -232,7 +232,7 @@ function PurchasesTab({ publicId }) {
           <TableBody>
             {purchases.map(p => (
               <TableRow key={p.invoiceNumber}>
-                <TableCell className="font-mono text-sky-700 dark:text-sky-400">{p.invoiceNumber}</TableCell>
+                <TableCell className="font-mono text-secondary dark:text-secondary">{p.invoiceNumber}</TableCell>
                 <TableCell>{formatDate(p.issueDate)}</TableCell>
                 <TableCell className="font-bold">${p.totalAmount.toLocaleString()}</TableCell>
                 <TableCell>
@@ -273,7 +273,7 @@ function ActivityLogTab({ publicId }) {
 
   const typeColor = (type) => {
     if (type === "Booking") return "text-violet-600 bg-violet-50 dark:bg-violet-900/20";
-    if (type === "Invoice") return "text-sky-600 bg-sky-50 dark:bg-sky-900/20";
+    if (type === "Invoice") return "text-secondary bg-secondary/5 dark:bg-secondary/20";
     return "text-amber-600 bg-amber-50 dark:bg-amber-900/20";
   };
 
@@ -474,7 +474,7 @@ export default function CustomerProfile() {
   if (!customer) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Icon name="sync" className="text-3xl animate-spin text-sky-600" />
+        <Icon name="sync" className="text-3xl animate-spin text-secondary" />
       </div>
     );
   }
@@ -483,7 +483,7 @@ export default function CustomerProfile() {
     <>
       <Link
         to="/admin/customers"
-        className="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700 transition-colors mb-6"
+        className="flex items-center gap-1 text-sm text-secondary hover:text-secondary transition-colors mb-6"
       >
         <Icon name="arrow_back" className="text-sm" />
         Back to Customers
@@ -493,8 +493,8 @@ export default function CustomerProfile() {
         {/* Left Column — Profile Card */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-8 border border-slate-200 dark:border-neutral-800 text-center shadow-sm">
-            <div className="w-20 h-20 rounded-full bg-sky-100 dark:bg-sky-900/30 mx-auto flex items-center justify-center mb-4">
-              <span className="text-3xl font-extrabold text-sky-600">
+            <div className="w-20 h-20 rounded-full bg-secondary/10 dark:bg-secondary/20 mx-auto flex items-center justify-center mb-4">
+              <span className="text-3xl font-extrabold text-secondary">
                 {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
               </span>
             </div>
@@ -543,7 +543,7 @@ export default function CustomerProfile() {
               <Button
                 onClick={downloadReport}
                 disabled={reportLoading || !report}
-                className="w-full bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2 justify-center"
+                className="w-full bg-secondary hover:bg-secondary text-white flex items-center gap-2 justify-center"
               >
                 <Icon name="download" className="text-sm" />
                 {reportLoading ? "Loading Report…" : "Generate Detailed Report"}
@@ -562,7 +562,7 @@ export default function CustomerProfile() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === tab
-                    ? "border-sky-600 text-sky-700 dark:text-sky-400"
+                    ? "border-secondary text-secondary dark:text-secondary"
                     : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                 }`}
               >

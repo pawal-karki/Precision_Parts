@@ -1,9 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/components/ui/toast";
-import { motion, fadeInUp } from "@/components/ui/motion";
+import { motion, fadeInUp, AnimatePresence, PageTransition } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/currency";
 import { api } from "@/lib/api";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/data-table";
 
 const timeSlots = ["09:00 AM", "11:30 AM", "02:15 PM", "04:45 PM"];
 const statuses = ["Booked", "Confirmed", "InProgress", "Completed", "Cancelled"];
@@ -144,6 +148,33 @@ export default function BookingsManagement({ role = "Admin" }) {
   const daysInMonth = getDaysInMonth(calYear, calMonth);
   const firstDay = getFirstDayOfMonth(calYear, calMonth);
 
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, activeFilter, dateFilter]);
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((b) => {
+      const matchesSearch = 
+        (b.customerName || "").toLowerCase().includes(search.toLowerCase()) || 
+        (b.referenceNumber || "").toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = activeFilter === "All" || b.status === activeFilter;
+      const matchesDate = !dateFilter || new Date(b.scheduledAtUtc).toISOString().slice(0, 10) === dateFilter;
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [bookings, search, activeFilter, dateFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / itemsPerPage));
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const getSlotOccupancy = (time) => {
     const [h, mPart] = time.split(":");
     const [m, ampm] = mPart.split(" ");
@@ -165,19 +196,61 @@ export default function BookingsManagement({ role = "Admin" }) {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <PageTransition className="space-y-10">
+      <section className="flex flex-col md:flex-row justify-between md:items-end items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-on-surface dark:text-white">{role} Booking Management</h1>
-          <p className="text-on-surface-variant text-sm">Oversee and schedule customer service appointments.</p>
+          <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
+            {role} Booking Management
+          </h1>
+          <p className="text-on-surface-variant dark:text-neutral-500 mt-1">
+            Oversee and schedule customer service appointments.
+          </p>
         </div>
-        <button 
+        <Button 
+          variant={showForm ? "outline" : "secondary"} 
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-sm"
         >
-          <Icon name={showForm ? "close" : "add"} />
+          <Icon name={showForm ? "close" : "add"} className="text-sm" />
           {showForm ? "Cancel" : "New Booking"}
-        </button>
+        </Button>
+      </section>
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-8">
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+              placeholder="Search by customer name or reference..."
+            />
+          </div>
+        </div>
+        <div className="relative w-48">
+          <Input 
+            type="date" 
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {["All", ...statuses].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-3 py-1.5 text-xs font-bold uppercase rounded-full transition-colors ${
+                activeFilter === filter
+                  ? "bg-secondary text-white"
+                  : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant dark:text-neutral-400 hover:bg-surface-container dark:hover:bg-neutral-700"
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
       </div>
 
       {showForm && (
@@ -305,90 +378,128 @@ export default function BookingsManagement({ role = "Admin" }) {
       )}
 
       {/* Bookings Table */}
-      <div className="bg-surface-container-low dark:bg-[#1C1C1C] rounded-xl overflow-hidden border border-outline-variant">
-        <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container dark:bg-neutral-800">
-          <h3 className="font-bold text-on-surface dark:text-white">Active Bookings</h3>
-          <div className="flex gap-2">
-             {/* Search/Filter could go here */}
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-surface-container-high dark:bg-neutral-800 text-[10px] font-bold text-outline uppercase tracking-wider">
-                <th className="px-6 py-3">Reference</th>
-                <th className="px-6 py-3">Customer</th>
-                <th className="px-6 py-3">Date & Time</th>
-                <th className="px-6 py-3">Vehicle</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+      <div className="overflow-x-auto bg-white dark:bg-[#1C1C1C] rounded-xl border border-surface-container-low dark:border-neutral-800/50 mt-6 shadow-sm">
+        <div className="min-w-[800px]">
+          <Table>
+            <TableHeader>
+              <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
+                <TableHead className="px-6">Reference</TableHead>
+                <TableHead className="px-6">Customer</TableHead>
+                <TableHead className="px-6">Date & Time</TableHead>
+                <TableHead className="px-6">Vehicle</TableHead>
+                <TableHead className="px-6">Status</TableHead>
+                <TableHead className="px-6 text-right">Actions</TableHead>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant dark:divide-neutral-800/50">
-              {bookings.map(b => (
-                <tr key={b.id} className="hover:bg-surface-container dark:hover:bg-neutral-800/30 transition-colors">
-                  <td className="px-6 py-4 text-sm font-bold dark:text-white">{b.referenceNumber}</td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-bold dark:text-white">{b.customerName}</div>
-                    <div className="text-[10px] text-outline">{b.customerEmail}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm dark:text-neutral-300">
-                      {new Date(b.scheduledAtUtc).toLocaleDateString()}
-                    </div>
-                    <div className="text-xs text-secondary font-bold">
-                      {new Date(b.scheduledAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm dark:text-neutral-300">{b.vehicleName || "N/A"}</td>
-                  <td className="px-6 py-4">
-                    <select 
-                      value={b.status} 
-                      onChange={(e) => handleStatusUpdate(b.id, e.target.value)}
-                      className={`text-[10px] font-bold uppercase py-1 px-2 rounded-full border-none focus:ring-0 ${
-                        b.status === 'Completed' ? 'bg-tertiary-container text-on-tertiary-container' :
-                        b.status === 'Cancelled' ? 'bg-error-container text-on-error-container' :
-                        'bg-secondary-container text-on-secondary-container'
-                      }`}
-                    >
-                      {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      className="p-2 hover:bg-surface-container-high dark:hover:bg-neutral-700 rounded-lg text-outline"
-                      title="View Details"
-                    >
-                      <Icon name="visibility" />
-                    </button>
-                    {!isStaff && (
-                      <button 
-                        onClick={async () => {
-                          if (confirm("Are you sure you want to delete this booking?")) {
-                            await api.deleteAppointment(b.id);
-                            setBookings(prev => prev.filter(item => item.id !== b.id));
-                            toast("Deleted successfully", "success");
-                          }
-                        }}
-                        className="p-2 hover:bg-error-container hover:text-error rounded-lg"
-                        title="Delete"
+            </TableHeader>
+            <TableBody>
+              <AnimatePresence mode="popLayout">
+                {paginatedBookings.map((b, i) => (
+                  <motion.tr
+                    key={b.id}
+                    layout
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: i * 0.04 } }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="border-b border-surface-container-low/50 dark:border-neutral-800/30 hover:bg-surface-container-low/30 dark:hover:bg-neutral-800/30 transition-colors"
+                  >
+                    <TableCell className="px-6 font-bold dark:text-white">{b.referenceNumber}</TableCell>
+                    <TableCell className="px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-neutral-300">
+                          {(b.customerName || "U").split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-on-surface dark:text-neutral-200">{b.customerName}</div>
+                          <div className="text-[10px] text-outline">{b.customerEmail}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6">
+                      <div className="dark:text-neutral-300">
+                        {new Date(b.scheduledAtUtc).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs text-secondary font-bold">
+                        {new Date(b.scheduledAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 dark:text-neutral-300">{b.vehicleName || "N/A"}</TableCell>
+                    <TableCell className="px-6">
+                      <select 
+                        value={b.status} 
+                        onChange={(e) => handleStatusUpdate(b.id, e.target.value)}
+                        className={`text-[10px] font-bold uppercase py-1 px-2 rounded-full border-none focus:ring-0 ${
+                          b.status === 'Completed' ? 'bg-tertiary-container text-on-tertiary-container' :
+                          b.status === 'Cancelled' ? 'bg-error-container text-on-error-container' :
+                          'bg-secondary-container text-on-secondary-container'
+                        }`}
                       >
-                        <Icon name="delete" />
+                        {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </TableCell>
+                    <TableCell className="px-6 text-right space-x-1">
+                      <button 
+                        className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-surface-container-low dark:hover:bg-neutral-800 hover:text-on-surface dark:hover:text-white transition-colors"
+                        title="View Details"
+                      >
+                        <Icon name="visibility" className="text-base" />
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {bookings.length === 0 && (
+                      {!isStaff && (
+                        <button 
+                          onClick={async () => {
+                            if (confirm("Are you sure you want to delete this booking?")) {
+                              await api.deleteAppointment(b.id);
+                              setBookings(prev => prev.filter(item => item.id !== b.id));
+                              toast("Deleted successfully", "success");
+                            }
+                          }}
+                          className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-error/10 hover:text-error transition-colors"
+                          title="Delete"
+                        >
+                          <Icon name="delete" className="text-base" />
+                        </button>
+                      )}
+                    </TableCell>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </TableBody>
+          </Table>
+          {paginatedBookings.length === 0 && (
             <div className="text-center py-20 text-on-surface-variant">
               <Icon name="event_busy" className="text-4xl mb-2 opacity-20" />
               <p>No appointments found.</p>
             </div>
           )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t border-surface-container dark:border-neutral-800">
+              <span className="text-sm text-outline font-medium">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container dark:hover:bg-neutral-800 disabled:opacity-40 transition-colors dark:text-neutral-300"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Icon name="chevron_left" className="text-sm" /> Previous
+                </button>
+                <div className="text-sm font-bold dark:text-white px-2">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <button
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container dark:hover:bg-neutral-800 disabled:opacity-40 transition-colors dark:text-neutral-300"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next <Icon name="chevron_right" className="text-sm" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
