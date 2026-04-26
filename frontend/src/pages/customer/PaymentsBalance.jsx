@@ -25,6 +25,7 @@ export default function PaymentsBalance() {
   const toast = useToast();
   const [invoices, setInvoices] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [totalBalance, setTotalBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated] = useState(new Date());
 
@@ -35,19 +36,21 @@ export default function PaymentsBalance() {
         const ledger = await api.getCustomerLedger();
         if (!cancelled && ledger) {
           const pending = (ledger.pendingInvoices || []).map((inv) => ({
-            id: inv.invoiceNumber,
+            id: inv.invoiceNumber || "N/A",
             realId: inv.id,
             due: formatDate(inv.dueDate || inv.issueDate),
             desc: `Invoice issued on ${formatDate(inv.issueDate)}`,
-            amount: inv.balanceDue,
-            status: inv.status
+            amount: Number(inv.balanceDue) || 0,
+            status: inv.status || "Unknown"
           }));
           setInvoices(pending);
           setActivity(ledger.recentActivity || []);
+          setTotalBalance(Number(ledger.totalOutstandingBalance) || 0);
         }
       } catch (err) {
         if (!cancelled) {
-          toast(err.message || "Could not load payment data from API", "error");
+          console.error("Ledger load error:", err);
+          toast("Could not load financial data. Please try again later.", "error");
           setInvoices([]);
           setActivity([]);
         }
@@ -58,7 +61,7 @@ export default function PaymentsBalance() {
     return () => { cancelled = true; };
   }, []);
 
-  const totalOutstanding = useMemo(() => invoices.reduce((sum, inv) => sum + inv.amount, 0), [invoices]);
+  const totalOutstanding = totalBalance;
 
   const handlePay = (inv) => {
     toast(`Payment initiated for ${inv.id} — ${fmtNPR(inv.amount)}`, "success");
@@ -160,7 +163,7 @@ export default function PaymentsBalance() {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-outline">Due This Month</span>
-                  <p className="text-xl font-bold font-headline text-on-surface dark:text-white">{fmtNPR(totalOutstanding)}</p>
+                  <p className="text-xl font-bold font-headline text-on-surface dark:text-white">{fmtNPR(totalBalance)}</p>
                 </div>
               </div>
             </div>

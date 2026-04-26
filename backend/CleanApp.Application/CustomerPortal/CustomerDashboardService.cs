@@ -1,5 +1,6 @@
 using System.Globalization;
 using CleanApp.Domain.Repositories;
+using CleanApp.Domain.Enums;
 
 namespace CleanApp.Application.CustomerPortal;
 
@@ -65,33 +66,34 @@ public class CustomerDashboardService : ICustomerDashboardService
         var user = await _customers.GetCustomerByIdWithDetailsAsync(customerId, cancellationToken);
         if (user == null) return null;
 
+        // Fetch all invoices for this customer
         var invoices = await _invoices.ListByCustomerIdAsync(user.Id, cancellationToken);
         
-        var totalOutstanding = invoices
-            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Paid)
-            .Sum(i => i.BalanceDue);
+        // Use OutstandingCredit from profile as the source of truth for total balance
+        var totalOutstanding = user.CustomerProfile?.OutstandingCredit ?? 0m;
 
+        // Map pending invoices
         var pendingInvoices = invoices
-            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Paid)
+            .Where(i => i.Status != InvoiceStatus.Paid)
             .Select(i => new CustomerInvoiceDto(
                 i.Id,
                 i.InvoiceNumber,
                 i.TotalAmount,
                 i.BalanceDue,
-                i.IssueDate.ToString("yyyy-MM-dd"),
-                i.DueDate?.ToString("yyyy-MM-dd"),
+                i.IssueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                i.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 i.Status.ToString()
             )).ToList();
 
+        // Map recent activity (last 5 invoices)
         var activity = invoices
-            .OrderByDescending(i => i.IssueDate)
             .Take(5)
             .Select((i, idx) => new CustomerActivityRow(
                 idx + 1,
                 "Invoice",
                 $"Invoice {i.InvoiceNumber} - {i.Status}",
-                i.IssueDate.ToString("MMM dd"),
-                i.TotalAmount.ToString("C")
+                i.IssueDate.ToString("MMM dd", CultureInfo.InvariantCulture),
+                DisplayMoney.Format(i.TotalAmount)
             )).ToList();
 
         return new CustomerLedgerDto(totalOutstanding, pendingInvoices, activity);
