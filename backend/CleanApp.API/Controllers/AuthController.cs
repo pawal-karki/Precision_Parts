@@ -41,8 +41,8 @@ public class AuthController : ControllerBase
         Response.Cookies.Delete("pp_auth", new CookieOptions
         {
             Path = "/",
-            SameSite = SameSiteMode.Lax,
-            Secure = false
+            SameSite = SameSiteMode.None,
+            Secure = true
         });
         return Ok(new { message = "Logged out" });
     }
@@ -94,8 +94,8 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("pp_auth", token, new CookieOptions
         {
             HttpOnly = true,
-            SameSite = SameSiteMode.Lax,
-            Secure = false, // set true in production with HTTPS
+            SameSite = SameSiteMode.None,
+            Secure = true, // Required for cross-site cookie transmission
             Expires = DateTimeOffset.UtcNow.AddDays(1),
             Path = "/"
         });
