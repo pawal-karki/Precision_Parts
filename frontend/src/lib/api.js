@@ -2,8 +2,18 @@ const BASE = import.meta.env.VITE_API_URL?.trim() || "http://localhost:5147/api"
 
 class ApiClient {
   async _req(path, opts = {}) {
+    const token = localStorage.getItem("pp_token");
+    const headers = { 
+      "Content-Type": "application/json", 
+      ...opts.headers 
+    };
+    
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${BASE}${path}`, {
-      headers: { "Content-Type": "application/json", ...opts.headers },
+      headers,
       credentials: "include",
       ...opts,
     });

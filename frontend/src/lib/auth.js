@@ -4,16 +4,29 @@ import { api } from "@/lib/api";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("pp_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [loading, setLoading] = useState(!user);
 
-  // Restore session from cookie on mount
+  // Sync with API on mount to ensure session still valid
   useEffect(() => {
     api.getMe()
       .then((data) => {
-        if (data && data.email) setUser(data);
+        if (data && data.email) {
+          setUser(data);
+          localStorage.setItem("pp_user", JSON.stringify(data));
+        } else {
+          // If 401, clear local storage
+          localStorage.removeItem("pp_user");
+          localStorage.removeItem("pp_token");
+          setUser(null);
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        // If network error, still keep the local user for offline/stale feeling
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -21,6 +34,8 @@ export function AuthProvider({ children }) {
     const result = await api.login({ email, password });
     if (result && result.email) {
       setUser(result);
+      localStorage.setItem("pp_user", JSON.stringify(result));
+      if (result.token) localStorage.setItem("pp_token", result.token);
       return result;
     }
     throw new Error(result?.message || "Invalid email or password");
@@ -30,6 +45,8 @@ export function AuthProvider({ children }) {
     const result = await api.register(data);
     if (result && result.email) {
       setUser(result);
+      localStorage.setItem("pp_user", JSON.stringify(result));
+      if (result.token) localStorage.setItem("pp_token", result.token);
       return result;
     }
     throw new Error(result?.message || "Registration failed");
@@ -39,6 +56,8 @@ export function AuthProvider({ children }) {
     try {
       await api.logout();
     } catch {}
+    localStorage.removeItem("pp_user");
+    localStorage.removeItem("pp_token");
     setUser(null);
   }, []);
 

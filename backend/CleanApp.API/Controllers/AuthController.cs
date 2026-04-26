@@ -97,6 +97,7 @@ public class AuthController : ControllerBase
             SameSite = SameSiteMode.None,
             Secure = true, // Required for cross-site cookie transmission
             Expires = DateTimeOffset.UtcNow.AddDays(1),
+            IsEssential = true,
             Path = "/"
         });
     }
