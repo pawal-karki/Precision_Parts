@@ -159,4 +159,10 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
-    
+
+export const getImageUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
+  const baseUrl = BASE.replace('/api', '');
+  return `${baseUrl}${url}`;
+};

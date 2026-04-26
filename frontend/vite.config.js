@@ -25,6 +25,18 @@ export default defineConfig({
           });
         },
       },
+      "/uploads": {
+        target: "http://127.0.0.1:5147",
+        changeOrigin: true,
+        configure(proxy) {
+          proxy.on("error", (err) => {
+            console.error(
+              "\n[vite] /uploads proxy: cannot reach http://127.0.0.1:5147\n",
+              err?.message || err,
+            );
+          });
+        },
+      },
     },
   },
 });

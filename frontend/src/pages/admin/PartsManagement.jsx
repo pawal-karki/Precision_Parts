@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useList, store } from "@/lib/store";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { Modal } from "@/components/ui/modal";
 import {
@@ -52,6 +52,7 @@ const statusVariant = (status) =>
 function ImageDropzone({ value, onChange, className = "" }) {
   const [uploading, setUploading] = useState(false);
   const toast = useToast();
+  const inputRef = useRef(null);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -65,6 +66,7 @@ function ImageDropzone({ value, onChange, className = "" }) {
     } catch (err) {
       toast(err.message || "Upload failed", "error");
     } finally {
+      if (inputRef.current) inputRef.current.value = "";
       setUploading(false);
     }
   };
@@ -72,37 +74,58 @@ function ImageDropzone({ value, onChange, className = "" }) {
   return (
     <div className={`relative group ${className}`}>
       <div className={`w-full aspect-square rounded-2xl overflow-hidden border-2 border-dashed transition-all duration-300 flex items-center justify-center bg-surface-container-low dark:bg-neutral-800 ${
-        value ? "border-transparent" : "border-outline-variant dark:border-neutral-700 hover:border-secondary dark:hover:border-neutral-500"
+        value ? "border-transparent relative" : "border-outline-variant dark:border-neutral-700 hover:border-secondary dark:hover:border-neutral-500"
       }`}>
         {value ? (
-          <img src={value} alt="Preview" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <>
+            <img src={getImageUrl(value)} alt="Preview" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm pointer-events-auto z-10">
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (inputRef.current) inputRef.current.click(); }}
+                className="px-4 py-1.5 bg-white text-black rounded-full text-xs font-bold shadow-lg hover:scale-105 transition-transform"
+              >
+                Change Image
+              </button>
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(""); }}
+                className="px-4 py-1.5 bg-error text-white rounded-full text-xs font-bold shadow-lg hover:scale-105 transition-transform"
+              >
+                Remove Image
+              </button>
+            </div>
+          </>
         ) : (
-          <div className="flex flex-col items-center gap-2 text-on-surface-variant dark:text-neutral-500">
+          <div className="flex flex-col items-center gap-2 text-on-surface-variant dark:text-neutral-500 pointer-events-none">
             {uploading ? (
               <Icon name="progress_activity" className="text-3xl animate-spin" />
             ) : (
               <>
                 <Icon name="add_a_photo" className="text-3xl opacity-50" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Upload Profile</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Upload Image</span>
               </>
             )}
           </div>
         )}
       </div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFile}
-        className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
-        disabled={uploading}
-      />
-      {value && !uploading && (
-        <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(""); }}
-          className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-error text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300"
-        >
-          <Icon name="close" className="text-sm" />
-        </button>
+      {!value && (
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+          className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed z-0"
+          disabled={uploading}
+        />
+      )}
+      {value && (
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+          className="hidden"
+          disabled={uploading}
+        />
       )}
     </div>
   );
@@ -185,8 +208,8 @@ export default function PartsManagement() {
       await reloadParts();
       toast(`${form.name} added to inventory`, "success");
       setAddModalOpen(false);
-    } catch {
-      toast("Could not create part on server", "error");
+    } catch (err) {
+      toast(err.message || "Could not create part on server", "error");
     }
   };
 
@@ -214,7 +237,10 @@ export default function PartsManagement() {
   };
 
   const savePanelEdit = async () => {
-    if (!selectedPart?.entityId) return;
+    if (!selectedPart?.entityId) {
+      toast("System Error: Part ID is missing.", "error");
+      return;
+    }
     const stock = Number(form.stock);
     const minStock = Number(form.minStock);
     try {
@@ -235,13 +261,16 @@ export default function PartsManagement() {
       setSelectedPart({ ...selectedPart, ...updates, id: selectedPart.id });
       setEditingInPanel(false);
       toast(`${form.name} updated`, "success");
-    } catch {
-      toast("Could not update part on server", "error");
+    } catch (err) {
+      toast(err.message || "Could not update part on server", "error");
     }
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget?.entityId) return;
+    if (!deleteTarget?.entityId) {
+      toast("System Error: Part ID is missing for deletion.", "error");
+      return;
+    }
     try {
       await api.deletePart(deleteTarget.entityId);
       await reloadParts();
@@ -347,7 +376,7 @@ export default function PartsManagement() {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-lg bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-surface-container dark:border-neutral-700">
                                 {part.imageUrl ? (
-                                  <img src={part.imageUrl} alt={part.name} className="w-full h-full object-cover" />
+                                  <img src={getImageUrl(part.imageUrl)} alt={part.name} className="w-full h-full object-cover" />
                                 ) : (
                                   <Icon name="inventory_2" className="text-base text-on-surface-variant dark:text-neutral-400" />
                                 )}
@@ -486,7 +515,7 @@ export default function PartsManagement() {
                     <>
                       <div className="relative aspect-video rounded-2xl overflow-hidden bg-surface-container-low dark:bg-neutral-800 border border-surface-container dark:border-neutral-800 group">
                         {selectedPart.imageUrl ? (
-                          <img src={selectedPart.imageUrl} alt={selectedPart.name} className="w-full h-full object-cover" />
+                          <img src={getImageUrl(selectedPart.imageUrl)} alt={selectedPart.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center opacity-30">
                             <Icon name="inventory_2" className="text-6xl mb-2" />

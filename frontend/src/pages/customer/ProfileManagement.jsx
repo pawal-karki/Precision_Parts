@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { Modal } from "@/components/ui/modal";
 import { motion, AnimatePresence, PageTransition, fadeInUp } from "@/components/ui/motion";
@@ -38,7 +38,7 @@ function VehicleImageUpload({ value, onChange }) {
   return (
     <div className="relative group w-full h-40 rounded-xl bg-surface-container-low dark:bg-neutral-800 flex items-center justify-center overflow-hidden border-2 border-dashed border-surface-container dark:border-neutral-700 hover:border-secondary transition-colors cursor-pointer">
       {value ? (
-        <img src={value} alt="Vehicle Preview" className="w-full h-full object-cover" />
+        <img src={getImageUrl(value)} alt="Vehicle Preview" className="w-full h-full object-cover" />
       ) : (
         <div className="flex flex-col items-center gap-2 text-on-surface-variant">
           <Icon name={uploading ? "progress_activity" : "add_a_photo"} className={uploading ? "animate-spin text-2xl" : "text-2xl"} />
@@ -85,7 +85,7 @@ function ProfileImageUpload({ value, onChange, username }) {
     <div className="relative group w-24 h-24 mb-6">
       <div className="w-full h-full rounded-full bg-secondary flex items-center justify-center text-4xl font-extrabold text-on-secondary font-headline shadow-lg overflow-hidden border-4 border-surface-container-low dark:border-[#1C1C1C]">
         {value ? (
-          <img src={value} alt="Profile" className="w-full h-full object-cover" />
+          <img src={getImageUrl(value)} alt="Profile" className="w-full h-full object-cover" />
         ) : (
           <span>{username?.charAt(0).toUpperCase()}</span>
         )}
@@ -366,7 +366,7 @@ export default function ProfileManagement() {
                       <div className="h-44 overflow-hidden relative">
                         <img
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          src={vehicle.imageUrl || vehicleImages[idx % vehicleImages.length]}
+                          src={getImageUrl(vehicle.imageUrl) || vehicleImages[idx % vehicleImages.length]}
                           alt={vehicle.nickname || "Vehicle"}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
