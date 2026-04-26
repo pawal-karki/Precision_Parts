@@ -139,7 +139,7 @@ public static class DatabaseSeeder
             for (var k = 0; k < 8; k++)
             {
                 var day = rnd.Next(1, DateTime.DaysInMonth(ym.Year, ym.Month));
-                var issue = new DateTime(ym.Year, ym.Month, day);
+                var issue = new DateTime(ym.Year, ym.Month, day, 0, 0, 0, DateTimeKind.Utc);
                 var sub = (decimal)rnd.Next(800, 12000);
                 var tax = Math.Round(sub * 0.08m, 2);
                 var inv = new Invoice

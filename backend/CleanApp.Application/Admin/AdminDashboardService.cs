@@ -43,7 +43,7 @@ public class AdminDashboardService : IAdminDashboardService
     {
         var today = DateTime.UtcNow;
         var start = today.AddMonths(-11);
-        var from = new DateTime(start.Year, start.Month, 1);
+        var from = new DateTime(start.Year, start.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var invs = await _invoices.ListByIssueDateFromAsync(from, cancellationToken);
 
         var months = new List<RevenueChartPoint>(12);
