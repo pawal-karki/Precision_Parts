@@ -106,9 +106,18 @@ export default function ServiceBooking() {
       return;
     }
     try {
+      // Parse the selected time (e.g., "11:30 AM")
+      const [time, modifier] = selectedTime.split(" ");
+      let [hours, minutes] = time.split(":").map(Number);
+      if (modifier === "PM" && hours < 12) hours += 12;
+      if (modifier === "AM" && hours === 12) hours = 0;
+
+      // Create local date and set hours/minutes
+      const scheduledDate = new Date(calYear, calMonth, selectedDay, hours, minutes);
+      
       const dateStr = `${monthNames[calMonth]} ${selectedDay}, ${calYear}`;
       const result = await api.createAppointment({
-        scheduledAt: new Date(calYear, calMonth, selectedDay).toISOString(),
+        scheduledAt: scheduledDate.toISOString(),
         pickupRequired: false,
         notes: `Services: ${selectedItems.map(s => s.name).join(", ")}`,
         serviceTypeIds: selectedItems.map(s => s.id),

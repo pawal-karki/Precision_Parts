@@ -20,7 +20,7 @@ public class InvoiceRepository : IInvoiceRepository
         return list;
     }
 
-    public async Task<IReadOnlyList<Invoice>> ListByIssueDateFromAsync(DateOnly fromInclusive, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Invoice>> ListByIssueDateFromAsync(DateTime fromInclusive, CancellationToken cancellationToken = default)
     {
         var list = await _db.Invoices
             .AsNoTracking()
@@ -29,7 +29,7 @@ public class InvoiceRepository : IInvoiceRepository
         return list;
     }
 
-    public async Task<IReadOnlyList<Invoice>> ListPaidByIssueDateFromAsync(DateOnly fromInclusive, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Invoice>> ListPaidByIssueDateFromAsync(DateTime fromInclusive, CancellationToken cancellationToken = default)
     {
         var list = await _db.Invoices
             .AsNoTracking()

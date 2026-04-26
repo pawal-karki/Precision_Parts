@@ -61,15 +61,28 @@ public class CustomerDetailReportDto
     public int PartRequestCount { get; set; }
     public DateTime? LastLoginAtUtc { get; set; }
     public List<RecentPurchaseDto> RecentPurchases { get; set; } = new();
+    public List<RecentPurchaseDto> FullPurchases { get; set; } = new();
+    public List<CustomerAppointmentDto> Appointments { get; set; } = new();
     public List<VehicleSummaryDto> Vehicles { get; set; } = new();
 }
 
 public class RecentPurchaseDto
 {
     public string InvoiceNumber { get; set; } = "";
-    public DateOnly IssueDate { get; set; }
+    public DateTime IssueDate { get; set; }
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = "";
+}
+
+public class CustomerAppointmentDto
+{
+    public Guid Id { get; set; }
+    public string ReferenceNumber { get; set; } = "";
+    public DateTime ScheduledAtUtc { get; set; }
+    public string Status { get; set; } = "";
+    public string Notes { get; set; } = "";
+    public string VehicleName { get; set; } = "";
+    public List<string> Services { get; set; } = new();
 }
 
 public class VehicleSummaryDto

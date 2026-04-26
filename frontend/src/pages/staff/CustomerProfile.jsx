@@ -141,20 +141,88 @@ function VehiclesTab({ customer }) {
   );
 }
 
-function ServiceHistoryTab({ customer }) {
+function ServiceHistoryTab({ report, reportLoading }) {
+  const appointments = report?.appointments ?? [];
   return (
-    <div className="bg-white dark:bg-[#1C1C1C] rounded-xl p-6 border border-slate-200 dark:border-neutral-800">
-      <h3 className="text-lg font-bold font-headline mb-4 text-slate-900 dark:text-white">Service History</h3>
-      <p className="text-slate-500 text-sm">Service appointment history will be loaded from the appointments API.</p>
+    <div className="bg-white dark:bg-[#1C1C1C] rounded-xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-neutral-800">
+        <h3 className="text-lg font-bold font-headline text-slate-900 dark:text-white">Service History</h3>
+      </div>
+      {reportLoading ? (
+        <div className="p-6"><TabSkeleton /></div>
+      ) : appointments.length === 0 ? (
+        <p className="text-slate-500 text-sm p-6 text-center">No service history found.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ref #</TableHead>
+              <TableHead>Date (NPT)</TableHead>
+              <TableHead>Vehicle</TableHead>
+              <TableHead>Services</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {appointments.map(a => (
+              <TableRow key={a.id}>
+                <TableCell className="font-mono text-sky-700 dark:text-sky-400">{a.referenceNumber}</TableCell>
+                <TableCell className="whitespace-nowrap">{formatNpt(a.scheduledAtUtc)}</TableCell>
+                <TableCell>{a.vehicleName}</TableCell>
+                <TableCell className="max-w-[200px] truncate" title={a.services.join(", ")}>
+                  {a.services.join(", ")}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={a.status === "Completed" ? "success" : a.status === "Cancelled" ? "error" : "info"}>
+                    {a.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
 
-function PurchasesTab({ customer }) {
+function PurchasesTab({ report, reportLoading }) {
+  const purchases = report?.fullPurchases ?? [];
   return (
-    <div className="bg-white dark:bg-[#1C1C1C] rounded-xl p-6 border border-slate-200 dark:border-neutral-800">
-      <h3 className="text-lg font-bold font-headline mb-4 text-slate-900 dark:text-white">Full Purchase History</h3>
-      <p className="text-slate-500 text-sm">Full invoice history is available in the financial reports module.</p>
+    <div className="bg-white dark:bg-[#1C1C1C] rounded-xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-neutral-800">
+        <h3 className="text-lg font-bold font-headline text-slate-900 dark:text-white">Full Purchase History</h3>
+      </div>
+      {reportLoading ? (
+        <div className="p-6"><TabSkeleton /></div>
+      ) : purchases.length === 0 ? (
+        <p className="text-slate-500 text-sm p-6 text-center">No purchases recorded.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Invoice #</TableHead>
+              <TableHead>Issue Date</TableHead>
+              <TableHead>Total Amount</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {purchases.map(p => (
+              <TableRow key={p.invoiceNumber}>
+                <TableCell className="font-mono text-sky-700 dark:text-sky-400">{p.invoiceNumber}</TableCell>
+                <TableCell>{formatDate(p.issueDate)}</TableCell>
+                <TableCell className="font-bold">${p.totalAmount.toLocaleString()}</TableCell>
+                <TableCell>
+                  <Badge variant={p.status === "Paid" ? "success" : p.status === "Unpaid" ? "warning" : "neutral"}>
+                    {p.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
@@ -485,8 +553,8 @@ export default function CustomerProfile() {
             <OverviewTab customer={customer} report={report} reportLoading={reportLoading} />
           )}
           {activeTab === "Vehicles" && <VehiclesTab customer={customer} />}
-          {activeTab === "Service History" && <ServiceHistoryTab customer={customer} />}
-          {activeTab === "Purchases" && <PurchasesTab customer={customer} />}
+          {activeTab === "Service History" && <ServiceHistoryTab report={report} reportLoading={reportLoading} />}
+          {activeTab === "Purchases" && <PurchasesTab report={report} reportLoading={reportLoading} />}
           {activeTab === "Activity Log" && <ActivityLogTab publicId={id} />}
           {activeTab === "Login Activity" && <LoginActivityTab publicId={id} customer={customer} />}
         </div>

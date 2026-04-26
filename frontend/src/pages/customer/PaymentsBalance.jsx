@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { motion, PageTransition, fadeInUp } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
 
 function parseMoney(str) {
   if (typeof str === "number") return str;
@@ -14,12 +15,6 @@ function fmtNPR(amount) {
   return `Rs. ${Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
-  return d.toLocaleDateString("en-NP", { day: "numeric", month: "short", year: "numeric" });
-}
 
 export default function PaymentsBalance() {
   const toast = useToast();

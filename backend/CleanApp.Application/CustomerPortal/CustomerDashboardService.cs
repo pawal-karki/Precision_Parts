@@ -34,15 +34,19 @@ public class CustomerDashboardService : ICustomerDashboardService
         var aid = 1;
         foreach (var inv in recent)
         {
+            // Determine the primary type based on items
+            var primaryType = inv.Items.Any(x => x.ItemType == "service") ? "Service" : "Order";
+            var desc = inv.Items.Any() 
+                ? string.Join(", ", inv.Items.Select(x => x.Description))
+                : $"Invoice {inv.InvoiceNumber}";
+
             activity.Add(new CustomerActivityRow(
                 aid++,
-                "Order",
-                $"Invoice {inv.InvoiceNumber}",
+                primaryType,
+                desc,
                 inv.IssueDate.ToString("MMM dd", CultureInfo.InvariantCulture),
                 DisplayMoney.Format(inv.TotalAmount)));
         }
-
-        activity.Add(new CustomerActivityRow(aid++, "Service", "Full brake inspection", "Feb 15", "$120.00"));
 
         var vehicles = user.Vehicles.Select(v => new CustomerVehicleRow(
             Math.Abs(v.Id.GetHashCode()) % 100000,
@@ -88,13 +92,16 @@ public class CustomerDashboardService : ICustomerDashboardService
         // Map recent activity (last 5 invoices)
         var activity = invoices
             .Take(5)
-            .Select((i, idx) => new CustomerActivityRow(
-                idx + 1,
-                "Invoice",
-                $"Invoice {i.InvoiceNumber} - {i.Status}",
-                i.IssueDate.ToString("MMM dd", CultureInfo.InvariantCulture),
-                DisplayMoney.Format(i.TotalAmount)
-            )).ToList();
+            .Select((i, idx) => {
+                var type = i.Items.Any(x => x.ItemType == "service") ? "Service" : "Payment";
+                return new CustomerActivityRow(
+                    idx + 1,
+                    type,
+                    $"Invoice {i.InvoiceNumber} - {i.Status}",
+                    i.IssueDate.ToString("MMM dd", CultureInfo.InvariantCulture),
+                    DisplayMoney.Format(i.TotalAmount)
+                );
+            }).ToList();
 
         return new CustomerLedgerDto(totalOutstanding, pendingInvoices, activity);
     }

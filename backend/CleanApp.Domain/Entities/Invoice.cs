@@ -7,8 +7,8 @@ public class Invoice : BaseEntity
     public string InvoiceNumber { get; set; } = string.Empty;
     public Guid? CustomerId { get; set; }
     public Guid? AppointmentId { get; set; }
-    public DateOnly IssueDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
-    public DateOnly? DueDate { get; set; }
+    public DateTime IssueDate { get; set; } = DateTime.UtcNow;
+    public DateTime? DueDate { get; set; }
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Unpaid;
     public decimal Subtotal { get; set; }
     public decimal TaxAmount { get; set; }

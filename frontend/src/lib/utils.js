@@ -26,9 +26,14 @@ export function formatNpt(value, { date = true, time = true, seconds = false } =
   return new Intl.DateTimeFormat("en-GB", opts).format(d) + " NPT";
 }
 
-/** Format a DateOnly ISO string (YYYY-MM-DD) to a human-readable date. */
+/** Format a Date string (ISO or DateOnly) to a human-readable date. */
 export function formatDate(value) {
   if (!value) return "—";
-  const d = new Date(value + "T00:00:00Z");
+  // If it's a simple date (YYYY-MM-DD), treat as UTC midnight
+  const dateStr = (typeof value === "string" && value.length === 10 && value.includes("-")) 
+    ? `${value}T00:00:00Z` 
+    : value;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "—";
   return new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short", day: "2-digit" }).format(d);
 }

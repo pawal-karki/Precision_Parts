@@ -41,9 +41,9 @@ public class AdminDashboardService : IAdminDashboardService
 
     public async Task<IReadOnlyList<RevenueChartPoint>> GetRevenueSeriesAsync(CancellationToken cancellationToken = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateTime.UtcNow;
         var start = today.AddMonths(-11);
-        var from = new DateOnly(start.Year, start.Month, 1);
+        var from = new DateTime(start.Year, start.Month, 1);
         var invs = await _invoices.ListByIssueDateFromAsync(from, cancellationToken);
 
         var months = new List<RevenueChartPoint>(12);

@@ -32,9 +32,9 @@ public class AdminFinancialService : IAdminFinancialService
 
     public async Task<IReadOnlyList<ProfitLossMonthRow>> GetProfitLossAsync(CancellationToken cancellationToken = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateTime.UtcNow;
         var start = today.AddMonths(-11);
-        var from = new DateOnly(start.Year, start.Month, 1);
+        var from = new DateTime(start.Year, start.Month, 1);
         var invs = await _invoices.ListPaidByIssueDateFromAsync(from, cancellationToken);
 
         var rows = new List<ProfitLossMonthRow>(12);

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CleanApp.Application.CustomerPortal;
 
 public record CustomerVehicleRow(int Id, string Name, string Vin, string Mileage, string LastService, int HealthScore);
@@ -12,7 +14,12 @@ public record CustomerDashboardDto(
     IReadOnlyList<CustomerVehicleRow> Vehicles,
     IReadOnlyList<CustomerActivityRow> RecentActivity);
 
-public record CustomerOrderRow(string Id, string Date, string Items, string Total, string Status);
+public record CustomerOrderRow(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("date")] string Date,
+    [property: JsonPropertyName("items")] string Items,
+    [property: JsonPropertyName("total")] string Total,
+    [property: JsonPropertyName("status")] string Status);
 
 
 public record CustomerPredictionRow(int Id, string Component, string Vehicle, string RiskLevel, int Confidence, string EstimatedFailure, string Recommendation);

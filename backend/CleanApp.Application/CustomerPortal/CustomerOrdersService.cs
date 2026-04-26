@@ -6,40 +6,59 @@ namespace CleanApp.Application.CustomerPortal;
 
 public class CustomerOrdersService : ICustomerOrdersService
 {
-    private readonly IUserRepository _users;
-    private readonly IInvoiceRepository _invoices;
+    private readonly ICustomerRepository _customers;
 
-    public CustomerOrdersService(IUserRepository users, IInvoiceRepository invoices)
+    public CustomerOrdersService(ICustomerRepository customers)
     {
-        _users = users;
-        _invoices = invoices;
+        _customers = customers;
     }
 
     public async Task<IReadOnlyList<CustomerOrderRow>> ListCustomerOrdersAsync(Guid customerId, CancellationToken cancellationToken = default)
     {
-        var user = await _users.GetByIdAsync(customerId, cancellationToken);
-        if (user == null)
-            return Array.Empty<CustomerOrderRow>();
+        // Get all activity data for the customer
+        var (appointments, invoices, partRequests) = await _customers.GetActivityDataAsync(customerId, cancellationToken);
 
-        var invs = await _invoices.ListByCustomerIdWithItemsAsync(user.Id, 20, cancellationToken);
+        var orders = new List<CustomerOrderRow>();
 
-        return invs.Select(i =>
+        // 1. Add Invoices as completed/billed orders
+        foreach (var inv in invoices)
         {
-            var desc = i.Items.FirstOrDefault()?.Description ?? "Order";
-            var status = i.Status switch
+            var itemsDesc = inv.Items.Any() 
+                ? string.Join(", ", inv.Items.Select(x => $"{x.Description} ({x.ItemType})"))
+                : "General Service / Parts";
+
+            orders.Add(new CustomerOrderRow(
+                inv.InvoiceNumber,
+                inv.IssueDate.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                itemsDesc,
+                DisplayMoney.Format(inv.TotalAmount),
+                inv.Status == InvoiceStatus.Paid ? "Delivered" : "Processing"
+            ));
+        }
+
+        // 2. Add PartRequests as active sourcing orders
+        foreach (var pr in partRequests)
+        {
+            // Map PartRequest statuses to UI badge statuses
+            var status = pr.Status switch
             {
-                InvoiceStatus.Paid => "Delivered",
-                InvoiceStatus.Unpaid => "Processing",
-                InvoiceStatus.Partial => "Processing",
-                InvoiceStatus.Overdue => "Processing",
-                _ => "Delivered"
+                "Available" => "Delivered",
+                "Cancelled" => "Returned",
+                _ => "Processing" // Pending, Sourcing -> Processing
             };
-            return new CustomerOrderRow(
-                i.InvoiceNumber,
-                i.IssueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                desc,
-                DisplayMoney.Format(i.TotalAmount),
-                status);
-        }).ToList();
+
+            orders.Add(new CustomerOrderRow(
+                $"PR-{pr.Id.ToString().Substring(0, 8).ToUpper()}",
+                pr.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                $"{pr.PartName} for {pr.VehicleModel}",
+                "N/A", // Part requests might not have a total yet
+                status
+            ));
+        }
+
+        // Return ordered by date descending
+        return orders
+            .OrderByDescending(o => o.Date)
+            .ToList();
     }
 }

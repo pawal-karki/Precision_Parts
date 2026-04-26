@@ -144,6 +144,31 @@ public class CustomersService : ICustomersService
                 Status = i.Status.ToString()
             }).ToList();
 
+        // All purchases (full history)
+        var allPurchases = user.Invoices
+            .OrderByDescending(i => i.IssueDate)
+            .Select(i => new RecentPurchaseDto
+            {
+                InvoiceNumber = i.InvoiceNumber,
+                IssueDate = i.IssueDate,
+                TotalAmount = i.TotalAmount,
+                Status = i.Status.ToString()
+            }).ToList();
+
+        // All appointments
+        var appointments = user.Appointments
+            .OrderByDescending(a => a.ScheduledAtUtc)
+            .Select(a => new CustomerAppointmentDto
+            {
+                Id = a.Id,
+                ReferenceNumber = $"SRV-{a.Id.ToString()[..6].ToUpper()}",
+                ScheduledAtUtc = a.ScheduledAtUtc,
+                Status = a.Status.ToString(),
+                Notes = a.Notes ?? "",
+                VehicleName = a.Vehicle?.Nickname ?? (a.Vehicle != null ? $"{a.Vehicle.Year} {a.Vehicle.Make}" : "—"),
+                Services = a.Services.Select(s => s.ServiceType?.Name ?? "Service").ToList()
+            }).ToList();
+
         return new CustomerDetailReportDto
         {
             PublicId = user.PublicId,
@@ -159,9 +184,11 @@ public class CustomersService : ICustomersService
             VehicleCount = user.Vehicles.Count,
             AppointmentCount = user.Appointments.Count,
             InvoiceCount = user.Invoices.Count,
-            PartRequestCount = 0, // PartRequests not loaded at user level; count omitted for perf
+            PartRequestCount = 0, 
             LastLoginAtUtc = user.LastLoginAtUtc,
             RecentPurchases = recentPurchases,
+            FullPurchases = allPurchases,
+            Appointments = appointments,
             Vehicles = user.Vehicles.Select(v => new VehicleSummaryDto
             {
                 Nickname = v.Nickname ?? "",
@@ -203,7 +230,7 @@ public class CustomersService : ICustomersService
             Title = $"Invoice {i.InvoiceNumber}",
             Detail = i.Status.ToString(),
             Amount = "$" + i.TotalAmount.ToString("N2", CultureInfo.InvariantCulture),
-            Timestamp = i.IssueDate.ToDateTime(TimeOnly.MinValue)
+            Timestamp = i.IssueDate
         }));
 
         stream.AddRange(partRequests.Select(pr => new ActivityLogItemDto
