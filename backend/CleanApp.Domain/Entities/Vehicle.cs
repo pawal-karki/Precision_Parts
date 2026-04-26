@@ -9,6 +9,7 @@ public class Vehicle : BaseEntity
     public int? Year { get; set; }
     public string? Vin { get; set; }
     public string? PlateNumber { get; set; }
+    public string? ImageUrl { get; set; }
     public int? MileageKm { get; set; }
     public int? HealthScore { get; set; }
     public DateOnly? LastServiceDate { get; set; }

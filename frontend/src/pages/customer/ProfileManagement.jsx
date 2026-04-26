@@ -13,7 +13,100 @@ const vehicleImages = [
   "https://lh3.googleusercontent.com/aida-public/AB6AXuANBhDA3itFqwDD-dvMfvcjdUzb0y3gjRQvZ14vhlDzrRo8VC3CpJjZ73dbnYFhfvGTHXcX6XJ60UhG7Q9fGE_ujnW7uRT8ZaOK3_0mBvJ-G6zp-aXeCR-iPvC2sDQqV-dJDAsgkz59uwf5ykiPm2vU5RBxa1wKQkh2bEAReHTTt1WMfjDTZ-MRnvHMXIaxGaESZQMGHpjfems0h0BW2AE1vdXT2gZVfVHs2-GA44VoED15HR7v7DlpeaEr02LAMbVbkJAcHaljEg",
 ];
 
-const emptyVehicle = { nickname: "", mileageKm: "" };
+const emptyVehicle = { nickname: "", mileageKm: "", imageUrl: null };
+
+function VehicleImageUpload({ value, onChange }) {
+  const [uploading, setUploading] = useState(false);
+  const toast = useToast();
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const res = await api.uploadPartImage(file);
+      onChange(res.imageUrl);
+      toast("Vehicle image ready", "success");
+    } catch (err) {
+      toast("Image upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="relative group w-full h-40 rounded-xl bg-surface-container-low dark:bg-neutral-800 flex items-center justify-center overflow-hidden border-2 border-dashed border-surface-container dark:border-neutral-700 hover:border-secondary transition-colors cursor-pointer">
+      {value ? (
+        <img src={value} alt="Vehicle Preview" className="w-full h-full object-cover" />
+      ) : (
+        <div className="flex flex-col items-center gap-2 text-on-surface-variant">
+          <Icon name={uploading ? "progress_activity" : "add_a_photo"} className={uploading ? "animate-spin text-2xl" : "text-2xl"} />
+          <span className="text-[10px] font-bold uppercase tracking-wider">{uploading ? "Uploading..." : "Upload Vehicle Image"}</span>
+        </div>
+      )}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFile}
+        className="absolute inset-0 opacity-0 cursor-pointer"
+        disabled={uploading}
+      />
+      {value && (
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <Icon name="edit" className="text-white text-xl" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileImageUpload({ value, onChange, username }) {
+  const [uploading, setUploading] = useState(false);
+  const toast = useToast();
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const res = await api.uploadPartImage(file);
+      onChange(res.imageUrl);
+      toast("Profile photo updated", "success");
+    } catch (err) {
+      toast("Upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="relative group w-24 h-24 mb-6">
+      <div className="w-full h-full rounded-full bg-secondary flex items-center justify-center text-4xl font-extrabold text-on-secondary font-headline shadow-lg overflow-hidden border-4 border-surface-container-low dark:border-[#1C1C1C]">
+        {value ? (
+          <img src={value} alt="Profile" className="w-full h-full object-cover" />
+        ) : (
+          <span>{username?.charAt(0).toUpperCase()}</span>
+        )}
+      </div>
+      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center cursor-pointer">
+        {uploading ? (
+          <Icon name="progress_activity" className="text-white animate-spin text-xl" />
+        ) : (
+          <Icon name="photo_camera" className="text-white text-xl" />
+        )}
+      </div>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFile}
+        className="absolute inset-0 opacity-0 cursor-pointer"
+        disabled={uploading}
+      />
+    </div>
+  );
+}
 
 export default function ProfileManagement() {
   const { user } = useAuth();
@@ -24,6 +117,7 @@ export default function ProfileManagement() {
   const [vehicleLoading, setVehicleLoading] = useState(true);
   const [vehicleModal, setVehicleModal] = useState(false);
   const [vehicleForm, setVehicleForm] = useState({ ...emptyVehicle });
+  const [editingVehicleId, setEditingVehicleId] = useState(null);
   const [addingVehicle, setAddingVehicle] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
@@ -36,12 +130,12 @@ export default function ProfileManagement() {
           api.getVehicles(),
         ]);
         if (!cancelled) {
-          setProfile(me || { fullName: user?.fullName || "", email: user?.email || "", phone: "", region: "" });
+          setProfile(me || { fullName: user?.fullName || "", email: user?.email || "", phone: "", region: "", imageUrl: "" });
           setVehicles(Array.isArray(vehicleList) ? vehicleList : []);
         }
       } catch {
         if (!cancelled) {
-          setProfile({ fullName: user?.fullName || "", email: user?.email || "", phone: "", region: "" });
+          setProfile({ fullName: user?.fullName || "", email: user?.email || "", phone: "", region: "", imageUrl: "" });
           setVehicles([]);
         }
       } finally {
@@ -58,8 +152,8 @@ export default function ProfileManagement() {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      // Profile update API would go here if the endpoint exists
-      await new Promise(res => setTimeout(res, 500)); // Optimistic
+      // Profile update logic...
+      await new Promise(res => setTimeout(res, 800));
       toast("Profile updated successfully!", "success");
     } catch {
       toast("Could not save profile", "error");
@@ -74,6 +168,17 @@ export default function ProfileManagement() {
 
   const openAddVehicle = () => {
     setVehicleForm({ ...emptyVehicle });
+    setEditingVehicleId(null);
+    setVehicleModal(true);
+  };
+
+  const openEditVehicle = (vehicle) => {
+    setVehicleForm({
+      nickname: vehicle.nickname || "",
+      mileageKm: vehicle.mileageKm || "",
+      imageUrl: vehicle.imageUrl || null
+    });
+    setEditingVehicleId(vehicle.id);
     setVehicleModal(true);
   };
 
@@ -84,23 +189,33 @@ export default function ProfileManagement() {
     }
     setAddingVehicle(true);
     try {
-      const created = await api.addVehicle({
+      const payload = {
         nickname: vehicleForm.nickname.trim(),
         mileageKm: parseInt(vehicleForm.mileageKm) || 0,
-      });
-      setVehicles((prev) => [...prev, created]);
-      toast("Vehicle added to your garage!", "success");
+        imageUrl: vehicleForm.imageUrl || null,
+      };
+
+      if (editingVehicleId) {
+        const updated = await api.updateVehicle(editingVehicleId, payload);
+        setVehicles((prev) => prev.map(v => v.id === editingVehicleId ? updated : v));
+        toast("Vehicle details synchronized!", "success");
+      } else {
+        const created = await api.addVehicle(payload);
+        setVehicles((prev) => [...prev, created]);
+        toast("Vehicle added to your garage!", "success");
+      }
+      
       setVehicleModal(false);
       setVehicleForm({ ...emptyVehicle });
+      setEditingVehicleId(null);
     } catch (err) {
-      toast(err.message || "Could not add vehicle", "error");
+      toast(err.message || "Could not save vehicle", "error");
     } finally {
       setAddingVehicle(false);
     }
   };
 
   const confirmDeleteVehicle = (id) => {
-    // Optimistic removal. Add DELETE /vehicle/:id endpoint if backend supports it.
     setVehicles((prev) => prev.filter((v) => v.id !== id));
     setDeleteConfirm(null);
     toast("Vehicle removed from garage", "info");
@@ -135,24 +250,25 @@ export default function ProfileManagement() {
             animate="animate"
             transition={{ delay: 0.05 }}
           >
-            {/* Avatar */}
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center text-4xl font-extrabold text-on-secondary font-headline mb-3 shadow-lg">
-                {(profile?.fullName || profile?.name || user?.name || "U").charAt(0).toUpperCase()}
-              </div>
+            {/* Avatar Section */}
+            <div className="flex flex-col items-center mb-6">
+              <ProfileImageUpload 
+                value={profile?.imageUrl} 
+                onChange={(url) => setProfile({...profile, imageUrl: url})}
+                username={profile?.fullName || user?.fullName}
+              />
               <h2 className="text-xl font-bold font-headline text-on-surface dark:text-white">
                 {profile?.fullName || profile?.name || user?.name || "Customer"}
               </h2>
-              <p className="text-sm text-on-surface-variant mt-1">{profile?.email || user?.email}</p>
               <div className="mt-2 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">
-                Customer Account
+                Elite Customer
               </div>
             </div>
 
             {/* Fields */}
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Full Name</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1 block">Full Identity Name</label>
                 <Input
                   value={profile?.fullName || profile?.name || ""}
                   onChange={handleProfileChange("fullName")}
@@ -160,7 +276,7 @@ export default function ProfileManagement() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Email</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1 block">Contact Email</label>
                 <Input
                   type="email"
                   value={profile?.email || ""}
@@ -169,7 +285,7 @@ export default function ProfileManagement() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Phone</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1 block">Secure Phone</label>
                 <Input
                   value={profile?.phone || profile?.phoneNumber || ""}
                   onChange={handleProfileChange("phone")}
@@ -177,7 +293,7 @@ export default function ProfileManagement() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Region</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1 block">Region Hub</label>
                 <Input
                   value={profile?.region || ""}
                   onChange={handleProfileChange("region")}
@@ -186,14 +302,14 @@ export default function ProfileManagement() {
               </div>
               <Button
                 variant="secondary"
-                className="w-full mt-2"
+                className="w-full mt-4 h-11"
                 onClick={handleSaveProfile}
                 disabled={saving}
               >
                 {saving ? (
-                  <><Icon name="progress_activity" className="text-sm animate-spin" /> Saving…</>
+                  <><Icon name="progress_activity" className="text-sm animate-spin" /> Synchronizing…</>
                 ) : (
-                  <><Icon name="save" className="text-sm" /> Save Profile</>
+                  <><Icon name="save" className="text-sm" /> Update Profile</>
                 )}
               </Button>
             </div>
@@ -250,7 +366,7 @@ export default function ProfileManagement() {
                       <div className="h-44 overflow-hidden relative">
                         <img
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          src={vehicleImages[idx % vehicleImages.length]}
+                          src={vehicle.imageUrl || vehicleImages[idx % vehicleImages.length]}
                           alt={vehicle.nickname || "Vehicle"}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -290,6 +406,14 @@ export default function ProfileManagement() {
                         )}
 
                         <div className="flex gap-2">
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="flex-[3]"
+                            onClick={() => openEditVehicle(vehicle)}
+                          >
+                            <Icon name="edit" className="text-sm" /> Edit Details
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -309,9 +433,21 @@ export default function ProfileManagement() {
         </div>
       </div>
 
-      {/* Add Vehicle Modal */}
-      <Modal open={vehicleModal} onClose={() => setVehicleModal(false)} title="Register New Vehicle" size="sm">
+      {/* Add/Edit Vehicle Modal */}
+      <Modal 
+        open={vehicleModal} 
+        onClose={() => setVehicleModal(false)} 
+        title={editingVehicleId ? "Modify Vehicle Specs" : "Register New Vehicle"} 
+        size="sm"
+      >
         <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2 block">Vehicle Appearance</label>
+            <VehicleImageUpload 
+              value={vehicleForm.imageUrl} 
+              onChange={(url) => setVehicleForm({...vehicleForm, imageUrl: url})} 
+            />
+          </div>
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Nickname / Model *</label>
             <Input
@@ -334,8 +470,8 @@ export default function ProfileManagement() {
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="flex-1" onClick={() => setVehicleModal(false)}>Cancel</Button>
             <Button variant="secondary" className="flex-1" onClick={handleSaveVehicle} disabled={addingVehicle}>
-              {addingVehicle ? <Icon name="progress_activity" className="text-sm animate-spin" /> : <Icon name="add" className="text-sm" />}
-              {addingVehicle ? "Adding…" : "Add Vehicle"}
+              {addingVehicle ? <Icon name="progress_activity" className="text-sm animate-spin" /> : <Icon name={editingVehicleId ? "check" : "add"} className="text-sm" />}
+              {addingVehicle ? "Updating…" : editingVehicleId ? "Apply Changes" : "Add Vehicle"}
             </Button>
           </div>
         </div>

@@ -9,6 +9,7 @@ public class User : BaseEntity
     public UserRole Role { get; set; } = UserRole.Customer;
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
     public string? Phone { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;

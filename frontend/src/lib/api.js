@@ -53,6 +53,21 @@ class ApiClient {
   createPart(dto)          { return this._post("/admin/parts", dto); }
   updatePart(id, dto)      { return this._put(`/admin/parts/${id}`, dto); }
   deletePart(id)           { return this._delete(`/admin/parts/${id}`); }
+  uploadPartImage(file) {
+    const fd = new FormData();
+    fd.append("file", file);
+    return fetch(`${BASE}/admin/parts/upload`, {
+      method: "POST",
+      body: fd,
+      credentials: "include",
+    }).then(async res => {
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b.error || "Upload failed");
+      }
+      return res.json();
+    });
+  }
 
   // ── Admin: Vendors ────────────────────────────────────────────
   getVendors()             { return this._get("/admin/vendors"); }
@@ -97,6 +112,7 @@ class ApiClient {
   // ── Customer: Vehicles ────────────────────────────────────────
   getVehicles()            { return this._get("/customer/vehicles"); }
   addVehicle(dto)          { return this._post("/customer/vehicles", dto); }
+  updateVehicle(id, dto)   { return this._put(`/customer/vehicles/${id}`, dto); }
   deleteVehicle(id)        { return this._delete(`/customer/vehicles/${id}`); }
 
   // ── Customer: Appointments ───────────────────────────────────

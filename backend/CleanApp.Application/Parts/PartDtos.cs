@@ -14,6 +14,7 @@ public class PartAdminRowDto
     public string Vendor { get; set; } = "";
     public int MinStock { get; set; }
     public string Location { get; set; } = "";
+    public string? ImageUrl { get; set; }
     public Guid EntityId { get; set; }
 }
 
@@ -29,6 +30,7 @@ public class PartCreateDto
     public string? BatchCode { get; set; }
     public string? UnitOfMeasure { get; set; }
     public string? WarehouseLocation { get; set; }
+    public string? ImageUrl { get; set; }
 }
 
 public class PartUpdateDto
@@ -43,5 +45,6 @@ public class PartUpdateDto
     public string? BatchCode { get; set; }
     public string? UnitOfMeasure { get; set; }
     public string? WarehouseLocation { get; set; }
+    public string? ImageUrl { get; set; }
 }
       

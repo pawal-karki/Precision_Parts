@@ -14,8 +14,8 @@ public class Part : BaseEntity
     public string? BatchCode { get; set; }
     public string? UnitOfMeasure { get; set; }
     public string? WarehouseLocation { get; set; }
+    public string? ImageUrl { get; set; }
 
     public PartCategory? Category { get; set; }
     public Vendor? Vendor { get; set; }
 }
-      

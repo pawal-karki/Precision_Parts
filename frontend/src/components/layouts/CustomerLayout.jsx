@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
+import { useAuth } from "@/lib/auth";
 
 const sidebarItems = [
   { to: "/customer", icon: "dashboard", label: "Overview", end: true },
@@ -28,9 +29,11 @@ const bottomNav = [
 
 export default function CustomerLayout() {
   const { dark, toggle } = useTheme();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -79,11 +82,15 @@ export default function CustomerLayout() {
             >
               <Icon name={dark ? "light_mode" : "dark_mode"} className="text-neutral-700 dark:text-neutral-300" />
             </button>
-            <NavLink to="/customer/profile">
-              <div className="w-8 h-8 rounded-full bg-surface-container dark:bg-neutral-700 overflow-hidden ring-2 ring-surface-container dark:ring-neutral-700">
-                <div className="w-full h-full bg-secondary flex items-center justify-center text-white text-xs font-bold">
-                  AT
-                </div>
+            <NavLink to="/customer/profile" className="group">
+              <div className="w-8 h-8 rounded-full bg-surface-container dark:bg-neutral-700 overflow-hidden ring-2 ring-surface-container dark:ring-neutral-700 shadow-sm group-hover:scale-105 transition-transform">
+                {user?.imageUrl ? (
+                  <img src={user.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-secondary flex items-center justify-center text-white text-xs font-bold uppercase">
+                    {(user?.fullName || user?.name || "C").charAt(0)}
+                  </div>
+                )}
               </div>
             </NavLink>
           </div>

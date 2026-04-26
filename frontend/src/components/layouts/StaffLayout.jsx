@@ -61,6 +61,20 @@ export default function StaffLayout() {
             New Sale
           </Button>
           <NavLink
+            to="/staff/profile"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center py-2 transition-colors",
+                isActive
+                  ? "text-neutral-900 dark:text-white font-semibold"
+                  : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-100"
+              )
+            }
+          >
+            <Icon name="person" className="mr-3" />
+            Profile Management
+          </NavLink>
+          <NavLink
             to="/staff/settings"
             className={({ isActive }) =>
               cn(
@@ -108,19 +122,23 @@ export default function StaffLayout() {
             >
               <Icon name={dark ? "light_mode" : "dark_mode"} />
             </button>
-            <div className="flex items-center gap-3 pl-4 border-l border-surface-container-highest dark:border-zinc-800">
+            <NavLink to="/staff/profile" className="flex items-center gap-3 pl-4 border-l border-surface-container-highest dark:border-zinc-800 group">
               <div className="text-right">
-                <p className="font-bold text-slate-900 dark:text-neutral-200 leading-none">
+                <p className="font-bold text-slate-900 dark:text-neutral-200 leading-none group-hover:text-secondary transition-colors">
                   Sarah Mitchell
                 </p>
                 <p className="text-[10px] text-slate-500 uppercase tracking-tighter">
                   Senior Technician
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold">
-                SM
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                {user?.imageUrl ? (
+                  <img src={user.imageUrl} alt="Staff" className="w-full h-full object-cover" />
+                ) : (
+                  "SM"
+                )}
               </div>
-            </div>
+            </NavLink>
           </div>
         </header>
 

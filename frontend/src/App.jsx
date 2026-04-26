@@ -34,6 +34,7 @@ import InvoiceView from "@/pages/staff/InvoiceView";
 import CustomerProfile from "@/pages/staff/CustomerProfile";
 import AdvancedSearch from "@/pages/staff/AdvancedSearch";
 import StaffSettings from "@/pages/staff/StaffSettings";
+import StaffProfile from "@/pages/staff/StaffProfile";
 
 import CustomerDashboard from "@/pages/customer/CustomerDashboard";
 import OrderHistory from "@/pages/customer/OrderHistory";
@@ -93,6 +94,7 @@ export default function App() {
               <Route path="invoice" element={<InvoiceView />} />
               <Route path="search" element={<AdvancedSearch />} />
               <Route path="settings" element={<StaffSettings />} />
+              <Route path="profile" element={<StaffProfile />} />
             </Route>
 
             {/* Customer routes — protected */}
@@ -103,7 +105,7 @@ export default function App() {
               <Route path="orders" element={<OrderHistory />} />
               <Route path="parts" element={<PartRequest />} />
               <Route path="ai" element={<AIMaintenanceTrends />} />
-              <Route path="profile" element={<AdminProfile />} />
+              <Route path="profile" element={<ProfileManagement />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="booking" element={<ServiceBooking />} />
               <Route path="booking-success" element={<BookingSuccess />} />

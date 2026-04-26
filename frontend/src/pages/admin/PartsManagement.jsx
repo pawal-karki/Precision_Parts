@@ -37,6 +37,7 @@ const emptyForm = {
   vendor: "",
   minStock: 10,
   location: "",
+  imageUrl: "",
 };
 
 function calcStatus(stock, minStock) {
@@ -47,6 +48,65 @@ function calcStatus(stock, minStock) {
 
 const statusVariant = (status) =>
   ({ "In Stock": "success", "Low Stock": "warning", Critical: "error", Refilling: "neutral" })[status] ?? "neutral";
+
+function ImageDropzone({ value, onChange, className = "" }) {
+  const [uploading, setUploading] = useState(false);
+  const toast = useToast();
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const res = await api.uploadPartImage(file);
+      onChange(res.imageUrl);
+      toast("Image uploaded successfully", "success");
+    } catch (err) {
+      toast(err.message || "Upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className={`relative group ${className}`}>
+      <div className={`w-full aspect-square rounded-2xl overflow-hidden border-2 border-dashed transition-all duration-300 flex items-center justify-center bg-surface-container-low dark:bg-neutral-800 ${
+        value ? "border-transparent" : "border-outline-variant dark:border-neutral-700 hover:border-secondary dark:hover:border-neutral-500"
+      }`}>
+        {value ? (
+          <img src={value} alt="Preview" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-on-surface-variant dark:text-neutral-500">
+            {uploading ? (
+              <Icon name="progress_activity" className="text-3xl animate-spin" />
+            ) : (
+              <>
+                <Icon name="add_a_photo" className="text-3xl opacity-50" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Upload Profile</span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFile}
+        className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+        disabled={uploading}
+      />
+      {value && !uploading && (
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(""); }}
+          className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-error text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300"
+        >
+          <Icon name="close" className="text-sm" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function PartsManagement() {
   const { list: parts } = useList("partsInventory");
@@ -118,6 +178,7 @@ export default function PartsManagement() {
         batchCode: form.batch || null,
         unitOfMeasure: form.unit || null,
         warehouseLocation: form.location || null,
+        imageUrl: form.imageUrl || null,
         categoryId: null,
         vendorId: null,
       });
@@ -147,6 +208,7 @@ export default function PartsManagement() {
       vendor: selectedPart.vendor,
       minStock: selectedPart.minStock,
       location: selectedPart.location,
+      imageUrl: selectedPart.imageUrl || "",
     });
     setEditingInPanel(true);
   };
@@ -165,6 +227,7 @@ export default function PartsManagement() {
         batchCode: form.batch || null,
         unitOfMeasure: form.unit || null,
         warehouseLocation: form.location || null,
+        imageUrl: form.imageUrl || null,
       });
       await reloadParts();
       const status = calcStatus(stock, minStock);
@@ -282,8 +345,12 @@ export default function PartsManagement() {
                         >
                           <TableCell className="px-6">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center">
-                                <Icon name="settings_input_component" className="text-xs text-on-surface-variant dark:text-neutral-400" />
+                              <div className="w-10 h-10 rounded-lg bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-surface-container dark:border-neutral-700">
+                                {part.imageUrl ? (
+                                  <img src={part.imageUrl} alt={part.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Icon name="inventory_2" className="text-base text-on-surface-variant dark:text-neutral-400" />
+                                )}
                               </div>
                               <span className="font-semibold text-on-surface dark:text-neutral-200">{part.name}</span>
                             </div>
@@ -347,12 +414,12 @@ export default function PartsManagement() {
                   </button>
                 </div>
                 <div className="p-6 space-y-6">
-                  <div className="bg-surface-container-low dark:bg-neutral-800 rounded-xl p-4 flex items-center justify-center h-48">
-                    <Icon name="inventory_2" className="text-6xl text-on-surface-variant/30" />
-                  </div>
-
                   {editingInPanel ? (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Part Image</label>
+                        <ImageDropzone value={form.imageUrl} onChange={(val) => setField("imageUrl", val)} />
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-1">Name</label>
@@ -408,7 +475,7 @@ export default function PartsManagement() {
                       </div>
                       <div className="flex gap-3 pt-4">
                         <Button variant="secondary" className="flex-1" onClick={savePanelEdit}>
-                          <Icon name="save" className="text-sm" /> Save
+                          <Icon name="save" className="text-sm" /> Save Changes
                         </Button>
                         <Button variant="ghost" className="flex-1" onClick={() => setEditingInPanel(false)}>
                           Cancel
@@ -417,6 +484,18 @@ export default function PartsManagement() {
                     </div>
                   ) : (
                     <>
+                      <div className="relative aspect-video rounded-2xl overflow-hidden bg-surface-container-low dark:bg-neutral-800 border border-surface-container dark:border-neutral-800 group">
+                        {selectedPart.imageUrl ? (
+                          <img src={selectedPart.imageUrl} alt={selectedPart.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center opacity-30">
+                            <Icon name="inventory_2" className="text-6xl mb-2" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">No Image Preview</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </div>
+
                       <div className="grid grid-cols-2 gap-4">
                         {[
                           { label: "SKU", value: selectedPart.sku, mono: true },
@@ -452,16 +531,14 @@ export default function PartsManagement() {
 
                       <div className="flex gap-3 pt-4">
                         <Button variant="secondary" className="flex-1" onClick={startPanelEdit}>
-                          <Icon name="edit" className="text-sm" /> Edit
+                          <Icon name="edit" className="text-sm" /> Edit Details
                         </Button>
                         <Button
                           variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setDeleteTarget(selectedPart);
-                          }}
+                          className="flex-1 text-error hover:bg-error/5 border-surface-container dark:border-neutral-800"
+                          onClick={() => setDeleteTarget(selectedPart)}
                         >
-                          <Icon name="delete" className="text-sm" /> Delete
+                          <Icon name="delete" className="text-sm" /> Delete Part
                         </Button>
                       </div>
                     </>
@@ -477,69 +554,78 @@ export default function PartsManagement() {
       <Modal
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        title="Add New Part"
-        size="lg"
+        title="Register New Inventory Component"
+        size="2xl"
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Name</label>
-              <Input value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="Part name" />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">SKU</label>
-              <Input value={form.sku} onChange={(e) => setField("sku", e.target.value)} placeholder="e.g. VC-9921-T" />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8">
+          <div className="flex flex-col gap-4">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Component Photo</label>
+            <ImageDropzone value={form.imageUrl} onChange={(val) => setField("imageUrl", val)} />
+            <p className="text-[10px] text-on-surface-variant italic leading-relaxed">
+              Recommended: high-res product photo with neutral background.
+            </p>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Batch</label>
-              <Input value={form.batch} onChange={(e) => setField("batch", e.target.value)} placeholder="e.g. B02-24" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Name</label>
+                <Input value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="e.g. Forged Pistons" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">SKU</label>
+                <Input value={form.sku} onChange={(e) => setField("sku", e.target.value)} placeholder="FP-2024-X" />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Category</label>
-              <Input value={form.category} onChange={(e) => setField("category", e.target.value)} placeholder="e.g. Engine" />
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Batch</label>
+                <Input value={form.batch} onChange={(e) => setField("batch", e.target.value)} placeholder="B101" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Category</label>
+                <Input value={form.category} onChange={(e) => setField("category", e.target.value)} placeholder="Engine" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Unit</label>
+                <Input value={form.unit} onChange={(e) => setField("unit", e.target.value)} placeholder="pcs" />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Unit</label>
-              <Input value={form.unit} onChange={(e) => setField("unit", e.target.value)} placeholder="pcs / liters" />
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Stock</label>
+                <Input type="number" value={form.stock} onChange={(e) => setField("stock", e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Min Stock</label>
+                <Input type="number" value={form.minStock} onChange={(e) => setField("minStock", e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Price (Rs.)</label>
+                <Input type="number" step="0.01" value={form.price} onChange={(e) => setField("price", e.target.value)} />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Stock</label>
-              <Input type="number" value={form.stock} onChange={(e) => setField("stock", e.target.value)} />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Vendor</label>
+                <Combobox
+                  options={vendors.map(v => ({ label: v.name, value: v.name }))}
+                  value={form.vendor}
+                  onChange={(val) => setField("vendor", val)}
+                  placeholder="Select..."
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Location</label>
+                <Input value={form.location} onChange={(e) => setField("location", e.target.value)} placeholder="WH-A-12" />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Min Stock</label>
-              <Input type="number" value={form.minStock} onChange={(e) => setField("minStock", e.target.value)} />
+            <div className="flex justify-end gap-3 pt-6 border-t border-surface-container dark:border-neutral-800 mt-2">
+              <Button variant="ghost" onClick={() => setAddModalOpen(false)}>Discard</Button>
+              <Button variant="secondary" onClick={handleAdd}>
+                <Icon name="verified" className="text-sm" />
+                Initialize Part
+              </Button>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Price (Rs.)</label>
-              <Input type="number" step="0.01" value={form.price} onChange={(e) => setField("price", e.target.value)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Vendor</label>
-              <Combobox
-                options={vendors.map(v => ({ label: v.name, value: v.name }))}
-                value={form.vendor}
-                onChange={(val) => setField("vendor", val)}
-                placeholder="Search vendor..."
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1 block">Location</label>
-              <Input value={form.location} onChange={(e) => setField("location", e.target.value)} placeholder="Warehouse A, Row 2" />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-surface-container dark:border-neutral-800">
-            <Button variant="ghost" onClick={() => setAddModalOpen(false)}>Cancel</Button>
-            <Button variant="secondary" onClick={handleAdd}>
-              <Icon name="add" className="text-sm" />
-              Add Part
-            </Button>
           </div>
         </div>
       </Modal>
@@ -548,18 +634,22 @@ export default function PartsManagement() {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Confirm Deletion"
+        title="Confirm Irreversible Deletion"
         size="sm"
       >
-        <p className="text-on-surface-variant dark:text-neutral-400 mb-6">
-          Are you sure you want to delete <strong className="text-on-surface dark:text-neutral-200">{deleteTarget?.name}</strong> ({deleteTarget?.sku}) from inventory?
-        </p>
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button variant="destructive" onClick={confirmDelete}>
-            <Icon name="delete" className="text-sm" />
-            Delete
-          </Button>
+        <div className="flex flex-col items-center text-center p-4">
+          <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mb-4">
+            <Icon name="warning" className="text-3xl text-error" />
+          </div>
+          <p className="text-on-surface-variant dark:text-neutral-400 mb-8 leading-relaxed">
+            This will permanently remove <strong className="text-on-surface dark:text-neutral-200">{deleteTarget?.name}</strong> from the database. This action cannot be undone.
+          </p>
+          <div className="flex w-full gap-3">
+            <Button variant="ghost" className="flex-1 font-bold" onClick={() => setDeleteTarget(null)}>No, Keep It</Button>
+            <Button variant="destructive" className="flex-1 font-bold" onClick={confirmDelete}>
+              Yes, Delete
+            </Button>
+          </div>
         </div>
       </Modal>
     </PageTransition>

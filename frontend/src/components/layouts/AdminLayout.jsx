@@ -177,9 +177,15 @@ export default function AdminLayout() {
                   {user?.role || "Staff Member"}
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:scale-105 transition-transform">
-                {(user?.fullName || user?.name || "A").charAt(0).toUpperCase()}
-                {(user?.fullName || user?.name || "V").split(" ").pop()?.charAt(0).toUpperCase()}
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                {user?.imageUrl ? (
+                  <img src={user.imageUrl} alt="Admin" className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    {(user?.fullName || user?.name || "A").charAt(0).toUpperCase()}
+                    {(user?.fullName || user?.name || "V").split(" ").pop()?.charAt(0).toUpperCase()}
+                  </>
+                )}
               </div>
             </NavLink>
           </div>

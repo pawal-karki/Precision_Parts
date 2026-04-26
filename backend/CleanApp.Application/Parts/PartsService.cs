@@ -31,6 +31,7 @@ public class PartsService : IPartsService
                 Vendor = p.Vendor?.Name ?? "—",
                 MinStock = p.ReorderLevel,
                 Location = p.WarehouseLocation ?? "—",
+                ImageUrl = p.ImageUrl,
                 EntityId = p.Id
             };
         }).ToList();
@@ -56,6 +57,7 @@ public class PartsService : IPartsService
             BatchCode = dto.BatchCode,
             UnitOfMeasure = dto.UnitOfMeasure,
             WarehouseLocation = dto.WarehouseLocation,
+            ImageUrl = dto.ImageUrl,
             IsActive = true
         };
         _parts.Add(entity);
@@ -78,6 +80,7 @@ public class PartsService : IPartsService
         if (dto.BatchCode != null) entity.BatchCode = dto.BatchCode;
         if (dto.UnitOfMeasure != null) entity.UnitOfMeasure = dto.UnitOfMeasure;
         if (dto.WarehouseLocation != null) entity.WarehouseLocation = dto.WarehouseLocation;
+        if (dto.ImageUrl != null) entity.ImageUrl = dto.ImageUrl;
 
         entity.UpdatedAtUtc = DateTime.UtcNow;
         await _parts.SaveChangesAsync(cancellationToken);
