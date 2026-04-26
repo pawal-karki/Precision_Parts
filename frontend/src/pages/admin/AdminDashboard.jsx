@@ -37,7 +37,7 @@ import {
 } from "recharts";
 import { generateReportPdf, downloadPdf } from "@/lib/pdf";
 
-const PIE_COLORS = ["#4d6172", "#5e5e5e", "#dee4e0"];
+const PIE_COLORS = ["#4d6172", "#64748b", "#94a3b8"];
 
 export default function AdminDashboard() {
   const [kpis, setKpis] = useState(null);
@@ -55,8 +55,9 @@ export default function AdminDashboard() {
     tooltip: {
       bg: dark ? "#171717" : "#fff",
       border: dark ? "#262626" : "#ecefec",
-      text: dark ? "#f5f5f5" : "#2d3432"
-    }
+      text: dark ? "#f5f5f5" : "#1e293b"
+    },
+    line: dark ? "#38bdf8" : "#0284c7"
   }), [dark]);
 
   useEffect(() => {
@@ -236,8 +237,8 @@ export default function AdminDashboard() {
                     }}
                     itemStyle={{ color: chartTheme.tooltip.text }}
                   />
-                  <Bar dataKey="actual" fill="#4d6172" radius={[4, 4, 0, 0]} animationDuration={800} />
-                  <Bar dataKey="projected" fill={dark ? "#404040" : "#adb3b0"} radius={[4, 4, 0, 0]} animationDuration={800} animationBegin={200} />
+                  <Bar dataKey="actual" fill={dark ? "#38bdf8" : "#0284c7"} radius={[4, 4, 0, 0]} animationDuration={800} />
+                  <Bar dataKey="projected" fill={dark ? "#475569" : "#cbd5e1"} radius={[4, 4, 0, 0]} animationDuration={800} animationBegin={200} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

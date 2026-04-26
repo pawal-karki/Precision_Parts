@@ -166,7 +166,14 @@ export default function OrderHistory() {
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `Rs.${(v/1000).toFixed(0)}k`} />
                   <Tooltip formatter={(value) => [fmtNPR(value), "Amount"]} />
-                  <Line type="monotone" dataKey="amount" stroke="var(--md-sys-color-secondary)" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#0ea5e9" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: "#0ea5e9", strokeWidth: 2, stroke: "#fff" }} 
+                    activeDot={{ r: 6, strokeWidth: 0 }} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
