@@ -15,8 +15,12 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // ── Database ────────────────────────────────────────────────────────
+        var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION") 
+            ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? configuration.GetConnectionString("DefaultConnection");
+
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(connectionString));
 
         // ── Repositories ────────────────────────────────────────────────────
         services.AddScoped<IPartRepository, PartRepository>();

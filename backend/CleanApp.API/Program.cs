@@ -77,9 +77,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 
 // ── Hangfire (background jobs) ──────────────────────────────────
+var hangfireConnectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION") 
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(options =>
-        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")!)));
+        options.UseNpgsqlConnection(hangfireConnectionString!)));
 builder.Services.AddHangfireServer();
 builder.Services.AddTransient<LowStockAlertJob>();
 builder.Services.AddTransient<OverdueCreditReminderJob>();
