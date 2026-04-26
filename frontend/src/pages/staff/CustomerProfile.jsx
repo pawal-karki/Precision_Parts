@@ -141,14 +141,25 @@ function VehiclesTab({ customer }) {
   );
 }
 
-function ServiceHistoryTab({ report, reportLoading }) {
-  const appointments = report?.appointments ?? [];
+function ServiceHistoryTab({ publicId }) {
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!publicId) return;
+    api.getCustomerServiceHistory(publicId)
+      .then(setAppointments)
+      .catch(() => toast("Failed to load service history", "error"))
+      .finally(() => setLoading(false));
+  }, [publicId, toast]);
+
   return (
     <div className="bg-white dark:bg-[#1C1C1C] rounded-xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-200 dark:border-neutral-800">
         <h3 className="text-lg font-bold font-headline text-slate-900 dark:text-white">Service History</h3>
       </div>
-      {reportLoading ? (
+      {loading ? (
         <div className="p-6"><TabSkeleton /></div>
       ) : appointments.length === 0 ? (
         <p className="text-slate-500 text-sm p-6 text-center">No service history found.</p>
@@ -186,14 +197,25 @@ function ServiceHistoryTab({ report, reportLoading }) {
   );
 }
 
-function PurchasesTab({ report, reportLoading }) {
-  const purchases = report?.fullPurchases ?? [];
+function PurchasesTab({ publicId }) {
+  const [purchases, setPurchases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!publicId) return;
+    api.getCustomerPurchases(publicId)
+      .then(setPurchases)
+      .catch(() => toast("Failed to load purchase history", "error"))
+      .finally(() => setLoading(false));
+  }, [publicId, toast]);
+
   return (
     <div className="bg-white dark:bg-[#1C1C1C] rounded-xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-200 dark:border-neutral-800">
         <h3 className="text-lg font-bold font-headline text-slate-900 dark:text-white">Full Purchase History</h3>
       </div>
-      {reportLoading ? (
+      {loading ? (
         <div className="p-6"><TabSkeleton /></div>
       ) : purchases.length === 0 ? (
         <p className="text-slate-500 text-sm p-6 text-center">No purchases recorded.</p>
@@ -553,8 +575,8 @@ export default function CustomerProfile() {
             <OverviewTab customer={customer} report={report} reportLoading={reportLoading} />
           )}
           {activeTab === "Vehicles" && <VehiclesTab customer={customer} />}
-          {activeTab === "Service History" && <ServiceHistoryTab report={report} reportLoading={reportLoading} />}
-          {activeTab === "Purchases" && <PurchasesTab report={report} reportLoading={reportLoading} />}
+          {activeTab === "Service History" && <ServiceHistoryTab publicId={id} />}
+          {activeTab === "Purchases" && <PurchasesTab publicId={id} />}
           {activeTab === "Activity Log" && <ActivityLogTab publicId={id} />}
           {activeTab === "Login Activity" && <LoginActivityTab publicId={id} customer={customer} />}
         </div>

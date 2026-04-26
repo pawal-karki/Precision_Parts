@@ -112,5 +112,33 @@ public class StaffCustomersController : ControllerBase
             return NotFound();
         }
     }
+
+    [HttpGet("{publicId:int}/service-history")]
+    public async Task<IActionResult> ServiceHistory(int publicId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _customers.GetServiceHistoryAsync(publicId, cancellationToken);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpGet("{publicId:int}/purchases")]
+    public async Task<IActionResult> Purchases(int publicId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _customers.GetPurchasesAsync(publicId, cancellationToken);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }
                                             

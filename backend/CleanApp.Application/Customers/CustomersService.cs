@@ -306,4 +306,39 @@ public class CustomersService : ICustomersService
             PageSize = pageSize
         };
     }
+
+    public async Task<List<CustomerAppointmentDto>> GetServiceHistoryAsync(int publicId, CancellationToken cancellationToken = default)
+    {
+        var user = await _customers.GetCustomerFullCrmAsync(publicId, cancellationToken)
+            ?? throw new KeyNotFoundException("Customer not found.");
+
+        return user.Appointments
+            .OrderByDescending(a => a.ScheduledAtUtc)
+            .Select(a => new CustomerAppointmentDto
+            {
+                Id = a.Id,
+                ReferenceNumber = $"SRV-{a.Id.ToString()[..6].ToUpper()}",
+                ScheduledAtUtc = a.ScheduledAtUtc,
+                Status = a.Status.ToString(),
+                Notes = a.Notes ?? "",
+                VehicleName = a.Vehicle?.Nickname ?? (a.Vehicle != null ? $"{a.Vehicle.Year} {a.Vehicle.Make}" : "—"),
+                Services = a.Services.Select(s => s.ServiceType?.Name ?? "Service").ToList()
+            }).ToList();
+    }
+
+    public async Task<List<RecentPurchaseDto>> GetPurchasesAsync(int publicId, CancellationToken cancellationToken = default)
+    {
+        var user = await _customers.GetCustomerFullCrmAsync(publicId, cancellationToken)
+            ?? throw new KeyNotFoundException("Customer not found.");
+
+        return user.Invoices
+            .OrderByDescending(i => i.IssueDate)
+            .Select(i => new RecentPurchaseDto
+            {
+                InvoiceNumber = i.InvoiceNumber,
+                IssueDate = i.IssueDate,
+                TotalAmount = i.TotalAmount,
+                Status = i.Status.ToString()
+            }).ToList();
+    }
 }

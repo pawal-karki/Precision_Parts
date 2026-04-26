@@ -95,6 +95,8 @@ class ApiClient {
   getCustomerDetailedReport(pid)                          { return this._get(`/staff/customers/${pid}/detailed-report`); }
   getCustomerActivityLog(pid, page = 1, size = 10)        { return this._get(`/staff/customers/${pid}/activity?page=${page}&size=${size}`); }
   getCustomerLoginActivity(pid, page = 1, size = 10)      { return this._get(`/staff/customers/${pid}/login-activity?page=${page}&size=${size}`); }
+  getCustomerServiceHistory(pid)                          { return this._get(`/staff/customers/${pid}/service-history`); }
+  getCustomerPurchases(pid)                               { return this._get(`/staff/customers/${pid}/purchases`); }
 
   // ── Staff: POS & Invoice ──────────────────────────────────────
   getPosProducts()         { return this._get("/staff/pos/products"); }

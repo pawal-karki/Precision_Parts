@@ -9,4 +9,6 @@ public interface ICustomersService
     Task<CustomerDetailReportDto> GetDetailedReportAsync(int publicId, CancellationToken cancellationToken = default);
     Task<PagedResult<ActivityLogItemDto>> GetActivityLogAsync(int publicId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<PagedResult<LoginActivityItemDto>> GetLoginActivityAsync(int publicId, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<List<CustomerAppointmentDto>> GetServiceHistoryAsync(int publicId, CancellationToken cancellationToken = default);
+    Task<List<RecentPurchaseDto>> GetPurchasesAsync(int publicId, CancellationToken cancellationToken = default);
 }
