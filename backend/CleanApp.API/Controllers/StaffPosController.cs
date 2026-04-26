@@ -16,5 +16,9 @@ public class StaffPosController : ControllerBase
     [HttpGet("products")]
     public async Task<IActionResult> Products(CancellationToken cancellationToken) =>
         Ok(await _pos.GetProductsAsync(cancellationToken));
+
+    [HttpPost("checkout")]
+    public async Task<IActionResult> Checkout([FromBody] CreatePosSaleDto request, CancellationToken cancellationToken) =>
+        Ok(new { InvoiceId = await _pos.CheckoutAsync(request, cancellationToken) });
 }
       

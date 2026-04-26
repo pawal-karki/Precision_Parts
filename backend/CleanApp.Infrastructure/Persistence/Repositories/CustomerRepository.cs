@@ -59,6 +59,15 @@ public class CustomerRepository : ICustomerRepository
         return list;
     }
 
+    public Task<CustomerProfile?> GetProfileByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.CustomerProfiles.FirstOrDefaultAsync(x => x.UserId == id, cancellationToken);
+
+    public Task UpdateProfileAsync(CustomerProfile profile, CancellationToken cancellationToken = default)
+    {
+        _db.CustomerProfiles.Update(profile);
+        return Task.CompletedTask;
+    }
+
     public Task<User?> GetCustomerFullCrmAsync(int publicId, CancellationToken cancellationToken = default) =>
         _db.Users
             .Include(u => u.CustomerProfile)

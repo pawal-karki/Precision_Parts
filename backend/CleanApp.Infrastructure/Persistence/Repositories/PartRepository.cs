@@ -24,10 +24,15 @@ public class PartRepository : IPartRepository
     public Task<Part?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Parts.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public Task<Part?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default) =>
+        _db.Parts.FirstOrDefaultAsync(p => p.Sku == sku, cancellationToken);
+
     public Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default) =>
         _db.Parts.AnyAsync(p => p.Sku == sku, cancellationToken);
 
     public void Add(Part part) => _db.Parts.Add(part);
+
+    public void Update(Part part) => _db.Parts.Update(part);
 
     public void Remove(Part part) => _db.Parts.Remove(part);
 

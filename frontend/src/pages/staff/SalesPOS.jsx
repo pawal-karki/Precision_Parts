@@ -86,56 +86,75 @@ export default function SalesPOS() {
   const tax = (subtotal - loyaltyDiscount) * VAT_RATE;
   const total = subtotal - loyaltyDiscount + tax;
 
-  function completeSale() {
+  async function completeSale() {
     if (cart.length === 0) {
       toast("Cart is empty", "error");
       return;
     }
 
-    const invoiceId = `INV-${String(Date.now()).slice(-5)}`;
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    const dueDate = new Date(now.getTime() + 30 * 86400000).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    try {
+      const dto = {
+        customerId: selectedCustomer.id || null,
+        subtotal,
+        tax,
+        discount: loyaltyDiscount,
+        total,
+        items: cart.map(item => ({
+          sku: item.sku,
+          quantity: item.qty,
+          unitPrice: item.price
+        }))
+      };
 
-    const invoice = {
-      id: invoiceId,
-      date: dateStr,
-      dueDate,
-      customer: {
-        name: selectedCustomer.name,
-        address: selectedCustomer.email ? `Customer File\n${selectedCustomer.email}` : "Walk-in Customer",
-        email: selectedCustomer.email || "",
-      },
-      company: {
-        name: "Precision Parts",
-        address: "Kathmandu, Nepal",
-        email: "accounts@precision-parts.com.np",
-      },
-      items: cart.map((item) => ({
-        name: item.name,
-        sku: item.sku,
-        qty: item.qty,
-        unitPrice: item.price,
-        total: item.price * item.qty,
-      })),
-      subtotal,
-      loyaltyDiscount,
-      tax,
-      total,
-      loyaltyApplied,
-    };
+      const response = await api.createPosSale(dto);
+      const invoiceId = response.invoiceId;
 
-    addSale({ ...invoice, timestamp: now.toISOString() });
-    store.set("lastInvoice", invoice);
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+      const dueDate = new Date(now.getTime() + 30 * 86400000).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
 
-    toast("Sale completed! Invoice generated.", "success");
-    setCart([]);
-    const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/staff";
-    navigate(`${basePath}/invoice`);
+      const invoice = {
+        id: invoiceId,
+        date: dateStr,
+        dueDate,
+        customer: {
+          name: selectedCustomer.name,
+          address: selectedCustomer.email ? `Customer File\n${selectedCustomer.email}` : "Walk-in Customer",
+          email: selectedCustomer.email || "",
+        },
+        company: {
+          name: "Precision Parts",
+          address: "Kathmandu, Nepal",
+          email: "accounts@precision-parts.com.np",
+        },
+        items: cart.map((item) => ({
+          name: item.name,
+          sku: item.sku,
+          qty: item.qty,
+          unitPrice: item.price,
+          total: item.price * item.qty,
+        })),
+        subtotal,
+        loyaltyDiscount,
+        tax,
+        total,
+        loyaltyApplied,
+      };
+
+      addSale({ ...invoice, timestamp: now.toISOString() });
+      store.set("lastInvoice", invoice);
+
+      toast("Sale completed and saved to database!", "success");
+      setCart([]);
+      const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/staff";
+      navigate(`${basePath}/invoice`);
+    } catch (err) {
+      toast("Failed to process sale. Check inventory levels.", "error");
+    }
   }
 
   return (

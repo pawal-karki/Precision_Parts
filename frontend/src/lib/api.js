@@ -99,7 +99,8 @@ class ApiClient {
   getCustomerPurchases(pid)                               { return this._get(`/staff/customers/${pid}/purchases`); }
 
   // ── Staff: POS & Invoice ──────────────────────────────────────
-  getPosProducts()         { return this._get("/staff/pos/products"); }
+  getPosProducts() { return this._get("/staff/pos/products"); }
+  createPosSale(dto) { return this._post("/staff/pos/checkout", dto); }
   getInvoice()             { return this._get("/staff/invoice"); }
 
   // ── Customer: Dashboard ───────────────────────────────────────

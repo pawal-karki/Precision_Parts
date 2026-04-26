@@ -11,6 +11,8 @@ public interface ICustomerRepository
     Task<bool> EmailExistsNormalizedAsync(string normalizedEmail, CancellationToken cancellationToken = default);
     Task<int> CountActiveCustomersAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CustomerProfile>> ListProfilesWithOutstandingCreditTakeAsync(int take, CancellationToken cancellationToken = default);
+    Task<CustomerProfile?> GetProfileByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task UpdateProfileAsync(CustomerProfile profile, CancellationToken cancellationToken = default);
 
     /// <summary>Returns full CRM aggregate: profile, vehicles, last 5 invoices, appointment count, part-request count.</summary>
     Task<User?> GetCustomerFullCrmAsync(int publicId, CancellationToken cancellationToken = default);
@@ -26,4 +28,3 @@ public interface ICustomerRepository
     void Remove(User user);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
-      

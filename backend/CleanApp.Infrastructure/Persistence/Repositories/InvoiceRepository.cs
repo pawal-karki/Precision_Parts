@@ -71,5 +71,10 @@ public class InvoiceRepository : IInvoiceRepository
 
     public Task<int> CountForCustomerExcludingPaidAsync(Guid customerId, CancellationToken cancellationToken = default) =>
         _db.Invoices.CountAsync(i => i.CustomerId == customerId && i.Status != InvoiceStatus.Paid, cancellationToken);
+
+    public void Add(Invoice invoice) => _db.Invoices.Add(invoice);
+
+    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+        _db.SaveChangesAsync(cancellationToken);
 }
        
