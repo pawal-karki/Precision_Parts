@@ -24,5 +24,16 @@ public class CustomerDashboardController : ControllerBase
         var dto = await _dashboard.GetCustomerDashboardAsync(userId, cancellationToken);
         return dto == null ? NotFound() : Ok(dto);
     }
+
+    [HttpGet("ledger")]
+    public async Task<IActionResult> GetLedger(CancellationToken cancellationToken)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (!Guid.TryParse(userIdStr, out var userId))
+            return Unauthorized();
+
+        var dto = await _dashboard.GetCustomerLedgerAsync(userId, cancellationToken);
+        return dto == null ? NotFound() : Ok(dto);
+    }
 }
       

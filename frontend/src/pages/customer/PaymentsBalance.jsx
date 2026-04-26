@@ -32,29 +32,22 @@ export default function PaymentsBalance() {
     let cancelled = false;
     (async () => {
       try {
-        const [orders, dashboard] = await Promise.all([
-          api.getOrderHistory(),
-          api.getCustomerDashboard().catch(() => null),
-        ]);
-        if (!cancelled) {
-          const list = Array.isArray(orders) ? orders : [];
-          const pending = list
-            .filter((o) => o.status === "Processing")
-            .map((o) => ({
-              id: o.id,
-              due: formatDate(o.date),
-              desc: o.items,
-              amount: parseMoney(o.total),
-              raw: o,
-            }));
+        const ledger = await api.getCustomerLedger();
+        if (!cancelled && ledger) {
+          const pending = (ledger.pendingInvoices || []).map((inv) => ({
+            id: inv.invoiceNumber,
+            realId: inv.id,
+            due: formatDate(inv.dueDate || inv.issueDate),
+            desc: `Invoice issued on ${formatDate(inv.issueDate)}`,
+            amount: inv.balanceDue,
+            status: inv.status
+          }));
           setInvoices(pending);
-          if (dashboard?.recentActivity && Array.isArray(dashboard.recentActivity)) {
-            setActivity(dashboard.recentActivity.slice(0, 8));
-          }
+          setActivity(ledger.recentActivity || []);
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
-          toast("Could not load payment data from API", "error");
+          toast(err.message || "Could not load payment data from API", "error");
           setInvoices([]);
           setActivity([]);
         }

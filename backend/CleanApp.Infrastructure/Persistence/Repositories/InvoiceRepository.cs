@@ -50,6 +50,15 @@ public class InvoiceRepository : IInvoiceRepository
         return list;
     }
 
+    public async Task<IReadOnlyList<Invoice>> ListByCustomerIdAsync(Guid customerId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.CustomerId == customerId)
+            .OrderByDescending(i => i.IssueDate)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<int> CountForCustomerExcludingPaidAsync(Guid customerId, CancellationToken cancellationToken = default) =>
         _db.Invoices.CountAsync(i => i.CustomerId == customerId && i.Status != InvoiceStatus.Paid, cancellationToken);
 }
