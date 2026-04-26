@@ -253,7 +253,7 @@ export default function PartsManagement() {
         batchCode: form.batch || null,
         unitOfMeasure: form.unit || null,
         warehouseLocation: form.location || null,
-        imageUrl: form.imageUrl || null,
+        imageUrl: form.imageUrl,
       });
       await reloadParts();
       const status = calcStatus(stock, minStock);

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ export default function SalesPOS() {
   const { add: addSale } = useList("completedSales");
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [cart, setCart] = useState([]);
   const [search, setSearch] = useState("");
@@ -133,7 +134,8 @@ export default function SalesPOS() {
 
     toast("Sale completed! Invoice generated.", "success");
     setCart([]);
-    navigate("/staff/invoice");
+    const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/staff";
+    navigate(`${basePath}/invoice`);
   }
 
   return (

@@ -79,8 +79,8 @@ public class PartsService : IPartsService
         if (dto.ReorderLevel.HasValue) entity.ReorderLevel = dto.ReorderLevel.Value;
         if (dto.BatchCode != null) entity.BatchCode = dto.BatchCode;
         if (dto.UnitOfMeasure != null) entity.UnitOfMeasure = dto.UnitOfMeasure;
-        if (dto.WarehouseLocation != null) entity.WarehouseLocation = dto.WarehouseLocation;
-        if (dto.ImageUrl != null) entity.ImageUrl = dto.ImageUrl;
+        if (dto.WarehouseLocation != null) entity.WarehouseLocation = dto.WarehouseLocation == "" ? null : dto.WarehouseLocation;
+        if (dto.ImageUrl != null) entity.ImageUrl = dto.ImageUrl == "" ? null : dto.ImageUrl;
 
         entity.UpdatedAtUtc = DateTime.UtcNow;
         await _parts.SaveChangesAsync(cancellationToken);
