@@ -61,4 +61,6 @@ appsettings.Development.json
 # Temporary Scripts and Logs
 *.ps1
 *.txt
-stitch_assets/
+# Custom Ignores
+backend/CleanApp.Infrastructure/Persistence/AppDbContextFactory.cs
+

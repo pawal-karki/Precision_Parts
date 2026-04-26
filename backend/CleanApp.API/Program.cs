@@ -121,7 +121,6 @@ if (swaggerEnabled)
 
 // ── Middleware pipeline ─────────────────────────────────────────
 app.UseCors("CorsPolicy");
-app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -131,7 +130,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // Apply migrations
+    // Run migrations on startup
     await db.Database.MigrateAsync();
     await DatabaseSeeder.SeedAsync(db);
 }
