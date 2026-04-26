@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 const navItems = [
   { to: "/staff", icon: "dashboard", label: "Dashboard", end: true },
   { to: "/staff/customers", icon: "group", label: "Customers" },
+  { to: "/staff/bookings", icon: "calendar_month", label: "Bookings" },
   { to: "/staff/sales", icon: "point_of_sale", label: "Sales / POS" },
   { to: "/staff/search", icon: "search", label: "Advanced Search" },
 ];

@@ -26,6 +26,8 @@ import InventoryReports from "@/pages/admin/InventoryReports";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminProfile from "@/pages/admin/AdminProfile";
+import AdminBookings from "@/pages/admin/AdminBookings";
+
 
 import StaffDashboard from "@/pages/staff/StaffDashboard";
 import CustomerManagement from "@/pages/staff/CustomerManagement";
@@ -35,6 +37,8 @@ import CustomerProfile from "@/pages/staff/CustomerProfile";
 import AdvancedSearch from "@/pages/staff/AdvancedSearch";
 import StaffSettings from "@/pages/staff/StaffSettings";
 import StaffProfile from "@/pages/staff/StaffProfile";
+import StaffBookings from "@/pages/staff/StaffBookings";
+
 
 import CustomerDashboard from "@/pages/customer/CustomerDashboard";
 import OrderHistory from "@/pages/customer/OrderHistory";
@@ -79,7 +83,9 @@ export default function App() {
               <Route path="customers/:id" element={<CustomerProfile />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
               <Route path="notifications" element={<Notifications />} />
+              <Route path="bookings" element={<AdminBookings />} />
               <Route path="profile" element={<AdminProfile />} />
+
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 
@@ -94,7 +100,9 @@ export default function App() {
               <Route path="invoice" element={<InvoiceView />} />
               <Route path="search" element={<AdvancedSearch />} />
               <Route path="settings" element={<StaffSettings />} />
+              <Route path="bookings" element={<StaffBookings />} />
               <Route path="profile" element={<StaffProfile />} />
+
             </Route>
 
             {/* Customer routes — protected */}

@@ -11,7 +11,7 @@ namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/customer/appointments")]
-[Authorize(Roles = "Customer")]
+[Authorize]
 public class AppointmentController : ControllerBase
 {
     private readonly AppDbContext _db;
@@ -22,6 +22,7 @@ public class AppointmentController : ControllerBase
         User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
 
     [HttpPost]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentDto dto, CancellationToken ct)
     {
         var userId = GetUserId();
@@ -92,6 +93,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> List(CancellationToken ct)
     {
         var userId = GetUserId();
@@ -117,6 +119,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpGet("services")]
+    [Authorize(Roles = "Customer,Admin,Staff")]
     public async Task<IActionResult> GetServices(CancellationToken ct)
     {
         var services = await _db.ServiceTypes
@@ -133,6 +136,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpPatch("{id}/cancel")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
     {
         var userId = GetUserId();

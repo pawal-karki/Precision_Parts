@@ -140,6 +140,19 @@ class ApiClient {
   getNotifications()       { return this._get("/notifications"); }
   markNotificationRead(id) { return this._patch(`/notifications/${id}/read`, {}); }
   markAllRead()            { return this._patch("/notifications/read-all", {}); }
+
+  // ── Admin: Appointments ──────────────────────────────────────
+  getAdminAppointments()        { return this._get("/admin/appointments"); }
+  getAdminSlotOccupancy(date)   { return this._get(`/admin/appointments/occupancy?date=${date}`); }
+  adminCreateAppointment(dto)   { return this._post("/admin/appointments", dto); }
+  updateAppointmentStatus(id, s) { return this._patch(`/admin/appointments/${id}/status`, { status: s }); }
+  deleteAppointment(id)         { return this._delete(`/admin/appointments/${id}`); }
+
+  // ── Staff: Appointments ──────────────────────────────────────
+  getStaffAppointments()        { return this._get("/staff/appointments"); }
+  getStaffSlotOccupancy(date)   { return this._get(`/staff/appointments/occupancy?date=${date}`); }
+  staffCreateAppointment(dto)   { return this._post("/staff/appointments", dto); }
+  updateStaffAppointmentStatus(id, s) { return this._patch(`/staff/appointments/${id}/status`, { status: s }); }
 }
 
 export const api = new ApiClient();

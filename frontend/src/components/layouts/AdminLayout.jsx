@@ -15,6 +15,7 @@ const navItems = [
   { to: "/admin/sales", icon: "point_of_sale", label: "Sales / POS" },
   { to: "/admin/staff", icon: "badge", label: "Staff" },
   { to: "/admin/customers", icon: "group", label: "Customers" },
+  { to: "/admin/bookings", icon: "calendar_month", label: "Bookings" },
   { to: "/admin/reports", icon: "analytics", label: "Reports" },
   { to: "/admin/vendors", icon: "storefront", label: "Vendors" },
 ];
