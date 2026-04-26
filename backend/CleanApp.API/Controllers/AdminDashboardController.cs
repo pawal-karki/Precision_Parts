@@ -36,5 +36,14 @@ public class AdminDashboardController : ControllerBase
 
     [HttpGet("audit-log")]
     public IActionResult AuditLog() => Ok(_dashboard.GetAuditLog());
+
+    [HttpPost("projection")]
+    public async Task<IActionResult> UpdateProjection([FromBody] UpdateProjectionDto dto, CancellationToken cancellationToken)
+    {
+        await _dashboard.UpdateProjectionAsync(dto.Year, dto.Month, dto.Amount, cancellationToken);
+        return Ok();
+    }
 }
+
+public record UpdateProjectionDto(int Year, int Month, decimal Amount);
     

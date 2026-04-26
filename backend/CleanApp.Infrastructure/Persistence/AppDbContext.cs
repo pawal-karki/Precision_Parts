@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<AiPrediction> AiPredictions => Set<AiPrediction>();
     public DbSet<PartRequest> PartRequests => Set<PartRequest>();
+    public DbSet<MonthlyProjection> MonthlyProjections => Set<MonthlyProjection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IAiPredictionRepository, AiPredictionRepository>();
+        services.AddScoped<IMonthlyProjectionRepository, MonthlyProjectionRepository>();
 
         // ── Email (Resend) ──────────────────────────────────────────────────
         services.Configure<ResendEmailOptions>(

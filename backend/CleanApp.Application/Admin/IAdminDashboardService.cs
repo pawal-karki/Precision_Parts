@@ -10,5 +10,6 @@ public interface IAdminDashboardService
     IReadOnlyList<object> GetActivity();
 
     IReadOnlyList<object> GetAuditLog();
+    Task UpdateProjectionAsync(int year, int month, decimal amount, CancellationToken cancellationToken = default);
 }
      

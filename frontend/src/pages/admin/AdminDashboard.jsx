@@ -37,7 +37,17 @@ import {
 } from "recharts";
 import { generateReportPdf, downloadPdf } from "@/lib/pdf";
 
-const PIE_COLORS = ["#4d6172", "#5e5e5e", "#dee4e0"];
+const PIE_COLORS = [
+  "#0ea5e9", // Sky Blue
+  "#10b981", // Emerald
+  "#f59e0b", // Amber
+  "#8b5cf6", // Violet
+  "#ec4899", // Pink
+  "#f43f5e", // Rose
+  "#6366f1", // Indigo
+  "#06b6d4", // Cyan
+  "#84cc16", // Lime
+];
 import { formatCurrency } from "@/lib/currency";
 
 export default function AdminDashboard() {
@@ -151,7 +161,7 @@ export default function AdminDashboard() {
             <KpiCard
               icon="payments"
               label="Total Revenue"
-              value={formatCurrency(Number(String(kpis.totalRevenue.value).replace(/[^0-9.-]+/g, "")))}
+              value={formatCurrency(Number(kpis.totalRevenue.value))}
               trend={kpis.totalRevenue.trend}
               trendType={kpis.totalRevenue.type}
             />

@@ -2,6 +2,8 @@ using System.Globalization;
 using CleanApp.Application.Demo;
 using CleanApp.Domain.Repositories;
 using CleanApp.Domain.Services;
+using CleanApp.Domain.Entities;
+using CleanApp.Domain.Enums;
 
 namespace CleanApp.Application.Admin;
 
@@ -11,17 +13,20 @@ public class AdminDashboardService : IAdminDashboardService
     private readonly IPartRepository _parts;
     private readonly ICustomerRepository _customers;
     private readonly IDemoContentProvider _demo;
+    private readonly IMonthlyProjectionRepository _projections;
 
     public AdminDashboardService(
         IInvoiceRepository invoices,
         IPartRepository parts,
         ICustomerRepository customers,
-        IDemoContentProvider demo)
+        IDemoContentProvider demo,
+        IMonthlyProjectionRepository projections)
     {
         _invoices = invoices;
         _parts = parts;
         _customers = customers;
         _demo = demo;
+        _projections = projections;
     }
 
     public async Task<AdminKpisDto> GetKpisAsync(CancellationToken cancellationToken = default)
@@ -32,8 +37,9 @@ public class AdminDashboardService : IAdminDashboardService
         var active = await _customers.CountActiveCustomersAsync(cancellationToken);
         var sales = paid.Count;
 
+        // Return raw decimal string to avoid frontend parsing issues with "Rs." prefix
         return new AdminKpisDto(
-            TotalRevenue: new KpiMetricDto(DisplayMoney.Format(revenue), "+12.4%", "up"),
+            TotalRevenue: new KpiMetricDto(revenue.ToString("F2", CultureInfo.InvariantCulture), "+12.4%", "up"),
             TotalSales: new KpiMetricDto(sales.ToString("N0", CultureInfo.InvariantCulture), "+4.2%", "up"),
             ActiveCustomers: new KpiMetricDto(active.ToString(CultureInfo.InvariantCulture), "Steady", "neutral"),
             LowStockItems: new KpiMetricDto(low.ToString(CultureInfo.InvariantCulture), "Action Needed", "error"));
@@ -45,25 +51,51 @@ public class AdminDashboardService : IAdminDashboardService
         var start = today.AddMonths(-11);
         var from = new DateTime(start.Year, start.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var invs = await _invoices.ListByIssueDateFromAsync(from, cancellationToken);
+        
+        var projections = await _projections.ListByYearFromAsync(start.Year, cancellationToken);
 
         var months = new List<RevenueChartPoint>(12);
         for (var i = 0; i < 12; i++)
         {
             var d = start.AddMonths(i);
-            var actual = invs.Where(x => x.IssueDate.Year == d.Year && x.IssueDate.Month == d.Month).Sum(x => x.TotalAmount);
-            var projected = Math.Round(actual * 0.95m, 0);
+            var actual = invs.Where(x => x.IssueDate.Year == d.Year && x.IssueDate.Month == d.Month && x.Status == InvoiceStatus.Paid).Sum(x => x.TotalAmount);
+            
+            var proj = projections.FirstOrDefault(p => p.Year == d.Year && p.Month == d.Month)?.ProjectedAmount 
+                       ?? (actual > 0 ? actual * 1.1m : 50000m); // Default fallback if no projection exists
+            
             months.Add(new RevenueChartPoint(
                 d.ToString("MMM", CultureInfo.InvariantCulture),
                 (double)actual,
-                (double)projected));
+                (double)proj));
         }
 
         return months;
     }
 
+    public async Task UpdateProjectionAsync(int year, int month, decimal amount, CancellationToken cancellationToken = default)
+    {
+        var proj = await _projections.GetByYearAndMonthAsync(year, month, cancellationToken);
+
+        if (proj == null)
+        {
+            _projections.Add(new MonthlyProjection
+            {
+                Year = year,
+                Month = month,
+                ProjectedAmount = amount
+            });
+        }
+        else
+        {
+            proj.ProjectedAmount = amount;
+        }
+
+        await _projections.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<CategoryDistributionSlice>> GetCategoryDistributionAsync(CancellationToken cancellationToken = default)
     {
-        var rows = await _parts.GetCategoryStockDistributionTopAsync(6, cancellationToken);
+        var rows = await _parts.GetCategoryStockDistributionTopAsync(10, cancellationToken); // Increased to 10 for better distribution
         var total = rows.Sum(x => x.StockQty);
         if (total == 0)
             return Array.Empty<CategoryDistributionSlice>();
