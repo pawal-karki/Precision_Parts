@@ -25,6 +25,7 @@ import FinancialReports from "@/pages/admin/FinancialReports";
 import InventoryReports from "@/pages/admin/InventoryReports";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminProfile from "@/pages/admin/AdminProfile";
 
 import StaffDashboard from "@/pages/staff/StaffDashboard";
 import CustomerManagement from "@/pages/staff/CustomerManagement";
@@ -76,6 +77,8 @@ export default function App() {
               <Route path="customers" element={<CustomerManagement />} />
               <Route path="customers/:id" element={<CustomerProfile />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="profile" element={<AdminProfile />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 
@@ -100,7 +103,7 @@ export default function App() {
               <Route path="orders" element={<OrderHistory />} />
               <Route path="parts" element={<PartRequest />} />
               <Route path="ai" element={<AIMaintenanceTrends />} />
-              <Route path="profile" element={<ProfileManagement />} />
+              <Route path="profile" element={<AdminProfile />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="booking" element={<ServiceBooking />} />
               <Route path="booking-success" element={<BookingSuccess />} />

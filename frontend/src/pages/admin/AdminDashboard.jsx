@@ -38,6 +38,7 @@ import {
 import { generateReportPdf, downloadPdf } from "@/lib/pdf";
 
 const PIE_COLORS = ["#4d6172", "#5e5e5e", "#dee4e0"];
+import { formatCurrency } from "@/lib/currency";
 
 export default function AdminDashboard() {
   const [kpis, setKpis] = useState(null);
@@ -150,7 +151,7 @@ export default function AdminDashboard() {
             <KpiCard
               icon="payments"
               label="Total Revenue"
-              value={kpis.totalRevenue.value}
+              value={formatCurrency(Number(String(kpis.totalRevenue.value).replace(/[^0-9.-]+/g, "")))}
               trend={kpis.totalRevenue.trend}
               trendType={kpis.totalRevenue.type}
             />

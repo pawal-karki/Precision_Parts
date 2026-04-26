@@ -21,7 +21,7 @@ const navItems = [
 
 export default function AdminLayout() {
   const { dark, toggle } = useTheme();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const SidebarContent = ({ isMobile = false }) => (
@@ -146,30 +146,42 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-3 md:gap-6">
-            <button type="button" className="hidden sm:block text-slate-600 dark:text-slate-300 hover:text-slate-800 transition-all relative">
+            <NavLink
+              to="/admin/notifications"
+              className={({ isActive }) =>
+                cn(
+                  "hidden sm:block transition-all relative",
+                  isActive ? "text-secondary" : "text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white"
+                )
+              }
+            >
               <Icon name="notifications" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full" />
-            </button>
+              <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-white dark:ring-neutral-950" />
+            </NavLink>
             <button
               type="button"
               onClick={toggle}
-              className="text-slate-600 dark:text-slate-300 hover:text-slate-800 transition-all"
+              className="text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-all"
             >
               <Icon name={dark ? "light_mode" : "dark_mode"} />
             </button>
-            <div className="flex items-center gap-3 pl-3 md:pl-4 border-l border-surface-container-highest dark:border-neutral-800">
+            <NavLink
+              to="/admin/profile"
+              className="flex items-center gap-3 pl-3 md:pl-4 border-l border-surface-container-highest dark:border-neutral-800 group"
+            >
               <div className="hidden sm:block text-right leading-tight">
-                <p className="font-bold text-slate-900 dark:text-neutral-200">
-                  Adrian Vance
+                <p className="font-bold text-slate-900 dark:text-neutral-200 group-hover:text-secondary transition-colors">
+                  {user?.fullName || user?.name || "Adrian Vance"}
                 </p>
                 <p className="text-[10px] text-slate-500 uppercase tracking-tighter">
-                  Chief Engineer
+                  {user?.role || "Staff Member"}
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold">
-                AV
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:scale-105 transition-transform">
+                {(user?.fullName || user?.name || "A").charAt(0).toUpperCase()}
+                {(user?.fullName || user?.name || "V").split(" ").pop()?.charAt(0).toUpperCase()}
               </div>
-            </div>
+            </NavLink>
           </div>
         </header>
 

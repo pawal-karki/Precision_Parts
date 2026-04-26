@@ -65,7 +65,17 @@ export default function PartsManagement() {
   }, [toast]);
 
   useEffect(() => {
-    reloadParts();
+    reloadParts().then(() => {
+      // Handle deep link from notifications
+      const hash = window.location.hash.replace("#", "");
+      if (hash) {
+        const part = store.get("partsInventory")?.find(p => p.sku === hash || p.name.includes(hash));
+        if (part) {
+          openPanel(part);
+          toast(`Inspecting component: ${part.name}`, "info");
+        }
+      }
+    });
   }, [reloadParts]);
 
   const [search, setSearch] = useState("");

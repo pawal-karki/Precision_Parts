@@ -45,6 +45,7 @@ export default function InventoryReports() {
     : report;
 
   const totalItems = filtered.reduce((s, r) => s + r.totalItems, 0);
+  const totalValue = filtered.reduce((s, r) => s + parseAmt(r.value), 0);
 
   const parseAmt = (val) => typeof val === 'number' ? val : Number(String(val).replace(/[^0-9.-]+/g, ""));
 

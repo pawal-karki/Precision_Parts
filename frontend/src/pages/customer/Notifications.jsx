@@ -84,19 +84,56 @@ export default function Notifications() {
   const handleDismiss = async (id) => {
     try {
       await api.markNotificationRead(id);
-      await reload();
+      store.set("notifications", notifications.filter(n => n.id !== id));
       toast("Notification dismissed", "info");
     } catch {
-      toast("Could not dismiss notification", "error");
+      toast("Could not dismiss", "error");
     }
   };
 
   const handleTakeAction = async (notification) => {
-    if (!notification.isRead) {
-      try { await api.markNotificationRead(notification.id); } catch {}
+    const msg = (notification.message + notification.title).toLowerCase();
+    
+    // 1. Mark as read and REMOVE from view immediately
+    try { 
+      await api.markNotificationRead(notification.id);
+      store.set("notifications", notifications.filter(n => n.id !== notification.id));
+    } catch {}
+
+    // 2. Deep Link Routing
+    if (msg.includes("low stock") || msg.includes("inventory") || msg.includes("sku")) {
+      const skuMatch = (notification.message + notification.title).match(/[A-Z0-9-]{5,}/);
+      const skuPart = skuMatch ? `#${skuMatch[0]}` : "";
+      toast(`Inspecting SKU: ${skuMatch ? skuMatch[0] : "Product"}`, "info");
+      window.location.href = `/admin/inventory${skuPart}`;
+      return;
     }
+
+    if (msg.includes("po-") || msg.includes("shipment") || msg.includes("purchase")) {
+      const poMatch = (notification.message + notification.title).match(/PO-[0-9-]+/i);
+      const poPart = poMatch ? `#${poMatch[0].toUpperCase()}` : "";
+      toast(`Opening Order: ${poMatch ? poMatch[0] : "Details"}`, "info");
+      window.location.href = `/admin/purchase-invoices${poPart}`;
+      return;
+    }
+
+    if (msg.includes("staff") || msg.includes("employee") || msg.includes("access")) {
+      window.location.href = "/admin/staff";
+      return;
+    }
+
+    if (msg.includes("revenue") || msg.includes("finance") || msg.includes("report")) {
+      window.location.href = "/admin/reports";
+      return;
+    }
+
+    if (msg.includes("customer") || msg.includes("crm") || msg.includes("account")) {
+      window.location.href = "/admin/customers";
+      return;
+    }
+
+    toast(`Action acknowledged: ${notification.title}`, "success");
     await reload();
-    toast(`Action taken on: ${notification.title}`, "success");
   };
 
   const statTypes = ["error", "warning", "info", "success"];

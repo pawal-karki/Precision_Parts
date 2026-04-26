@@ -41,7 +41,16 @@ export default function PurchaseInvoice() {
         const listInv = Array.isArray(inv) ? inv : [];
         store.set("purchaseInvoices", listInv);
         store.set("vendors", Array.isArray(vend) ? vend : []);
-        if (listInv.length) setSelectedInvoice(listInv[0]);
+        
+        // Handle deep link hash
+        const hash = window.location.hash.replace("#", "").toUpperCase();
+        if (hash) {
+          const matched = listInv.find(i => i.id === hash);
+          if (matched) setSelectedInvoice(matched);
+          else if (listInv.length) setSelectedInvoice(listInv[0]);
+        } else if (listInv.length) {
+          setSelectedInvoice(listInv[0]);
+        }
       })
       .catch(() => toast("Could not load purchase data from API", "error"));
   }, []);
