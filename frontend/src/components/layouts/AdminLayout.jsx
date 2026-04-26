@@ -12,7 +12,7 @@ const navItems = [
   { to: "/admin/audit-log", icon: "fact_check", label: "Audit Log" },
   { to: "/admin/inventory", icon: "inventory_2", label: "Inventory" },
   { to: "/admin/purchase-invoices", icon: "local_shipping", label: "Purchases" },
-  { to: "/staff/sales", icon: "point_of_sale", label: "Sales / POS" },
+  { to: "/admin/sales", icon: "point_of_sale", label: "Sales / POS" },
   { to: "/admin/staff", icon: "badge", label: "Staff" },
   { to: "/admin/customers", icon: "group", label: "Customers" },
   { to: "/admin/reports", icon: "analytics", label: "Reports" },

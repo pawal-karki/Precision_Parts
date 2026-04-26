@@ -392,7 +392,7 @@ export default function CustomerProfile() {
   return (
     <>
       <Link
-        to="/staff/customers"
+        to="/admin/customers"
         className="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700 transition-colors mb-6"
       >
         <Icon name="arrow_back" className="text-sm" />

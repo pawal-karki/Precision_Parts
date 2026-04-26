@@ -72,8 +72,9 @@ export default function App() {
               <Route path="purchase-invoices" element={<PurchaseInvoice />} />
               <Route path="reports" element={<FinancialReports />} />
               <Route path="inventory-reports" element={<InventoryReports />} />
-              <Route path="sales" element={<Navigate to="/admin/purchase-invoices" replace />} />
-              <Route path="customers" element={<Navigate to="/staff/customers" replace />} />
+              <Route path="sales" element={<SalesPOS />} />
+              <Route path="customers" element={<CustomerManagement />} />
+              <Route path="customers/:id" element={<CustomerProfile />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>

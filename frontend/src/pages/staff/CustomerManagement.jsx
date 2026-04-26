@@ -252,7 +252,7 @@ export default function CustomerManagement() {
                     className="border-b border-surface-container dark:border-zinc-800 last:border-0"
                   >
                     <TableCell className="px-6">
-                      <Link to={`/staff/customers/${customer.id}`} className="flex items-center gap-3">
+                      <Link to={`/admin/customers/${customer.id}`} className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-surface-container-high dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-zinc-300">
                           {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                         </div>
@@ -298,7 +298,7 @@ export default function CustomerManagement() {
                           <Icon name="delete" className="text-base" />
                         </button>
                         <Link
-                          to={`/staff/customers/${customer.id}`}
+                          to={`/admin/customers/${customer.id}`}
                           className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-zinc-800 hover:text-on-surface transition-colors"
                           title="View Profile"
                         >
