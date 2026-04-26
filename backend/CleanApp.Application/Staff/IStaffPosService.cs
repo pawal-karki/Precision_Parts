@@ -1,6 +1,6 @@
 namespace CleanApp.Application.Staff;
 
-public record StaffPosProductRow(int Id, string Name, string Sku, double Price, int Stock, string Category);
+public record StaffPosProductRow(int Id, string Name, string Sku, double Price, int Stock, string Category, string? ImageUrl = null);
 
 public record CreatePosSaleDto(
     Guid? CustomerId, 

@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using CleanApp.Domain.Entities;
 using CleanApp.Domain.Enums;
@@ -341,5 +342,20 @@ public class CustomersService : ICustomersService
                 TotalAmount = i.TotalAmount,
                 Status = i.Status.ToString()
             }).ToList();
+    }
+
+    public async Task UpdateProfileAsync(Guid userId, ProfileUpdateDto dto, CancellationToken cancellationToken = default)
+    {
+        var user = await _customers.GetCustomerByIdWithDetailsAsync(userId, cancellationToken)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        if (dto.FullName != null) user.FullName = dto.FullName;
+        if (dto.Email != null) user.Email = dto.Email;
+        if (dto.Phone != null) user.Phone = dto.Phone;
+        if (dto.Region != null) user.Region = dto.Region;
+        if (dto.ImageUrl != null) user.ImageUrl = dto.ImageUrl;
+
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        await _customers.SaveChangesAsync(cancellationToken);
     }
 }

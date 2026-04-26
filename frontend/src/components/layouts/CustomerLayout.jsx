@@ -37,68 +37,75 @@ export default function CustomerLayout() {
     navigate("/");
   };
 
+  const isWebView = new URLSearchParams(window.location.search).get("webview") === "true";
+
   return (
     <div className="min-h-screen">
       {/* Top Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-white/85 dark:bg-[#1C1C1C]/85 backdrop-blur-md shadow-sm dark:shadow-black/20">
-        <div className="flex justify-between items-center w-full px-6 py-3 max-w-screen-2xl mx-auto">
-          <div className="flex items-center gap-8">
-            <NavLink to="/customer" className="text-xl font-bold tracking-tighter text-neutral-800 dark:text-neutral-100 font-headline">
-              Precision Parts
-            </NavLink>
-            <div className="hidden md:flex items-center gap-6">
-              {topLinks.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  end={link.to === "/customer"}
-                  className={({ isActive }) =>
-                    cn(
-                      "font-headline tracking-tight font-semibold transition-all duration-200",
-                      isActive
-                        ? "text-neutral-900 dark:text-white border-b-2 border-stone-400 dark:border-neutral-500 pb-1"
-                        : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
-                    )
-                  }
-                >
-                  {link.label}
-                </NavLink>
-              ))}
+      {!isWebView && (
+        <nav className="fixed top-0 w-full z-50 bg-white/85 dark:bg-[#1C1C1C]/85 backdrop-blur-md shadow-sm dark:shadow-black/20">
+          <div className="flex justify-between items-center w-full px-6 py-3 max-w-screen-2xl mx-auto">
+            <div className="flex items-center gap-8">
+              <NavLink to="/customer" className="text-xl font-bold tracking-tighter text-neutral-800 dark:text-neutral-100 font-headline">
+                Precision Parts
+              </NavLink>
+              <div className="hidden md:flex items-center gap-6">
+                {topLinks.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    end={link.to === "/customer"}
+                    className={({ isActive }) =>
+                      cn(
+                        "font-headline tracking-tight font-semibold transition-all duration-200",
+                        isActive
+                          ? "text-neutral-900 dark:text-white border-b-2 border-stone-400 dark:border-neutral-500 pb-1"
+                          : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+                      )
+                    }
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <NavLink
+                to="/customer/notifications"
+                className="p-2 rounded-full hover:bg-stone-100/50 dark:hover:bg-neutral-800/50 transition-all relative"
+              >
+                <Icon name="notifications" className="text-neutral-700 dark:text-neutral-300" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full" />
+              </NavLink>
+              <button
+                type="button"
+                onClick={toggle}
+                title={dark ? "Light mode" : "Dark mode"}
+                className="p-2 rounded-full hover:bg-stone-100/50 dark:hover:bg-neutral-800/50 transition-all"
+              >
+                <Icon name={dark ? "light_mode" : "dark_mode"} className="text-neutral-700 dark:text-neutral-300" />
+              </button>
+              <NavLink to="/customer/profile" className="group">
+                <div className="w-8 h-8 rounded-full bg-surface-container dark:bg-neutral-700 overflow-hidden ring-2 ring-surface-container dark:ring-neutral-700 shadow-sm group-hover:scale-105 transition-transform">
+                  {user?.imageUrl ? (
+                    <img src={user.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-secondary flex items-center justify-center text-white text-xs font-bold uppercase">
+                      {(user?.fullName || user?.name || "C").charAt(0)}
+                    </div>
+                  )}
+                </div>
+              </NavLink>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <NavLink
-              to="/customer/notifications"
-              className="p-2 rounded-full hover:bg-stone-100/50 dark:hover:bg-neutral-800/50 transition-all relative"
-            >
-              <Icon name="notifications" className="text-neutral-700 dark:text-neutral-300" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full" />
-            </NavLink>
-            <button
-              type="button"
-              onClick={toggle}
-              title={dark ? "Light mode" : "Dark mode"}
-              className="p-2 rounded-full hover:bg-stone-100/50 dark:hover:bg-neutral-800/50 transition-all"
-            >
-              <Icon name={dark ? "light_mode" : "dark_mode"} className="text-neutral-700 dark:text-neutral-300" />
-            </button>
-            <NavLink to="/customer/profile" className="group">
-              <div className="w-8 h-8 rounded-full bg-surface-container dark:bg-neutral-700 overflow-hidden ring-2 ring-surface-container dark:ring-neutral-700 shadow-sm group-hover:scale-105 transition-transform">
-                {user?.imageUrl ? (
-                  <img src={user.imageUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-secondary flex items-center justify-center text-white text-xs font-bold uppercase">
-                    {(user?.fullName || user?.name || "C").charAt(0)}
-                  </div>
-                )}
-              </div>
-            </NavLink>
-          </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* Side Navigation (Desktop) */}
-      <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 pt-20 bg-stone-50 dark:bg-[#0A0A0A] z-40 border-r border-stone-200/50 dark:border-neutral-800/50">
+      <aside className={cn(
+        "hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-stone-50 dark:bg-[#0A0A0A] z-40 border-r border-stone-200/50 dark:border-neutral-800/50",
+        !isWebView ? "pt-20" : "pt-6"
+      )}>
         <div className="px-6 py-4">
           <div className="flex items-center gap-3 mb-0">
             <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center text-white shadow-sm">
@@ -160,7 +167,10 @@ export default function CustomerLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-24 px-6 pb-20 md:pb-12 max-w-screen-2xl mx-auto dark:bg-[#0A0A0A] min-h-screen">
+      <main className={cn(
+        "lg:ml-64 px-6 pb-20 md:pb-12 max-w-screen-2xl mx-auto dark:bg-[#0A0A0A] min-h-screen",
+        !isWebView ? "pt-24" : "pt-8"
+      )}>
         <Outlet />
       </main>
 

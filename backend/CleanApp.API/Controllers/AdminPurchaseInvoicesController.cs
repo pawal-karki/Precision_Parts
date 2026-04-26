@@ -13,5 +13,12 @@ public class AdminPurchaseInvoicesController : ControllerBase
 
     [HttpGet]
     public IActionResult List() => Ok(_demo.PurchaseInvoices);
+
+    [HttpPost("{id}/approve")]
+    public IActionResult Approve(string id)
+    {
+        _demo.ApproveInvoice(id);
+        return Ok();
+    }
 }
            

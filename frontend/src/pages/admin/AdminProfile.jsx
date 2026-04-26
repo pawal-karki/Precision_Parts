@@ -8,53 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-function AdminImageUpload({ value, onChange, username }) {
-  const [uploading, setUploading] = useState(false);
-  const toast = useToast();
+import { ImageDropzone } from "@/components/shared/ImageDropzone";
 
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      // Reusing the same upload logic for administration
-      const res = await api.uploadPartImage(file);
-      onChange(res.imageUrl);
-      toast("Identity document updated", "success");
-    } catch (err) {
-      toast("Verification upload failed", "error");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="relative group w-32 h-32 mx-auto">
-      <div className="w-full h-full rounded-2xl bg-secondary flex items-center justify-center text-3xl font-bold text-white shadow-2xl shadow-secondary/20 overflow-hidden transform rotate-3 transition-transform group-hover:rotate-0 duration-500">
-        {value ? (
-          <img src={value} alt="Admin" className="w-full h-full object-cover" />
-        ) : (
-          <span>{username?.charAt(0) || "A"}</span>
-        )}
-      </div>
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center cursor-pointer">
-        {uploading ? (
-          <Icon name="progress_activity" className="text-white animate-spin text-2xl" />
-        ) : (
-          <Icon name="add_a_photo" className="text-white text-2xl" />
-        )}
-      </div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFile}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-        disabled={uploading}
-      />
-    </div>
-  );
-}
 
 export default function AdminProfile() {
   const { user } = useAuth();
@@ -73,11 +28,15 @@ export default function AdminProfile() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // In a real app, we'd call an update profile API
-      await new Promise(res => setTimeout(res, 1200));
+      await api.updateProfile({
+        fullName: profile.fullName,
+        phone: profile.phone,
+        region: profile.region,
+        imageUrl: profile.imageUrl
+      });
       toast("Industrial authority profile synchronized", "success");
-    } catch {
-      toast("Synchronization failure", "error");
+    } catch (err) {
+      toast(err.message || "Synchronization failure", "error");
     } finally {
       setSaving(false);
     }
@@ -119,10 +78,16 @@ export default function AdminProfile() {
                 <Icon name="security" className="text-9xl" />
               </div>
               <CardContent className="pt-10 flex flex-col items-center">
-                <AdminImageUpload 
+              <ImageDropzone 
                   value={profile?.imageUrl} 
                   onChange={(url) => setProfile({...profile, imageUrl: url})}
-                  username={user?.fullName}
+                  aspect="avatar"
+                  className="w-32 h-32 mx-auto rotate-3 hover:rotate-0 transition-transform duration-500 shadow-2xl"
+                  fallback={
+                    <div className="w-full h-full rounded-full bg-secondary flex items-center justify-center text-3xl font-bold text-white">
+                      <span>{user?.fullName?.charAt(0) || "A"}</span>
+                    </div>
+                  }
                 />
                 
                 <h3 className="text-xl font-black dark:text-white mt-6 font-headline tracking-tight">{profile?.fullName || "Admin"}</h3>

@@ -8,52 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-function StaffImageUpload({ value, onChange, username }) {
-  const [uploading, setUploading] = useState(false);
-  const toast = useToast();
+import { ImageDropzone } from "@/components/shared/ImageDropzone";
 
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const res = await api.uploadPartImage(file);
-      onChange(res.imageUrl);
-      toast("Staff profile image updated", "success");
-    } catch (err) {
-      toast("Upload failed", "error");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="relative group w-32 h-32 mx-auto">
-      <div className="w-full h-full rounded-2xl bg-secondary flex items-center justify-center text-3xl font-bold text-white shadow-lg overflow-hidden border-2 border-surface-container dark:border-neutral-800 transition-all group-hover:scale-[1.02]">
-        {value ? (
-          <img src={value} alt="Staff" className="w-full h-full object-cover" />
-        ) : (
-          <span>{username?.charAt(0) || "S"}</span>
-        )}
-      </div>
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center cursor-pointer">
-        {uploading ? (
-          <Icon name="progress_activity" className="text-white animate-spin text-2xl" />
-        ) : (
-          <Icon name="add_a_photo" className="text-white text-2xl" />
-        )}
-      </div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFile}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-        disabled={uploading}
-      />
-    </div>
-  );
-}
 
 export default function StaffProfile() {
   const { user } = useAuth();
@@ -72,11 +28,15 @@ export default function StaffProfile() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Logic for profile update
-      await new Promise(res => setTimeout(res, 1000));
+      await api.updateProfile({
+        fullName: profile.fullName,
+        phone: profile.phone,
+        region: profile.region,
+        imageUrl: profile.imageUrl
+      });
       toast("Staff profile synchronized successfully", "success");
-    } catch {
-      toast("Synchronization failed", "error");
+    } catch (err) {
+      toast(err.message || "Synchronization failed", "error");
     } finally {
       setSaving(false);
     }
@@ -112,10 +72,16 @@ export default function StaffProfile() {
           <div className="lg:col-span-4 space-y-6">
             <Card className="dark:bg-[#1C1C1C] dark:border-neutral-800 shadow-xl overflow-hidden">
               <CardContent className="pt-10 flex flex-col items-center">
-                <StaffImageUpload 
+                <ImageDropzone 
                   value={profile?.imageUrl} 
                   onChange={(url) => setProfile({...profile, imageUrl: url})}
-                  username={user?.fullName}
+                  aspect="avatar"
+                  className="w-32 h-32 mx-auto"
+                  fallback={
+                    <div className="w-full h-full rounded-full bg-secondary flex items-center justify-center text-3xl font-bold text-white">
+                      <span>{user?.fullName?.charAt(0) || "S"}</span>
+                    </div>
+                  }
                 />
                 
                 <h3 className="text-xl font-bold dark:text-white mt-6 font-headline">{profile?.fullName || "Staff Member"}</h3>

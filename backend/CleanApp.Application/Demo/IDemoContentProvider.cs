@@ -11,4 +11,5 @@ public interface IDemoContentProvider
     IReadOnlyList<object> FinancialReportRows { get; }
     IReadOnlyList<InventoryReportRowDto> InventoryReportFallback { get; }
     object SampleInvoice { get; }
+    void ApproveInvoice(string id);
 }

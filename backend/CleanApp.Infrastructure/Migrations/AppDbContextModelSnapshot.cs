@@ -651,6 +651,9 @@ namespace CleanApp.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PublicId"));
 
+                    b.Property<string>("Region")
+                        .HasColumnType("text");
+
                     b.Property<string>("ResetPasswordOtp")
                         .HasColumnType("text");
 

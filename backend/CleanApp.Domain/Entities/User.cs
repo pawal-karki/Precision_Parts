@@ -11,6 +11,7 @@ public class User : BaseEntity
     public string Email { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
     public string? Phone { get; set; }
+    public string? Region { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public DateTime? EmailVerifiedAtUtc { get; set; }

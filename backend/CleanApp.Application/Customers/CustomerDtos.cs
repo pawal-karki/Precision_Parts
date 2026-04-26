@@ -42,6 +42,15 @@ public class CustomerUpdateDto
     public decimal? Credit { get; set; }
 }
 
+public class ProfileUpdateDto
+{
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? ImageUrl { get; set; }
+    public string? Region { get; set; }
+}
+
 // ── CRM Detailed Report ───────────────────────────────────────────────────
 
 public class CustomerDetailReportDto

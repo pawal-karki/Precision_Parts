@@ -1,42 +1,46 @@
+using System.Dynamic;
+using System.Collections.Generic;
+using System.Linq;
 using CleanApp.Application.Admin;
 
 namespace CleanApp.Application.Demo;
 
 public sealed class DemoContentProvider : IDemoContentProvider
 {
-    public IReadOnlyList<object> PurchaseInvoices { get; } =
-    [
-        (object)new
+    private readonly List<dynamic> _purchaseInvoices;
+
+    public DemoContentProvider()
+    {
+        _purchaseInvoices = new List<dynamic>
         {
-            id = "PO-2024-001",
-            vendor = "Euro Precision GmbH",
-            date = "2024-03-10",
-            status = "Completed",
-            items = new object[]
+            CreateInvoice("PO-2024-001", "Euro Precision GmbH", "2024-03-10", "Completed", 12500, 2500, 15000, new[]
             {
                 new { name = "Titanium Valve Cap", sku = "VC-9921-T", qty = 500, unitPrice = 22.0, total = 11000 },
                 new { name = "Hub Bolt Kit", sku = "HBK-011", qty = 200, unitPrice = 7.5, total = 1500 }
-            },
-            subtotal = 12500,
-            tax = 2500,
-            total = 15000
-        },
-        new
-        {
-            id = "PO-2024-002",
-            vendor = "Brembo SpA",
-            date = "2024-03-12",
-            status = "Pending",
-            items = new object[]
+            }),
+            CreateInvoice("PO-2024-002", "Brembo SpA", "2024-03-12", "Pending", 35500, 7100, 42600, new[]
             {
                 new { name = "Carbon Ceramic Brake Rotor", sku = "BR-CCR-08", qty = 100, unitPrice = 165.0, total = 16500 },
                 new { name = "Brembo Pro Caliper Blue", sku = "CL-BPB-02", qty = 50, unitPrice = 380.0, total = 19000 }
-            },
-            subtotal = 35500,
-            tax = 7100,
-            total = 42600
-        }
-    ];
+            })
+        };
+    }
+
+    private static dynamic CreateInvoice(string id, string vendor, string date, string status, double subtotal, double tax, double total, object[] items)
+    {
+        dynamic inv = new ExpandoObject();
+        inv.id = id;
+        inv.vendor = vendor;
+        inv.date = date;
+        inv.status = status;
+        inv.subtotal = subtotal;
+        inv.tax = tax;
+        inv.total = total;
+        inv.items = items;
+        return inv;
+    }
+
+    public IReadOnlyList<object> PurchaseInvoices => _purchaseInvoices.Cast<object>().ToList();
 
     public IReadOnlyList<object> AuditLog { get; } = DemoAuditLogData.Rows;
 
@@ -107,4 +111,13 @@ public sealed class DemoContentProvider : IDemoContentProvider
         total = 13143.6,
         loyaltyApplied = true
     };
+
+    public void ApproveInvoice(string id)
+    {
+        var inv = _purchaseInvoices.FirstOrDefault(x => x.id == id);
+        if (inv != null)
+        {
+            inv.status = "Completed";
+        }
+    }
 }

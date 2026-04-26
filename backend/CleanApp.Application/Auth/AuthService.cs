@@ -175,6 +175,9 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             Email = user.Email,
             Role = roleName,
+            ImageUrl = user.ImageUrl,
+            Phone = user.Phone,
+            Region = user.Region,
             Token = includeToken ? GenerateJwt(user, roleName) : null
         };
     }

@@ -77,6 +77,7 @@ class ApiClient {
 
   // ── Admin: Purchase Invoices ──────────────────────────────────
   getPurchaseInvoices()    { return this._get("/admin/purchase-invoices"); }
+  approvePurchaseInvoice(id) { return this._post(`/admin/purchase-invoices/${id}/approve`, {}); }
 
   // ── Admin: Financial ─────────────────────────────────────────
   getFinancialSummary()    { return this._get("/admin/financial/summary"); }

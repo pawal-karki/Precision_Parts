@@ -94,6 +94,8 @@ export default function AdminLayout() {
     </>
   );
 
+  const isWebView = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("webview") === "true";
+
   return (
     <div className="flex min-h-screen bg-white dark:bg-neutral-950">
       {/* Mobile Drawer */}
@@ -121,77 +123,80 @@ export default function AdminLayout() {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex h-screen sticky left-0 top-0 w-64 bg-neutral-100 dark:bg-neutral-900 flex-col py-6 font-manrope tracking-tight text-sm border-r border-surface-container dark:border-neutral-800 shrink-0">
-        <SidebarContent />
-      </aside>
+      {!isWebView && (
+        <aside className="hidden lg:flex h-screen sticky left-0 top-0 w-64 bg-neutral-100 dark:bg-neutral-900 flex-col py-6 font-manrope tracking-tight text-sm border-r border-surface-container dark:border-neutral-800 shrink-0">
+          <SidebarContent />
+        </aside>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Top Nav */}
-        <header className="sticky top-0 w-full z-40 bg-white/85 dark:bg-neutral-950/85 backdrop-blur-xl flex justify-between items-center h-16 px-4 md:px-8 shadow-sm dark:shadow-none font-manrope text-sm transition-all duration-300">
-          <div className="flex items-center gap-2 md:gap-4 flex-1 mr-4">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 rounded-lg transition-colors"
-            >
-              <Icon name="menu" />
-            </button>
-            <div className="flex items-center bg-surface-container dark:bg-neutral-900 rounded-lg px-3 py-1.5 w-full max-w-sm">
-              <Icon name="search" className="text-slate-400 mr-2" />
-              <input
-                className="bg-transparent border-none focus:ring-0 text-sm w-full text-on-surface-variant dark:text-neutral-300 placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
-                placeholder="Search inventory..."
-                type="text"
-              />
+        {!isWebView && (
+          <header className="sticky top-0 w-full z-40 bg-white/85 dark:bg-neutral-950/85 backdrop-blur-xl flex justify-between items-center h-16 px-4 md:px-8 shadow-sm dark:shadow-none font-manrope text-sm transition-all duration-300">
+            <div className="flex items-center gap-2 md:gap-4 flex-1 mr-4">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-2 hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 rounded-lg transition-colors"
+              >
+                <Icon name="menu" />
+              </button>
+              <div className="flex items-center bg-surface-container dark:bg-neutral-900 rounded-lg px-3 py-1.5 w-full max-w-sm">
+                <Icon name="search" className="text-slate-400 mr-2" />
+                <input
+                  className="bg-transparent border-none focus:ring-0 text-sm w-full text-on-surface-variant dark:text-neutral-300 placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+                  placeholder="Search inventory..."
+                  type="text"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 md:gap-6">
-            <NavLink
-              to="/admin/notifications"
-              className={({ isActive }) =>
-                cn(
-                  "hidden sm:block transition-all relative",
-                  isActive ? "text-secondary" : "text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white"
-                )
-              }
-            >
-              <Icon name="notifications" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-white dark:ring-neutral-950" />
-            </NavLink>
-            <button
-              type="button"
-              onClick={toggle}
-              className="text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-all"
-            >
-              <Icon name={dark ? "light_mode" : "dark_mode"} />
-            </button>
-            <NavLink
-              to="/admin/profile"
-              className="flex items-center gap-3 pl-3 md:pl-4 border-l border-surface-container-highest dark:border-neutral-800 group"
-            >
-              <div className="hidden sm:block text-right leading-tight">
-                <p className="font-bold text-slate-900 dark:text-neutral-200 group-hover:text-secondary transition-colors">
-                  {user?.fullName || user?.name || "Adrian Vance"}
-                </p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-tighter">
-                  {user?.role || "Staff Member"}
-                </p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-                {user?.imageUrl ? (
-                  <img src={user.imageUrl} alt="Admin" className="w-full h-full object-cover" />
-                ) : (
-                  <>
-                    {(user?.fullName || user?.name || "A").charAt(0).toUpperCase()}
-                    {(user?.fullName || user?.name || "V").split(" ").pop()?.charAt(0).toUpperCase()}
-                  </>
-                )}
-              </div>
-            </NavLink>
-          </div>
-        </header>
-
+            <div className="flex items-center gap-3 md:gap-6">
+              <NavLink
+                to="/admin/notifications"
+                className={({ isActive }) =>
+                  cn(
+                    "hidden sm:block transition-all relative",
+                    isActive ? "text-secondary" : "text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white"
+                  )
+                }
+              >
+                <Icon name="notifications" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-white dark:ring-neutral-950" />
+              </NavLink>
+              <button
+                type="button"
+                onClick={toggle}
+                className="text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-all"
+              >
+                <Icon name={dark ? "light_mode" : "dark_mode"} />
+              </button>
+              <NavLink
+                to="/admin/profile"
+                className="flex items-center gap-3 pl-3 md:pl-4 border-l border-surface-container-highest dark:border-neutral-800 group"
+              >
+                <div className="hidden sm:block text-right leading-tight">
+                  <p className="font-bold text-slate-900 dark:text-neutral-200 group-hover:text-secondary transition-colors">
+                    {user?.fullName || user?.name || "Adrian Vance"}
+                  </p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-tighter">
+                    {user?.role || "Staff Member"}
+                  </p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                  {user?.imageUrl ? (
+                    <img src={user.imageUrl} alt="Admin" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      {(user?.fullName || user?.name || "A").charAt(0).toUpperCase()}
+                      {(user?.fullName || user?.name || "V").split(" ").pop()?.charAt(0).toUpperCase()}
+                    </>
+                  )}
+                </div>
+              </NavLink>
+            </div>
+          </header>
+        )}
         <div className="p-4 md:p-8 space-y-8 dark:bg-neutral-950 flex-1">
           <Outlet />
         </div>

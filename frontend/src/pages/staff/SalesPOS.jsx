@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useList, store } from "@/lib/store";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency, VAT_RATE, LOYALTY_THRESHOLD, LOYALTY_DISCOUNT_RATE } from "@/lib/currency";
 import {
@@ -199,11 +199,19 @@ export default function SalesPOS() {
                 onClick={() => addToCart(product)}
                 className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-4 border border-surface-container-low dark:border-neutral-800/50 cursor-pointer hover:border-secondary hover:shadow-glass transition-all group"
               >
-                <div className="h-24 bg-surface-container-low dark:bg-neutral-800 rounded-lg mb-3 flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
-                  <Icon
-                    name="settings_input_component"
-                    className="text-3xl text-on-surface-variant/30 dark:text-neutral-600"
-                  />
+                <div className="h-24 bg-surface-container-low dark:bg-neutral-800 rounded-lg mb-3 flex items-center justify-center group-hover:bg-secondary/10 transition-colors overflow-hidden">
+                  {product.imageUrl ? (
+                    <img
+                      src={getImageUrl(product.imageUrl)}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <Icon
+                      name="inventory_2"
+                      className="text-3xl text-on-surface-variant/30 dark:text-neutral-600"
+                    />
+                  )}
                 </div>
                 <h4 className="font-semibold text-sm truncate">{product.name}</h4>
                 <p className="text-[10px] font-mono text-on-surface-variant dark:text-neutral-500 mt-0.5">

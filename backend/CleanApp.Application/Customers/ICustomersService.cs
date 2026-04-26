@@ -1,3 +1,5 @@
+using System;
+
 namespace CleanApp.Application.Customers;
 
 public interface ICustomersService
@@ -11,4 +13,5 @@ public interface ICustomersService
     Task<PagedResult<LoginActivityItemDto>> GetLoginActivityAsync(int publicId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<List<CustomerAppointmentDto>> GetServiceHistoryAsync(int publicId, CancellationToken cancellationToken = default);
     Task<List<RecentPurchaseDto>> GetPurchasesAsync(int publicId, CancellationToken cancellationToken = default);
+    Task UpdateProfileAsync(Guid userId, ProfileUpdateDto dto, CancellationToken cancellationToken = default);
 }

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 
+import { ImageDropzone } from "@/components/shared/ImageDropzone";
+
 const vehicleImages = [
   "https://lh3.googleusercontent.com/aida-public/AB6AXuB6cMTs1PPSCYKTA6AS-Nc_GAay9K3npVFM-eTwfYuOPtcT7UbZkkurrWx5XmtkYErx0RSiR3LLGsxRaDLLWChPo13S_-JdlFbsdfmmKPzbSkY8j95inntK8HYY0iyVZTPQpsn2Xct1qtZbD26lJI0tE6ncj9wRAgKk4MRcUi4blVIB_hU9CoG9eyBKWi8VsQyE30Dq_MvBlBYKFmT8UNJTsfpTkKJ4fY0rbVrvnHU7roLtPcq8SWz5o71E1hTypP5g3HoevgyRTg",
   "https://lh3.googleusercontent.com/aida-public/AB6AXuANBhDA3itFqwDD-dvMfvcjdUzb0y3gjRQvZ14vhlDzrRo8VC3CpJjZ73dbnYFhfvGTHXcX6XJ60UhG7Q9fGE_ujnW7uRT8ZaOK3_0mBvJ-G6zp-aXeCR-iPvC2sDQqV-dJDAsgkz59uwf5ykiPm2vU5RBxa1wKQkh2bEAReHTTt1WMfjDTZ-MRnvHMXIaxGaESZQMGHpjfems0h0BW2AE1vdXT2gZVfVHs2-GA44VoED15HR7v7DlpeaEr02LAMbVbkJAcHaljEg",
@@ -15,98 +17,6 @@ const vehicleImages = [
 
 const emptyVehicle = { nickname: "", mileageKm: "", imageUrl: null };
 
-function VehicleImageUpload({ value, onChange }) {
-  const [uploading, setUploading] = useState(false);
-  const toast = useToast();
-
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const res = await api.uploadPartImage(file);
-      onChange(res.imageUrl);
-      toast("Vehicle image ready", "success");
-    } catch (err) {
-      toast("Image upload failed", "error");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="relative group w-full h-40 rounded-xl bg-surface-container-low dark:bg-neutral-800 flex items-center justify-center overflow-hidden border-2 border-dashed border-surface-container dark:border-neutral-700 hover:border-secondary transition-colors cursor-pointer">
-      {value ? (
-        <img src={getImageUrl(value)} alt="Vehicle Preview" className="w-full h-full object-cover" />
-      ) : (
-        <div className="flex flex-col items-center gap-2 text-on-surface-variant">
-          <Icon name={uploading ? "progress_activity" : "add_a_photo"} className={uploading ? "animate-spin text-2xl" : "text-2xl"} />
-          <span className="text-[10px] font-bold uppercase tracking-wider">{uploading ? "Uploading..." : "Upload Vehicle Image"}</span>
-        </div>
-      )}
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFile}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-        disabled={uploading}
-      />
-      {value && (
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Icon name="edit" className="text-white text-xl" />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ProfileImageUpload({ value, onChange, username }) {
-  const [uploading, setUploading] = useState(false);
-  const toast = useToast();
-
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const res = await api.uploadPartImage(file);
-      onChange(res.imageUrl);
-      toast("Profile photo updated", "success");
-    } catch (err) {
-      toast("Upload failed", "error");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="relative group w-24 h-24 mb-6">
-      <div className="w-full h-full rounded-full bg-secondary flex items-center justify-center text-4xl font-extrabold text-on-secondary font-headline shadow-lg overflow-hidden border-4 border-surface-container-low dark:border-[#1C1C1C]">
-        {value ? (
-          <img src={getImageUrl(value)} alt="Profile" className="w-full h-full object-cover" />
-        ) : (
-          <span>{username?.charAt(0).toUpperCase()}</span>
-        )}
-      </div>
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center cursor-pointer">
-        {uploading ? (
-          <Icon name="progress_activity" className="text-white animate-spin text-xl" />
-        ) : (
-          <Icon name="photo_camera" className="text-white text-xl" />
-        )}
-      </div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFile}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-        disabled={uploading}
-      />
-    </div>
-  );
-}
 
 export default function ProfileManagement() {
   const { user } = useAuth();
@@ -152,11 +62,16 @@ export default function ProfileManagement() {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      // Profile update logic...
-      await new Promise(res => setTimeout(res, 800));
+      await api.updateProfile({
+        fullName: profile.fullName || profile.name,
+        email: profile.email,
+        phone: profile.phone || profile.phoneNumber,
+        region: profile.region,
+        imageUrl: profile.imageUrl
+      });
       toast("Profile updated successfully!", "success");
-    } catch {
-      toast("Could not save profile", "error");
+    } catch (err) {
+      toast(err.message || "Could not save profile", "error");
     } finally {
       setSaving(false);
     }
@@ -252,10 +167,17 @@ export default function ProfileManagement() {
           >
             {/* Avatar Section */}
             <div className="flex flex-col items-center mb-6">
-              <ProfileImageUpload 
+              <ImageDropzone 
                 value={profile?.imageUrl} 
                 onChange={(url) => setProfile({...profile, imageUrl: url})}
-                username={profile?.fullName || user?.fullName}
+                aspect="avatar"
+                className="w-32 h-32 mb-4"
+                label="Photo"
+                fallback={
+                  <div className="w-full h-full rounded-full bg-secondary flex items-center justify-center text-4xl font-extrabold text-on-secondary font-headline shadow-lg overflow-hidden border-4 border-surface-container-low dark:border-[#1C1C1C]">
+                    <span>{(profile?.fullName || user?.fullName)?.charAt(0).toUpperCase()}</span>
+                  </div>
+                }
               />
               <h2 className="text-xl font-bold font-headline text-on-surface dark:text-white">
                 {profile?.fullName || profile?.name || user?.name || "Customer"}
@@ -443,9 +365,11 @@ export default function ProfileManagement() {
         <div className="space-y-4">
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2 block">Vehicle Appearance</label>
-            <VehicleImageUpload 
+            <ImageDropzone 
               value={vehicleForm.imageUrl} 
               onChange={(url) => setVehicleForm({...vehicleForm, imageUrl: url})} 
+              aspect="rectangle"
+              label="Upload Vehicle Image"
             />
           </div>
           <div>

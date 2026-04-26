@@ -206,12 +206,12 @@ export default function BookingsManagement({ role = "Admin" }) {
       </section>
 
       {/* Filters & Search */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center bg-surface-container-lowest dark:bg-[#1C1C1C] p-2 rounded-2xl border border-outline-variant shadow-sm backdrop-blur-sm">
+      <div className="relative z-50 flex flex-col lg:flex-row gap-4 items-start lg:items-center bg-surface-container-lowest dark:bg-[#1C1C1C] p-2 rounded-2xl border border-outline-variant shadow-sm backdrop-blur-sm">
         <div className="relative flex-1 max-w-md group">
           <Icon name="search" className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors" />
           <Input 
             placeholder="Search by customer name or reference..." 
-            className="pl-12 h-12 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
+            className="pl-12 h-12 text-sm bg-surface-container-low/50 dark:bg-neutral-800/30 border-none rounded-xl focus:ring-0 focus:outline-none transition-all group-hover:bg-surface-container dark:group-hover:bg-neutral-800/50"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -231,13 +231,16 @@ export default function BookingsManagement({ role = "Admin" }) {
             </Button>
 
             {showDatePicker && (
-              <div className="absolute top-full left-0 z-50 mt-2">
+              <div className="absolute top-[calc(100%+8px)] left-0 z-[100]">
                 <div 
-                  className="fixed inset-0" 
-                  onClick={() => setShowDatePicker(false)} 
+                  className="fixed inset-0 cursor-default" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDatePicker(false);
+                  }}
                 />
                 <Calendar
-                  className="relative animate-in fade-in zoom-in-95 duration-200"
+                  className="relative animate-in fade-in zoom-in-95 duration-200 shadow-2xl"
                   selected={dateFilter ? new Date(dateFilter) : null}
                   onSelect={(date) => {
                     setDateFilter(date.toISOString().split("T")[0]);

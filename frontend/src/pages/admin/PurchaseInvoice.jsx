@@ -114,11 +114,16 @@ export default function PurchaseInvoice() {
     toast(`Purchase order ${id} created`, "success");
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedInvoice) return;
-    updateInvoice(selectedInvoice.id, { status: "Completed" });
-    setSelectedInvoice((prev) => ({ ...prev, status: "Completed" }));
-    toast(`${selectedInvoice.id} approved`, "success");
+    try {
+      await api.approvePurchaseInvoice(selectedInvoice.id);
+      updateInvoice(selectedInvoice.id, { status: "Completed" });
+      setSelectedInvoice((prev) => ({ ...prev, status: "Completed" }));
+      toast(`${selectedInvoice.id} approved`, "success");
+    } catch {
+      toast("Failed to approve purchase order", "error");
+    }
   };
 
   const handleExportPdf = () => {

@@ -25,6 +25,7 @@ import {
   TableCell,
 } from "@/components/ui/data-table";
 import { Combobox } from "@/components/ui/combobox";
+import { ImageDropzone } from "@/components/shared/ImageDropzone";
 
 const emptyForm = {
   name: "",
@@ -48,88 +49,6 @@ function calcStatus(stock, minStock) {
 
 const statusVariant = (status) =>
   ({ "In Stock": "success", "Low Stock": "warning", Critical: "error", Refilling: "neutral" })[status] ?? "neutral";
-
-function ImageDropzone({ value, onChange, className = "" }) {
-  const [uploading, setUploading] = useState(false);
-  const toast = useToast();
-  const inputRef = useRef(null);
-
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const res = await api.uploadPartImage(file);
-      onChange(res.imageUrl);
-      toast("Image uploaded successfully", "success");
-    } catch (err) {
-      toast(err.message || "Upload failed", "error");
-    } finally {
-      if (inputRef.current) inputRef.current.value = "";
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className={`relative group ${className}`}>
-      <div className={`w-full aspect-square rounded-2xl overflow-hidden border-2 border-dashed transition-all duration-300 flex items-center justify-center bg-surface-container-low dark:bg-neutral-800 ${
-        value ? "border-transparent relative" : "border-outline-variant dark:border-neutral-700 hover:border-secondary dark:hover:border-neutral-500"
-      }`}>
-        {value ? (
-          <>
-            <img src={getImageUrl(value)} alt="Preview" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm pointer-events-auto z-10">
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (inputRef.current) inputRef.current.click(); }}
-                className="px-4 py-1.5 bg-white text-black rounded-full text-xs font-bold shadow-lg hover:scale-105 transition-transform"
-              >
-                Change Image
-              </button>
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(""); }}
-                className="px-4 py-1.5 bg-error text-white rounded-full text-xs font-bold shadow-lg hover:scale-105 transition-transform"
-              >
-                Remove Image
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-2 text-on-surface-variant dark:text-neutral-500 pointer-events-none">
-            {uploading ? (
-              <Icon name="progress_activity" className="text-3xl animate-spin" />
-            ) : (
-              <>
-                <Icon name="add_a_photo" className="text-3xl opacity-50" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Upload Image</span>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-      {!value && (
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFile}
-          className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed z-0"
-          disabled={uploading}
-        />
-      )}
-      {value && (
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFile}
-          className="hidden"
-          disabled={uploading}
-        />
-      )}
-    </div>
-  );
-}
 
 export default function PartsManagement() {
   const { list: parts } = useList("partsInventory");

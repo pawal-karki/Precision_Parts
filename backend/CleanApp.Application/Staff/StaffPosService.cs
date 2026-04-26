@@ -30,7 +30,8 @@ public class StaffPosService : IStaffPosService
             p.Sku,
             (double)p.UnitPrice,
             p.StockQty,
-            p.Category?.Name ?? "General")).ToList();
+            p.Category?.Name ?? "General",
+            p.ImageUrl)).ToList();
     }
 
     public async Task<string> CheckoutAsync(CreatePosSaleDto request, CancellationToken cancellationToken = default)

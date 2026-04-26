@@ -51,28 +51,40 @@ export function Calendar({
   };
 
   return (
-    <div className={cn("p-4 bg-white dark:bg-neutral-900 rounded-2xl border border-outline-variant shadow-2xl animate-in fade-in zoom-in-95 duration-200", className)} {...props}>
-      <div className="flex items-center justify-between mb-5 px-1">
-        <span className="text-xs font-black uppercase tracking-widest text-on-surface dark:text-neutral-100">
-          {monthNames[month]} <span className="text-secondary">{year}</span>
-        </span>
-        <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-outline-variant hover:bg-secondary/10 hover:text-secondary transition-all" onClick={prevMonth}>
+    <div className={cn("p-6 bg-white dark:bg-[#1A1A1A] rounded-[32px] border border-outline-variant shadow-[0_20px_50px_rgba(0,0,0,0.15)] animate-in fade-in zoom-in-95 duration-300 w-80", className)} {...props}>
+      <div className="flex items-center justify-between mb-8 px-2">
+        <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-on-surface dark:text-neutral-200">
+          {monthNames[month]} <span className="text-secondary ml-1">{year}</span>
+        </h3>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-8 w-8 rounded-full border-outline-variant hover:bg-secondary/10 hover:text-secondary hover:border-secondary/30 transition-all duration-300" 
+            onClick={prevMonth}
+          >
             <Icon name="chevron_left" className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-outline-variant hover:bg-secondary/10 hover:text-secondary transition-all" onClick={nextMonth}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-8 w-8 rounded-full border-outline-variant hover:bg-secondary/10 hover:text-secondary hover:border-secondary/30 transition-all duration-300" 
+            onClick={nextMonth}
+          >
             <Icon name="chevron_right" className="h-4 w-4" />
           </Button>
         </div>
       </div>
       
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-outline-variant uppercase mb-3">
+      <div className="grid grid-cols-7 gap-1 text-center mb-4">
         {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => (
-          <span key={d} className="w-9 h-9 flex items-center justify-center">{d}</span>
+          <span key={d} className="text-[9px] font-black text-on-surface-variant/40 dark:text-neutral-500 uppercase tracking-widest h-9 w-9 flex items-center justify-center">
+            {d}
+          </span>
         ))}
       </div>
       
-      <div className="grid grid-cols-7 gap-1 text-center font-sans">
+      <div className="grid grid-cols-7 gap-1 text-center">
         {Array.from({ length: firstDay }).map((_, i) => (
           <div key={`empty-${i}`} className="h-9 w-9" />
         ))}
@@ -86,14 +98,14 @@ export function Calendar({
               key={d}
               onClick={() => onSelect(new Date(year, month, d))}
               className={cn(
-                "h-9 w-9 text-xs p-0 font-bold transition-all rounded-xl flex items-center justify-center relative group",
+                "h-9 w-9 text-xs p-0 font-bold transition-all duration-300 rounded-full flex items-center justify-center relative group",
                 active 
-                  ? "bg-secondary text-on-secondary shadow-lg shadow-secondary/30 scale-110 z-10" 
+                  ? "bg-secondary text-on-secondary shadow-xl shadow-secondary/40 scale-110 z-10" 
                   : "hover:bg-secondary/10 hover:text-secondary text-on-surface dark:text-neutral-300",
-                today && !active && "border border-secondary/30 text-secondary"
+                today && !active && "text-secondary ring-1 ring-secondary/20"
               )}
             >
-              {d}
+              <span className="relative z-10">{d}</span>
               {today && (
                 <span className={cn(
                   "absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full",
