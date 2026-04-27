@@ -103,7 +103,7 @@ export default function App() {
               <Route path="settings" element={<StaffSettings />} />
               <Route path="bookings" element={<StaffBookings />} />
               <Route path="profile" element={<StaffProfile />} />
-
+              <Route path="notifications" element={<Notifications />} />
             </Route>
 
             {/* Customer routes — protected */}

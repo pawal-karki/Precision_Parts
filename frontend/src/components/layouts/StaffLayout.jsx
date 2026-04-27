@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import { NotificationBell } from "@/components/shared/NotificationBell";
 
 const navItems = [
   { to: "/staff", icon: "dashboard", label: "Dashboard", end: true },
@@ -160,15 +161,8 @@ export default function StaffLayout() {
                 />
               </div>
             </div>
-
             <div className="flex items-center gap-3 md:gap-6">
-              <button
-                type="button"
-                className="hidden sm:block text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-all relative"
-              >
-                <Icon name="notifications" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-white dark:ring-neutral-950" />
-              </button>
+              <NotificationBell to="/staff/notifications" />
               <button
                 type="button"
                 onClick={toggle}
