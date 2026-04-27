@@ -1,13 +1,3 @@
-**System Role:** Act as an Expert Full-Stack Developer and System Architect with deep expertise in .NET 8, C#, Entity Framework Core, React, Tailwind CSS, and Clean Architecture.
-
-**Context:** Working on the `Precision_Parts` repository. I need to add a Bookings management page for Admins and Staff. 
-
-**Task:**
-1. **Frontend:** Create `AdminBookings.jsx` and `StaffBookings.jsx` (or a shared component) reusing UI elements from the existing Client-side booking page. Include a Data Table to view all bookings and a form to make a booking for a customer.
-2. **Backend:** Implement CRUD operations in `AdminAppointmentController.cs` and `StaffAppointmentController.cs` (or respective services).
-3. **Slot Tracking logic:** In the booking form, when selecting a time slot, query the backend to display how many bookings are currently active/pending for that specific time slot so staff can avoid overbooking.
-4. **Git Workflow:** Provide the code file by file. Once I reply confirming that the feature works perfectly, generate the exact `git add <file_paths>` commands for all created/modified files, followed by a conventional `git commit -m "feat: add admin and staff bookings management with slot tracking"` command.# Visual Studio / .NET
-
 ## Build results
 [Dd]ebug/
 [Dd]ebugPublic/
