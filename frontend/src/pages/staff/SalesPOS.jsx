@@ -175,12 +175,12 @@ export default function SalesPOS() {
           </section>
 
           {/* Search */}
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div className="relative group">
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-secondary transition-colors" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-12 bg-white dark:bg-[#1C1C1C] border-surface-container dark:border-neutral-800 rounded-2xl focus:ring-secondary/20 shadow-sm"
               placeholder="Search parts by name or SKU..."
             />
           </div>
@@ -199,7 +199,7 @@ export default function SalesPOS() {
                 onClick={() => addToCart(product)}
                 className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-4 border border-surface-container-low dark:border-neutral-800/50 cursor-pointer hover:border-secondary hover:shadow-glass transition-all group"
               >
-                <div className="h-24 bg-surface-container-low dark:bg-neutral-800 rounded-lg mb-3 flex items-center justify-center group-hover:bg-secondary/10 transition-colors overflow-hidden">
+                <div className="h-32 bg-surface-container-low dark:bg-neutral-800 rounded-lg mb-3 flex items-center justify-center group-hover:bg-secondary/10 transition-all duration-300 overflow-hidden border border-transparent group-hover:border-secondary/20 relative">
                   {product.imageUrl ? (
                     <img
                       src={getImageUrl(product.imageUrl)}
@@ -209,9 +209,12 @@ export default function SalesPOS() {
                   ) : (
                     <Icon
                       name="inventory_2"
-                      className="text-3xl text-on-surface-variant/30 dark:text-neutral-600"
+                      className="text-4xl text-on-surface-variant/30 dark:text-neutral-600 transition-transform group-hover:scale-110"
                     />
                   )}
+                  <div className="absolute inset-0 bg-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Icon name="add" className="text-secondary text-2xl" />
+                  </div>
                 </div>
                 <h4 className="font-semibold text-sm truncate">{product.name}</h4>
                 <p className="text-[10px] font-mono text-on-surface-variant dark:text-neutral-500 mt-0.5">

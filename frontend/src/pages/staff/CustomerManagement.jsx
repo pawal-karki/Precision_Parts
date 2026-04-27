@@ -197,12 +197,12 @@ export default function CustomerManagement() {
         {/* Search & Filters */}
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-[240px] max-w-md">
-            <div className="relative">
-              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="relative group">
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-secondary transition-colors" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-11 bg-white dark:bg-[#1C1C1C] border-surface-container dark:border-neutral-800/50 rounded-xl focus:ring-secondary/20"
                 placeholder="Search customers by name or email..."
               />
             </div>
@@ -213,10 +213,10 @@ export default function CustomerManagement() {
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
                 className={cn(
-                  "px-3 py-1.5 text-xs font-bold uppercase rounded-full transition-colors",
+                  "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full transition-all duration-200",
                   activeFilter === filter
-                    ? "bg-secondary text-white"
-                    : "bg-surface-container-low dark:bg-zinc-800 text-on-surface-variant dark:text-zinc-400 hover:bg-surface-container dark:hover:bg-zinc-700"
+                    ? "bg-secondary text-white shadow-lg shadow-secondary/20 scale-105"
+                    : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant dark:text-zinc-400 hover:bg-surface-container dark:hover:bg-neutral-700"
                 )}
               >
                 {filter}
@@ -226,10 +226,10 @@ export default function CustomerManagement() {
         </div>
 
         {/* Table */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-surface-container-low dark:border-zinc-800">
+        <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl overflow-hidden border border-surface-container-low dark:border-neutral-800/50 shadow-sm">
           <Table>
             <TableHeader>
-              <tr className="bg-surface-container-low/50 dark:bg-zinc-800/50 border-b border-surface-container dark:border-zinc-800">
+              <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
                 <TableHead className="px-6">Customer</TableHead>
                 <TableHead className="px-6">Type</TableHead>
                 <TableHead className="px-6">Total Spent</TableHead>
@@ -252,15 +252,15 @@ export default function CustomerManagement() {
                     className="border-b border-surface-container dark:border-zinc-800 last:border-0"
                   >
                     <TableCell className="px-6">
-                      <Link to={`/admin/customers/${customer.id}`} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-surface-container-high dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-zinc-300">
+                      <Link to={`/admin/customers/${customer.id}`} className="flex items-center gap-3 group/item">
+                        <div className="w-10 h-10 rounded-xl bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-zinc-300 group-hover/item:bg-secondary/10 group-hover/item:text-secondary transition-colors border border-transparent group-hover/item:border-secondary/20">
                           {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                         </div>
                         <div>
-                          <p className="font-semibold text-on-surface dark:text-zinc-200 hover:text-secondary transition-colors">
+                          <p className="font-bold text-on-surface dark:text-zinc-100 group-hover/item:text-secondary transition-colors">
                             {customer.name}
                           </p>
-                          <p className="text-[10px] text-on-surface-variant dark:text-zinc-500">{customer.email}</p>
+                          <p className="text-[10px] text-on-surface-variant dark:text-zinc-500 font-medium font-mono">{customer.email}</p>
                         </div>
                       </Link>
                     </TableCell>

@@ -103,18 +103,18 @@ export default function AdvancedSearch() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-14 bg-white dark:bg-neutral-800 border-none rounded-xl pl-12 pr-36 text-lg font-medium text-on-surface dark:text-white placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-secondary shadow-glass"
+              className="w-full h-14 bg-white dark:bg-[#1C1C1C] border border-surface-container dark:border-neutral-800 rounded-2xl pl-12 pr-36 text-lg font-medium text-on-surface dark:text-white placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-secondary/20 shadow-glass transition-all"
               placeholder="Search by part name, SKU, or category..."
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-28 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                className="absolute right-32 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
               >
                 <Icon name="close" className="text-lg" />
               </button>
             )}
-            <Button variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2">
+            <Button variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-6 rounded-xl">
               Search
             </Button>
           </div>
@@ -129,7 +129,7 @@ export default function AdvancedSearch() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
+              className="w-full appearance-none bg-surface-container-lowest dark:bg-[#1C1C1C] border border-outline-variant dark:border-neutral-800/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -146,7 +146,7 @@ export default function AdvancedSearch() {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
+              className="w-full appearance-none bg-surface-container-lowest dark:bg-[#1C1C1C] border border-outline-variant dark:border-neutral-800/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
             >
               <option value="">All Statuses</option>
               <option value="In Stock">In Stock</option>
@@ -162,7 +162,7 @@ export default function AdvancedSearch() {
             <select
               value={filters.priceRange}
               onChange={(e) => setFilters({ ...filters, priceRange: e.target.value })}
-              className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
+              className="w-full appearance-none bg-surface-container-lowest dark:bg-[#1C1C1C] border border-outline-variant dark:border-neutral-800/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
             >
               <option value="">Any Price</option>
               <option value="low">Under Rs. 2,000</option>
@@ -177,7 +177,7 @@ export default function AdvancedSearch() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
+              className="w-full appearance-none bg-surface-container-lowest dark:bg-[#1C1C1C] border border-outline-variant dark:border-neutral-800/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
             >
               <option value="relevance">Relevance</option>
               <option value="name">Name A–Z</option>
