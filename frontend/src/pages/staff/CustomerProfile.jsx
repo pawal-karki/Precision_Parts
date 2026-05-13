@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -427,6 +427,8 @@ function LoginActivityTab({ publicId, customer }) {
 
 export default function CustomerProfile() {
   const { id } = useParams();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/staff";
   const [customer, setCustomer] = useState(null);
   const [report, setReport] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
@@ -482,7 +484,7 @@ export default function CustomerProfile() {
   return (
     <>
       <Link
-        to="/admin/customers"
+        to={`${basePath}/customers`}
         className="flex items-center gap-1 text-sm text-secondary hover:text-secondary transition-colors mb-6"
       >
         <Icon name="arrow_back" className="text-sm" />

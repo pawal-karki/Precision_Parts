@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,8 @@ function tierColor(tier) {
 export default function CustomerManagement() {
   const { list: customers } = useList("customers");
   const toast = useToast();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/staff";
 
   const reload = async () => {
     try {
@@ -252,7 +254,7 @@ export default function CustomerManagement() {
                     className="border-b border-surface-container dark:border-zinc-800 last:border-0"
                   >
                     <TableCell className="px-6">
-                      <Link to={`/admin/customers/${customer.id}`} className="flex items-center gap-3 group/item">
+                      <Link to={`${basePath}/customers/${customer.id}`} className="flex items-center gap-3 group/item">
                         <div className="w-10 h-10 rounded-xl bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-zinc-300 group-hover/item:bg-secondary/10 group-hover/item:text-secondary transition-colors border border-transparent group-hover/item:border-secondary/20">
                           {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                         </div>
@@ -298,7 +300,7 @@ export default function CustomerManagement() {
                           <Icon name="delete" className="text-base" />
                         </button>
                         <Link
-                          to={`/admin/customers/${customer.id}`}
+                          to={`${basePath}/customers/${customer.id}`}
                           className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-zinc-800 hover:text-on-surface transition-colors"
                           title="View Profile"
                         >

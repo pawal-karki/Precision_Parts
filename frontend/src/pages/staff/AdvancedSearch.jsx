@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useList, store } from "@/lib/store";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { Modal } from "@/components/ui/modal";
 import { formatCurrency } from "@/lib/currency";
@@ -221,13 +221,19 @@ export default function AdvancedSearch() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl overflow-hidden border border-surface-container-low dark:border-neutral-800/50 group hover:shadow-glass transition-all"
                 >
-                  <div className="h-36 bg-surface-container-low dark:bg-neutral-800 relative overflow-hidden">
-                    <div className="flex items-center justify-center h-full">
+                  <div className="h-36 bg-surface-container-low dark:bg-neutral-800 relative overflow-hidden flex items-center justify-center">
+                    {part.imageUrl ? (
+                      <img
+                        src={getImageUrl(part.imageUrl)}
+                        alt={part.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
                       <Icon
                         name="settings_input_component"
                         className="text-4xl text-on-surface-variant/20 dark:text-neutral-700"
                       />
-                    </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-4">
                       <div className="flex gap-2">
                         <Button
@@ -287,11 +293,19 @@ export default function AdvancedSearch() {
         >
           {detailPart && (
             <div className="space-y-4">
-              <div className="h-40 bg-surface-container-low dark:bg-neutral-800 rounded-lg flex items-center justify-center">
-                <Icon
-                  name="settings_input_component"
-                  className="text-5xl text-on-surface-variant/20"
-                />
+              <div className="h-40 bg-surface-container-low dark:bg-neutral-800 rounded-lg flex items-center justify-center overflow-hidden border border-surface-container dark:border-neutral-800">
+                {detailPart.imageUrl ? (
+                  <img
+                    src={getImageUrl(detailPart.imageUrl)}
+                    alt={detailPart.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Icon
+                    name="settings_input_component"
+                    className="text-5xl text-on-surface-variant/20"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
