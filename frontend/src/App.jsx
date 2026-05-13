@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/lib/auth";
+import { CartProvider } from "@/lib/cart";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -50,81 +51,85 @@ import ServiceBooking from "@/pages/customer/ServiceBooking";
 import BookingSuccess from "@/pages/customer/BookingSuccess";
 import PaymentsBalance from "@/pages/customer/PaymentsBalance";
 import ReviewsFeedback from "@/pages/customer/ReviewsFeedback";
+import LoyaltyProgram from "@/pages/customer/LoyaltyProgram";
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-otp" element={<VerifyOTP />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/info/:slug" element={<InfoPage />} />
+        <CartProvider>
+          <ToastProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/verify-otp" element={<VerifyOTP />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/info/:slug" element={<InfoPage />} />
 
-            {/* Admin routes — protected */}
-            <Route path="/admin" element={
-              <ProtectedRoute role="admin"><AdminLayout /></ProtectedRoute>
-            }>
-              <Route index element={<AdminDashboard />} />
-              <Route path="staff" element={<StaffManagement />} />
-              <Route path="inventory" element={<PartsManagement />} />
-              <Route path="vendors" element={<VendorManagement />} />
-              <Route path="vendors/:id" element={<VendorProfile />} />
-              <Route path="purchase-invoices" element={<PurchaseInvoice />} />
-              <Route path="reports" element={<FinancialReports />} />
-              <Route path="inventory-reports" element={<InventoryReports />} />
-              <Route path="sales" element={<SalesPOS />} />
-              <Route path="invoice" element={<InvoiceView />} />
-              <Route path="customers" element={<CustomerManagement />} />
-              <Route path="customers/:id" element={<CustomerProfile />} />
-              <Route path="audit-log" element={<AdminAuditLog />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="bookings" element={<AdminBookings />} />
-              <Route path="profile" element={<AdminProfile />} />
+              {/* Admin routes — protected */}
+              <Route path="/admin" element={
+                <ProtectedRoute role="admin"><AdminLayout /></ProtectedRoute>
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="staff" element={<StaffManagement />} />
+                <Route path="inventory" element={<PartsManagement />} />
+                <Route path="vendors" element={<VendorManagement />} />
+                <Route path="vendors/:id" element={<VendorProfile />} />
+                <Route path="purchase-invoices" element={<PurchaseInvoice />} />
+                <Route path="reports" element={<FinancialReports />} />
+                <Route path="inventory-reports" element={<InventoryReports />} />
+                <Route path="sales" element={<SalesPOS />} />
+                <Route path="invoice" element={<InvoiceView />} />
+                <Route path="customers" element={<CustomerManagement />} />
+                <Route path="customers/:id" element={<CustomerProfile />} />
+                <Route path="audit-log" element={<AdminAuditLog />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="bookings" element={<AdminBookings />} />
+                <Route path="profile" element={<AdminProfile />} />
 
-              <Route path="settings" element={<AdminSettings />} />
-            </Route>
+                <Route path="settings" element={<AdminSettings />} />
+              </Route>
 
-            {/* Staff routes — protected */}
-            <Route path="/staff" element={
-              <ProtectedRoute role="staff"><StaffLayout /></ProtectedRoute>
-            }>
-              <Route index element={<StaffDashboard />} />
-              <Route path="customers" element={<CustomerManagement />} />
-              <Route path="customers/:id" element={<CustomerProfile />} />
-              <Route path="sales" element={<SalesPOS />} />
-              <Route path="invoice" element={<InvoiceView />} />
-              <Route path="search" element={<AdvancedSearch />} />
-              <Route path="settings" element={<StaffSettings />} />
-              <Route path="bookings" element={<StaffBookings />} />
-              <Route path="profile" element={<StaffProfile />} />
+              {/* Staff routes — protected */}
+              <Route path="/staff" element={
+                <ProtectedRoute role="staff"><StaffLayout /></ProtectedRoute>
+              }>
+                <Route index element={<StaffDashboard />} />
+                <Route path="customers" element={<CustomerManagement />} />
+                <Route path="customers/:id" element={<CustomerProfile />} />
+                <Route path="sales" element={<SalesPOS />} />
+                <Route path="invoice" element={<InvoiceView />} />
+                <Route path="search" element={<AdvancedSearch />} />
+                <Route path="settings" element={<StaffSettings />} />
+                <Route path="bookings" element={<StaffBookings />} />
+                <Route path="profile" element={<StaffProfile />} />
 
-            </Route>
+              </Route>
 
-            {/* Customer routes — protected */}
-            <Route path="/customer" element={
-              <ProtectedRoute role="customer"><CustomerLayout /></ProtectedRoute>
-            }>
-              <Route index element={<CustomerDashboard />} />
-              <Route path="orders" element={<OrderHistory />} />
-              <Route path="parts" element={<PartRequest />} />
-              <Route path="ai" element={<AIMaintenanceTrends />} />
-              <Route path="profile" element={<ProfileManagement />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="booking" element={<ServiceBooking />} />
-              <Route path="booking-success" element={<BookingSuccess />} />
-              <Route path="payments" element={<PaymentsBalance />} />
-              <Route path="reviews" element={<ReviewsFeedback />} />
-            </Route>
+              {/* Customer routes — protected */}
+              <Route path="/customer" element={
+                <ProtectedRoute role="customer"><CustomerLayout /></ProtectedRoute>
+              }>
+                <Route index element={<CustomerDashboard />} />
+                <Route path="orders" element={<OrderHistory />} />
+                <Route path="parts" element={<PartRequest />} />
+                <Route path="ai" element={<AIMaintenanceTrends />} />
+                <Route path="profile" element={<ProfileManagement />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="booking" element={<ServiceBooking />} />
+                <Route path="booking-success" element={<BookingSuccess />} />
+                <Route path="payments" element={<PaymentsBalance />} />
+                <Route path="reviews" element={<ReviewsFeedback />} />
+                <Route path="loyalty" element={<LoyaltyProgram />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ToastProvider>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ToastProvider>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );

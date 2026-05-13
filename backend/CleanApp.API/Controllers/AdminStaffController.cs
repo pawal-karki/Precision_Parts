@@ -1,10 +1,12 @@
 using CleanApp.Application.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/staff")]
+[Authorize(Roles = "Admin")]
 public class AdminStaffController : ControllerBase
 {
     private readonly IAdminStaffService _staff;
@@ -12,8 +14,15 @@ public class AdminStaffController : ControllerBase
     public AdminStaffController(IAdminStaffService staff) => _staff = staff;
 
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken ct) =>
-        Ok(await _staff.ListAsync(ct));
+    public async Task<IActionResult> List([FromQuery] Guid? id, CancellationToken ct)
+    {
+        var list = await _staff.ListAsync(ct);
+        if (id.HasValue)
+        {
+            list = list.Where(s => s.EntityId == id.Value).ToList();
+        }
+        return Ok(list);
+    }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] StaffCreateDto dto, CancellationToken ct)

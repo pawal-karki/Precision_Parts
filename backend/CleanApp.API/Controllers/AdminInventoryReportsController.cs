@@ -1,10 +1,12 @@
 using CleanApp.Application.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/inventory")]
+[Authorize(Roles = "Admin")]
 public class AdminInventoryReportsController : ControllerBase
 {
     private readonly IAdminInventoryReportsService _reports;

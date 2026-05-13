@@ -1,10 +1,12 @@
 using CleanApp.Application.Vendors;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/vendors")]
+[Authorize(Roles = "Admin")]
 public class AdminVendorsController : ControllerBase
 {
     private readonly IVendorsService _vendors;

@@ -101,34 +101,30 @@ export default function Notifications() {
     } catch {}
 
     // 2. Deep Link Routing
-    if (msg.includes("low stock") || msg.includes("inventory") || msg.includes("sku")) {
-      const skuMatch = (notification.message + notification.title).match(/[A-Z0-9-]{5,}/);
-      const skuPart = skuMatch ? `#${skuMatch[0]}` : "";
-      toast(`Inspecting SKU: ${skuMatch ? skuMatch[0] : "Product"}`, "info");
-      window.location.href = `/admin/inventory${skuPart}`;
+    if (msg.includes("low stock") || msg.includes("inventory") || msg.includes("sku") || msg.includes("part")) {
+      toast("Taking you to Inventory & Sourcing...", "info");
+      window.location.href = `/customer/parts`;
       return;
     }
 
-    if (msg.includes("po-") || msg.includes("shipment") || msg.includes("purchase")) {
-      const poMatch = (notification.message + notification.title).match(/PO-[0-9-]+/i);
-      const poPart = poMatch ? `#${poMatch[0].toUpperCase()}` : "";
-      toast(`Opening Order: ${poMatch ? poMatch[0] : "Details"}`, "info");
-      window.location.href = `/admin/purchase-invoices${poPart}`;
+    if (msg.includes("order") || msg.includes("shipment") || msg.includes("purchase")) {
+      toast("Opening Order History...", "info");
+      window.location.href = `/customer/orders`;
       return;
     }
 
-    if (msg.includes("staff") || msg.includes("employee") || msg.includes("access")) {
-      window.location.href = "/admin/staff";
+    if (msg.includes("payment") || msg.includes("invoice") || msg.includes("credit")) {
+      window.location.href = "/customer/payments";
       return;
     }
 
-    if (msg.includes("revenue") || msg.includes("finance") || msg.includes("report")) {
-      window.location.href = "/admin/reports";
+    if (msg.includes("service") || msg.includes("booking") || msg.includes("appointment")) {
+      window.location.href = "/customer/booking";
       return;
     }
 
-    if (msg.includes("customer") || msg.includes("crm") || msg.includes("account")) {
-      window.location.href = "/admin/customers";
+    if (msg.includes("vehicle") || msg.includes("garage") || msg.includes("profile")) {
+      window.location.href = "/customer/profile";
       return;
     }
 

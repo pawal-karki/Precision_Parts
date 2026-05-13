@@ -293,7 +293,7 @@ function Navigation() {
             </div>
             <div>
               <span className={`font-headline font-extrabold tracking-tight transition-all duration-500 ${scrolled ? "text-base" : "text-lg"}`}>
-                MotorCare
+              Precision Parts
               </span>
               <span className={`text-on-surface-variant font-mono block transition-all duration-500 ${scrolled ? "text-[8px]" : "text-[9px]"} uppercase tracking-widest`}>
                 Customer Service Booking

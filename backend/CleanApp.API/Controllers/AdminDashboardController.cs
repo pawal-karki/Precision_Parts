@@ -1,10 +1,12 @@
 using CleanApp.Application.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/dashboard")]
+[Authorize(Roles = "Admin")]
 public class AdminDashboardController : ControllerBase
 {
     private readonly IAdminDashboardService _dashboard;

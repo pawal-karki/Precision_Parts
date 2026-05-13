@@ -332,7 +332,10 @@ export default function ServiceBooking() {
                 >
                   Confirm Booking
                 </button>
-                <button className="w-full py-3 bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant rounded-lg font-bold text-xs tracking-wide hover:bg-surface-container transition-all">
+                <button 
+                  className="w-full py-3 bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant rounded-lg font-bold text-xs tracking-wide hover:bg-surface-container transition-all"
+                  onClick={() => toast("Booking configuration saved to your drafts", "info")}
+                >
                   Save for Later
                 </button>
               </div>

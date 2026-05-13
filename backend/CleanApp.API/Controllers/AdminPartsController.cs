@@ -1,10 +1,12 @@
 using CleanApp.Application.Parts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/parts")]
+[Authorize(Roles = "Admin")]
 public class AdminPartsController : ControllerBase
 {
     private readonly IPartsService _parts;
@@ -12,6 +14,7 @@ public class AdminPartsController : ControllerBase
     public AdminPartsController(IPartsService parts) => _parts = parts;
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Staff,Customer")]
     public async Task<IActionResult> List(CancellationToken cancellationToken) =>
         Ok(await _parts.ListForAdminAsync(cancellationToken));
 

@@ -117,6 +117,8 @@ class ApiClient {
   // ── Customer: Dashboard ───────────────────────────────────────
   getCustomerDashboard()   { return this._get("/customer/dashboard"); }
   getCustomerLedger()      { return this._get("/customer/dashboard/ledger"); }
+  getCustomerLoyalty()     { return this._get("/customer/loyalty"); }
+  createCustomerOrder(dto) { return this._post("/customer/checkout", dto); }
 
   // ── Customer: Orders ─────────────────────────────────────────
   getOrderHistory()        { return this._get("/customer/orders"); }

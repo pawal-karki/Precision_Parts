@@ -1,10 +1,12 @@
 using CleanApp.Application.Demo;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/purchase-invoices")]
+[Authorize(Roles = "Admin")]
 public class AdminPurchaseInvoicesController : ControllerBase
 {
     private readonly IDemoContentProvider _demo;

@@ -1,10 +1,12 @@
 using CleanApp.Application.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/financial")]
+[Authorize(Roles = "Admin")]
 public class AdminFinancialController : ControllerBase
 {
     private readonly IAdminFinancialService _financial;

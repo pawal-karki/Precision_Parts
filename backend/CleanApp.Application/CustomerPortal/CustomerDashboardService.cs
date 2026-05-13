@@ -70,8 +70,8 @@ public class CustomerDashboardService : ICustomerDashboardService
         var user = await _customers.GetCustomerByIdWithDetailsAsync(customerId, cancellationToken);
         if (user == null) return null;
 
-        // Fetch all invoices for this customer
-        var invoices = await _invoices.ListByCustomerIdAsync(user.Id, cancellationToken);
+        // Fetch all invoices for this customer with items included
+        var invoices = await _invoices.ListByCustomerIdWithItemsAsync(user.Id, 100, cancellationToken);
         
         // Use OutstandingCredit from profile as the source of truth for total balance
         var totalOutstanding = user.CustomerProfile?.OutstandingCredit ?? 0m;
@@ -85,8 +85,9 @@ public class CustomerDashboardService : ICustomerDashboardService
                 i.TotalAmount,
                 i.BalanceDue,
                 i.IssueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                i.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                i.Status.ToString()
+                i.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? i.IssueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                i.Status.ToString(),
+                i.Items.Select(x => new InvoiceItemDto(x.Description, x.ItemType, x.Quantity, x.UnitPrice, x.LineTotal)).ToList()
             )).ToList();
 
         // Map recent activity (last 5 invoices)

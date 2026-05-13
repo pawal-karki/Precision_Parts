@@ -19,7 +19,7 @@ public static class DatabaseSeeder
             await db.SaveChangesAsync();
         }
 
-        if (await db.Users.AnyAsync(u => u.Email == "admin@precision-parts.com"))
+        if (await db.Users.AnyAsync(u => u.Email == "mail.pawal.karki@gmail.com"))
             return;
 
         var hash = BCrypt.Net.BCrypt.HashPassword("Demo123!");
@@ -57,7 +57,7 @@ public static class DatabaseSeeder
         {
             Role = UserRole.Admin,
             FullName = "System Admin",
-            Email = "admin@precision-parts.com",
+            Email = "mail.pawal.karki@gmail.com",
             PasswordHash = hash,
             Department = "Operations",
             PositionTitle = "Administrator",

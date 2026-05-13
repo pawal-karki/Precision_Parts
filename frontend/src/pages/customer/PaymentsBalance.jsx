@@ -1,20 +1,15 @@
 import { useMemo, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
-import { motion, PageTransition, fadeInUp } from "@/components/ui/motion";
+import { motion, PageTransition, fadeInUp, AnimatePresence } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-
-function parseMoney(str) {
-  if (typeof str === "number") return str;
-  return parseFloat(String(str).replace(/[Rs.,\s$]/g, "")) || 0;
-}
+import { formatCurrency } from "@/lib/currency";
 
 function fmtNPR(amount) {
-  return `Rs. ${Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(amount);
 }
-
 
 export default function PaymentsBalance() {
   const toast = useToast();
@@ -23,6 +18,7 @@ export default function PaymentsBalance() {
   const [totalBalance, setTotalBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated] = useState(new Date());
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,9 +30,10 @@ export default function PaymentsBalance() {
             id: inv.invoiceNumber || "N/A",
             realId: inv.id,
             due: formatDate(inv.dueDate || inv.issueDate),
-            desc: `Invoice issued on ${formatDate(inv.issueDate)}`,
+            desc: inv.items?.length > 0 ? inv.items.map(x => x.description).join(", ") : `Invoice issued on ${formatDate(inv.issueDate)}`,
             amount: Number(inv.balanceDue) || 0,
-            status: inv.status || "Unknown"
+            status: inv.status || "Unknown",
+            items: inv.items || []
           }));
           setInvoices(pending);
           setActivity(ledger.recentActivity || []);
@@ -89,7 +86,7 @@ export default function PaymentsBalance() {
 
   return (
     <PageTransition>
-      <div className="space-y-8">
+      <div className="space-y-8 pb-20">
         {/* Header */}
         <motion.header
           className="flex flex-col md:flex-row justify-between md:items-end gap-4"
@@ -99,7 +96,7 @@ export default function PaymentsBalance() {
         >
           <div>
             <h1 className="font-headline text-3xl sm:text-4xl font-extrabold tracking-tight text-on-surface dark:text-white">
-              Payments &amp; Ledger
+              Payments & Ledger
             </h1>
             <p className="text-on-surface-variant dark:text-neutral-400 mt-2">
               Financial overview and statement management.
@@ -128,17 +125,14 @@ export default function PaymentsBalance() {
               <span className="text-sm font-bold text-secondary uppercase tracking-widest">Current Outstanding Balance</span>
               <div className="flex items-baseline gap-2 mt-4 flex-wrap">
                 <span className="text-4xl sm:text-5xl font-extrabold font-headline text-on-surface dark:text-white">
-                  Rs. {Math.floor(totalOutstanding).toLocaleString("en-IN")}
-                </span>
-                <span className="text-2xl font-semibold font-headline text-outline-variant">
-                  .{String((totalOutstanding % 1).toFixed(2)).slice(2)}
+                  {fmtNPR(totalOutstanding)}
                 </span>
               </div>
               <div className="flex gap-3 flex-wrap mt-6">
                 <button
                   onClick={handleClearBalance}
                   disabled={totalOutstanding === 0}
-                  className="px-5 py-2 bg-secondary text-on-secondary rounded-lg text-sm font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2 bg-secondary text-on-secondary rounded-lg text-sm font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
                   {totalOutstanding === 0 ? "No Balance Due" : "Clear Full Balance"}
                 </button>
@@ -175,10 +169,11 @@ export default function PaymentsBalance() {
             <span className="text-xs font-bold uppercase tracking-widest text-outline mb-4">Payment Score</span>
             <div className="relative w-36 h-36">
               <svg viewBox="0 0 120 120" className="w-full h-full">
-                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--md-sys-color-surface-container)" strokeWidth="12" />
+                <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" className="text-surface-container" strokeWidth="12" />
                 <circle
                   cx="60" cy="60" r="50" fill="none"
-                  stroke="var(--md-sys-color-secondary)" strokeWidth="12"
+                  stroke="currentColor" strokeWidth="12"
+                  className="text-secondary"
                   strokeLinecap="round" strokeDasharray="314"
                   strokeDashoffset={314 - (314 * 0.92)}
                   transform="rotate(-90 60 60)"
@@ -186,7 +181,7 @@ export default function PaymentsBalance() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-4xl font-extrabold font-headline text-on-surface dark:text-white">92</span>
-                <span className="text-xs font-bold text-on-surface-variant">EXCELLENT</span>
+                <span className="text-xs font-bold text-on-surface-variant uppercase">Excellent</span>
               </div>
             </div>
             <p className="text-xs text-on-surface-variant mt-4 text-center px-2">
@@ -207,7 +202,7 @@ export default function PaymentsBalance() {
           >
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-headline text-xl font-bold text-on-surface dark:text-white">Unpaid Invoices</h2>
-              <span className="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-xs font-bold">
+              <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">
                 {invoices.length} Pending
               </span>
             </div>
@@ -222,26 +217,26 @@ export default function PaymentsBalance() {
                 invoices.map((inv) => (
                   <motion.div
                     key={inv.id}
-                    className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow border border-surface-container dark:border-neutral-800/50"
+                    className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-5 rounded-xl border border-surface-container dark:border-neutral-800/50 hover:shadow-lg transition-all"
                     whileHover={{ y: -2 }}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-surface-container-low dark:bg-neutral-800 flex items-center justify-center rounded-lg shrink-0">
-                        <Icon name="description" className="text-secondary" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-secondary/10 flex items-center justify-center rounded-lg shrink-0">
+                          <Icon name="description" className="text-secondary" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold font-headline text-on-surface dark:text-white">{inv.id}</h4>
+                          <p className="text-xs text-on-surface-variant truncate max-w-[200px]">Due: {inv.due} · {inv.desc}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold font-headline text-on-surface dark:text-white">{inv.id}</h4>
-                        <p className="text-xs text-on-surface-variant">Due: {inv.due} · {inv.desc}</p>
+                      <div className="flex items-center gap-4 self-end sm:self-auto">
+                        <span className="font-bold font-headline text-on-surface dark:text-white">{fmtNPR(inv.amount)}</span>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedInvoice(inv)}>Details</Button>
+                          <Button size="sm" onClick={() => handlePay(inv)}>Pay</Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4 self-end sm:self-auto">
-                      <span className="font-bold font-headline text-on-surface dark:text-white">{fmtNPR(inv.amount)}</span>
-                      <button
-                        onClick={() => handlePay(inv)}
-                        className="text-sm font-bold text-secondary hover:text-on-surface underline underline-offset-4 decoration-2 decoration-secondary/30 whitespace-nowrap"
-                      >
-                        Pay Now
-                      </button>
                     </div>
                   </motion.div>
                 ))
@@ -258,13 +253,13 @@ export default function PaymentsBalance() {
             transition={{ delay: 0.3 }}
           >
             <h2 className="font-headline text-xl font-bold text-on-surface dark:text-white mb-5">Recent Activity</h2>
-            <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl border border-surface-container dark:border-neutral-800/50 overflow-hidden">
+            <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl border border-surface-container dark:border-neutral-800/50 overflow-hidden shadow-sm">
               {activity.length === 0 ? (
                 <p className="p-6 text-sm text-on-surface-variant text-center">No ledger activity yet.</p>
               ) : (
                 <div className="divide-y divide-surface-container dark:divide-neutral-800/50">
                   {activity.map((act) => (
-                    <div key={act.id} className="p-4 flex gap-4 items-start">
+                    <div key={act.id} className="p-4 flex gap-4 items-start hover:bg-surface-container-low transition-colors group cursor-pointer">
                       <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
                         <Icon name={act.icon || "payments"} className="text-sm" />
                       </div>
@@ -274,9 +269,12 @@ export default function PaymentsBalance() {
                           <span className="text-xs text-outline whitespace-nowrap">{act.time || act.date}</span>
                         </div>
                         <p className="text-xs text-on-surface-variant">{act.desc || act.description}</p>
-                        {act.amount && (
-                          <span className="text-xs font-bold text-secondary mt-1 block">{act.amount}</span>
-                        )}
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs font-bold text-secondary">{act.amount}</span>
+                          <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            Verified <Icon name="check" className="text-[10px]" />
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -285,6 +283,65 @@ export default function PaymentsBalance() {
             </div>
           </motion.div>
         </div>
+
+        {/* Detail Modal */}
+        <AnimatePresence>
+          {selectedInvoice && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedInvoice(null)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+              />
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white dark:bg-[#1C1C1C] rounded-2xl shadow-2xl z-[101] overflow-hidden flex flex-col"
+              >
+                <div className="p-6 border-b border-surface-container dark:border-neutral-800/50 flex justify-between items-center bg-stone-50 dark:bg-neutral-900/50">
+                  <div>
+                    <h3 className="text-xl font-bold font-headline text-on-surface dark:text-white">Invoice Details</h3>
+                    <p className="text-sm text-secondary font-bold">{selectedInvoice.id}</p>
+                  </div>
+                  <button onClick={() => setSelectedInvoice(null)} className="p-2 hover:bg-surface-container rounded-full transition-all">
+                    <Icon name="close" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6">
+                   <div className="mb-6 grid grid-cols-2 gap-4 text-sm">
+                      <div className="p-3 bg-surface-container rounded-xl">
+                         <span className="text-[10px] font-bold text-outline block mb-1">ISSUE DATE</span>
+                         <span className="font-bold">{selectedInvoice.due}</span>
+                      </div>
+                      <div className="p-3 bg-surface-container rounded-xl">
+                         <span className="text-[10px] font-bold text-outline block mb-1">TOTAL AMOUNT</span>
+                         <span className="font-bold text-secondary">{fmtNPR(selectedInvoice.amount)}</span>
+                      </div>
+                   </div>
+                   <h4 className="text-xs font-bold text-outline uppercase tracking-widest mb-3">Line Items</h4>
+                   <div className="space-y-2">
+                      {selectedInvoice.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3 border-b border-surface-container dark:border-neutral-800/50 last:border-0">
+                           <div>
+                              <p className="font-bold text-sm">{item.description}</p>
+                              <p className="text-[10px] text-on-surface-variant uppercase">{item.itemType} · Qty: {item.quantity}</p>
+                           </div>
+                           <span className="font-bold text-sm">{fmtNPR(item.lineTotal)}</span>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+                <div className="p-6 bg-surface-container dark:bg-neutral-900/50 border-t border-surface-container dark:border-neutral-800/50 flex justify-end gap-3">
+                   <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
+                   <Button onClick={() => { handlePay(selectedInvoice); setSelectedInvoice(null); }}>Pay {fmtNPR(selectedInvoice.amount)}</Button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Footer Stats */}
         <motion.div

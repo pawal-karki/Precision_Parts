@@ -14,13 +14,37 @@ public record CustomerDashboardDto(
     IReadOnlyList<CustomerVehicleRow> Vehicles,
     IReadOnlyList<CustomerActivityRow> RecentActivity);
 
-public record CustomerOrderRow(
-    [property: JsonPropertyName("id")] string Id,
-    [property: JsonPropertyName("date")] string Date,
-    [property: JsonPropertyName("items")] string Items,
-    [property: JsonPropertyName("total")] string Total,
-    [property: JsonPropertyName("status")] string Status);
+public record InvoiceItemDto(
+    string Description,
+    string ItemType,
+    decimal Quantity,
+    decimal UnitPrice,
+    decimal LineTotal);
 
+public record CustomerOrderRow(
+    string OrderNumber,
+    string OrderDate,
+    string DeliveryDate,
+    string ItemsSummary,
+    string AmountStr,
+    decimal TotalAmount,
+    string Status,
+    List<InvoiceItemDto> Items);
+
+public record LoyaltyStatusDto(
+    [property: JsonPropertyName("totalSpent")] decimal TotalSpent,
+    [property: JsonPropertyName("loyaltyTier")] string LoyaltyTier,
+    [property: JsonPropertyName("loyaltyPoints")] int LoyaltyPoints,
+    [property: JsonPropertyName("discountEligible")] bool DiscountEligible,
+    [property: JsonPropertyName("maxSingleOrderAmount")] decimal MaxSingleOrderAmount,
+    [property: JsonPropertyName("discountPercent")] int DiscountPercent);
+
+public record OrderItemDto(
+    [property: JsonPropertyName("sku")] string Sku,
+    [property: JsonPropertyName("quantity")] decimal Quantity);
+
+public record CreateCustomerOrderDto(
+    [property: JsonPropertyName("items")] List<OrderItemDto> Items);
 
 public record CustomerPredictionRow(int Id, string Component, string Vehicle, string RiskLevel, int Confidence, string EstimatedFailure, string Recommendation);
 
@@ -35,5 +59,6 @@ public record CustomerInvoiceDto(
     decimal TotalAmount,
     decimal BalanceDue,
     string IssueDate,
-    string? DueDate,
-    string Status);
+    string DueDate,
+    string Status,
+    List<InvoiceItemDto> Items);

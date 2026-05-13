@@ -4,9 +4,52 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
-import { motion, PageTransition } from "@/components/ui/motion";
+import { motion, PageTransition, AnimatePresence } from "@/components/ui/motion";
 import { useAuth } from "@/lib/auth";
 import { formatCurrency } from "@/lib/currency";
+
+/* ─── System Alert Banner ──────────────────────────────────────────── */
+function SystemAlertsBanner({ overdueCredit }) {
+  const [dismissed, setDismissed] = useState([]);
+  const alerts = [
+    overdueCredit && {
+      id: "credit",
+      type: "warning",
+      icon: "credit_card_off",
+      title: "Overdue Credit Reminder",
+      message: "You have an unpaid credit balance outstanding for more than 1 month. Please settle it to avoid account restrictions.",
+      href: "/customer/payments",
+      cta: "View Payments",
+    },
+  ].filter(Boolean).filter((a) => !dismissed.includes(a.id));
+
+  if (alerts.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      {alerts.map((alert) => (
+        <motion.div
+          key={alert.id}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, x: 60 }}
+          className="flex items-center gap-4 p-4 rounded-xl border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-900/15 border border-amber-200/50 dark:border-amber-700/30"
+        >
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
+            <Icon name={alert.icon} className="text-lg" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-300">{alert.title}</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">{alert.message}</p>
+            <Link to={alert.href} className="text-xs font-bold underline underline-offset-2 mt-1 inline-block text-amber-700 dark:text-amber-400">{alert.cta} →</Link>
+          </div>
+          <button onClick={() => setDismissed((d) => [...d, alert.id])} className="text-amber-600 hover:text-amber-800 p-1 shrink-0">
+            <Icon name="close" className="text-sm" />
+          </button>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
 
 const vehicleImages = [
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCZvy7Xe_tfhvoxNwYTS__GRT5AwO57W1Qi4BbF_pkhr511N3Vwf9TWSNbZFTko9GX_KiO_OWPyysWz-kZHC8dV1JKC7Qe1UMGUjOnARMyV1ltOg1M-JVFvs5aD5YrJaGk9m2HCGqMOK15-psHxeHKVqvgxe8PxBWJOn3nBL3TnRMlwpWcGUM3hSEGpC2p9QGzGzlJoXDqn1bDGKyRWXJgXJqgJt8NaVlXSLhItKEUFhRUp_1-cYU8gmtNwJHCKOp2s-Lm82xKgBw",
@@ -32,6 +75,7 @@ export default function CustomerDashboard() {
   const [data, setData] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
   const navigate = useNavigate();
@@ -40,14 +84,16 @@ export default function CustomerDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const [dashboard, vehicleList] = await Promise.all([
+        const [dashboard, vehicleList, ledger] = await Promise.all([
           api.getCustomerDashboard(),
           api.getVehicles().catch(() => []),
+          api.getCustomerLedger().catch(() => ({ pendingInvoices: [] })),
         ]);
         if (!cancelled) {
           setData(dashboard);
           setVehicles(Array.isArray(vehicleList) ? vehicleList : []);
           setActivity(Array.isArray(dashboard?.recentActivity) ? dashboard.recentActivity : []);
+          setInvoices(ledger?.pendingInvoices || []);
         }
       } catch {
         if (!cancelled) {
@@ -55,6 +101,7 @@ export default function CustomerDashboard() {
           setData({});
           setVehicles([]);
           setActivity([]);
+          setInvoices([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -75,8 +122,18 @@ export default function CustomerDashboard() {
     const maxSingleOrder = activity
       .filter((a) => a.type === "Order")
       .reduce((max, item) => Math.max(max, parseMoney(item.amount)), 0);
-    return maxSingleOrder > 5000;
+    return maxSingleOrder >= 5000;
   }, [activity]);
+
+  // Overdue credit: invoice older than 30 days
+  const overdueCredit = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    return invoices.some((inv) => {
+      const d = new Date(inv.issueDate || inv.dueDate || "");
+      return !isNaN(d) && d < cutoff;
+    });
+  }, [invoices]);
 
   if (loading) {
     return (
@@ -100,6 +157,9 @@ export default function CustomerDashboard() {
             System status: booking, service tracking, and reminders are active.
           </p>
         </header>
+
+        {/* System Alerts */}
+        <SystemAlertsBanner overdueCredit={overdueCredit} />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -277,16 +337,43 @@ export default function CustomerDashboard() {
           </motion.div>
         </div>
 
-        {/* Loyalty Banner */}
-        <div className="rounded-xl border border-secondary/20 dark:border-emerald-900/50 bg-secondary/5 dark:bg-emerald-900/10 p-4">
-          <p className="text-sm text-on-surface-variant dark:text-neutral-300">
-            <span className="font-semibold text-secondary dark:text-emerald-400">Loyalty Program:</span>{" "}
-            {loyaltyPoints > 0
-              ? `You have ${loyaltyPoints.toLocaleString()} points accumulated. Keep ordering to unlock rewards.`
-              : "Earn points on every purchase and service. 10% discount unlocks at 5,000 points."}
-            {loyaltyEligible ? " You currently qualify based on recent activity." : ""}
-          </p>
-        </div>
+        {/* Loyalty Program Card */}
+        <motion.div
+          className={`rounded-2xl border-2 p-6 flex flex-col sm:flex-row sm:items-center gap-5 ${
+            loyaltyEligible
+              ? "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-300 dark:border-emerald-700/50"
+              : "bg-secondary/5 dark:bg-secondary/5 border-secondary/20 dark:border-secondary/20"
+          }`}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.28 }}
+        >
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+            loyaltyEligible ? "bg-emerald-500 text-white" : "bg-secondary/10 text-secondary"
+          }`}>
+            <Icon name={loyaltyEligible ? "verified" : "workspace_premium"} filled className="text-3xl" />
+          </div>
+          <div className="flex-1">
+            <h3 className={`font-headline font-bold text-lg ${
+              loyaltyEligible ? "text-emerald-700 dark:text-emerald-400" : "text-on-surface dark:text-white"
+            }`}>
+              {loyaltyEligible ? "🎉 10% Discount Unlocked!" : "Loyalty Program"}
+            </h3>
+            <p className="text-sm text-on-surface-variant dark:text-neutral-400 mt-1">
+              {loyaltyEligible
+                ? "Your single purchase qualifies for a 10% discount. This applies automatically on orders ≥ Rs. 5,000."
+                : `Spend Rs. 5,000 or more in a single purchase to unlock a 10% discount. ${loyaltyPoints > 0 ? `You have ${loyaltyPoints.toLocaleString()} loyalty points.` : ""}`}
+            </p>
+          </div>
+          <Button
+            variant={loyaltyEligible ? "default" : "outline"}
+            className={loyaltyEligible ? "bg-emerald-500 hover:bg-emerald-600 text-white shrink-0" : "shrink-0"}
+            onClick={() => navigate("/customer/loyalty")}
+          >
+            <Icon name="emoji_events" className="text-sm" />
+            View Rewards
+          </Button>
+        </motion.div>
       </div>
 
       {/* FAB */}

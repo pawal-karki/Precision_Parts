@@ -1,8 +1,14 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { useCart } from "@/lib/cart";
+import { api, getImageUrl } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { formatCurrency } from "@/lib/currency";
 
 const sidebarItems = [
   { to: "/customer", icon: "dashboard", label: "Overview", end: true },
@@ -10,6 +16,7 @@ const sidebarItems = [
   { to: "/customer/parts", icon: "precision_manufacturing", label: "Inventory" },
   { to: "/customer/orders", icon: "history", label: "History" },
   { to: "/customer/payments", icon: "payments", label: "Payments" },
+  { to: "/customer/loyalty", icon: "workspace_premium", label: "Loyalty" },
   { to: "/customer/profile", icon: "directions_car", label: "Garage" },
 ];
 
@@ -18,11 +25,13 @@ const topLinks = [
   { to: "/customer/booking", label: "Services" },
   { to: "/customer/orders", label: "Orders" },
   { to: "/customer/parts", label: "Parts" },
+  { to: "/customer/loyalty", label: "Loyalty" },
 ];
 
 const bottomNav = [
   { to: "/customer", icon: "dashboard", label: "Overview", end: true },
   { to: "/customer/parts", icon: "precision_manufacturing", label: "Parts" },
+  { to: "/customer/loyalty", icon: "workspace_premium", label: "Loyalty" },
   { to: "/customer/orders", icon: "history", label: "History" },
   { to: "/customer/profile", icon: "person", label: "Profile" },
 ];
@@ -30,11 +39,34 @@ const bottomNav = [
 export default function CustomerLayout() {
   const { dark, toggle } = useTheme();
   const { user, logout } = useAuth();
+  const { items, count, subtotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const navigate = useNavigate();
+  const toast = useToast();
+  const [showCart, setShowCart] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   const handleSignOut = async () => {
     await logout();
     navigate("/");
+  };
+
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
+    setCheckingOut(true);
+    try {
+      const dto = {
+        items: items.map(i => ({ sku: i.sku, quantity: i.quantity }))
+      };
+      const res = await api.createCustomerOrder(dto);
+      toast(`Order placed successfully! #${res.invoiceNumber}`, "success");
+      clearCart();
+      setShowCart(false);
+      navigate("/customer/orders");
+    } catch (err) {
+      toast(err.message || "Checkout failed", "error");
+    } finally {
+      setCheckingOut(false);
+    }
   };
 
   const isWebView = new URLSearchParams(window.location.search).get("webview") === "true";
@@ -70,6 +102,17 @@ export default function CustomerLayout() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowCart(true)}
+                className="p-2 rounded-full hover:bg-stone-100/50 dark:hover:bg-neutral-800/50 transition-all relative"
+              >
+                <Icon name="shopping_cart" className="text-neutral-700 dark:text-neutral-300" />
+                {count > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-secondary text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+                    {count}
+                  </span>
+                )}
+              </button>
               <NavLink
                 to="/customer/notifications"
                 className="p-2 rounded-full hover:bg-stone-100/50 dark:hover:bg-neutral-800/50 transition-all relative"
@@ -150,7 +193,7 @@ export default function CustomerLayout() {
             <span>Reviews</span>
           </NavLink>
           <a
-            href="#"
+            href="mailto:support@precisionparts.com"
             className="flex items-center gap-3 py-2 text-stone-500 hover:text-stone-800 dark:hover:text-neutral-300 transition-colors text-sm"
           >
             <Icon name="help" />
@@ -201,6 +244,101 @@ export default function CustomerLayout() {
           ))}
         </div>
       </nav>
+
+      {/* Cart Drawer */}
+      <AnimatePresence>
+        {showCart && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCart(false)}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-[#1C1C1C] shadow-2xl z-[70] flex flex-col"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-outline-variant/20">
+                <h2 className="text-xl font-bold font-headline flex items-center gap-2 text-on-surface dark:text-white">
+                  <Icon name="shopping_cart" className="text-secondary" /> My Cart
+                </h2>
+                <button onClick={() => setShowCart(false)} className="p-2 hover:bg-surface-container rounded-full text-on-surface-variant transition-all">
+                  <Icon name="close" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {items.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-on-surface-variant opacity-50">
+                    <Icon name="shopping_cart_checkout" className="text-6xl mb-4" />
+                    <p className="font-bold">Your cart is empty</p>
+                  </div>
+                ) : (
+                  items.map((item) => (
+                    <div key={item.id} className="flex gap-4 items-center p-3 bg-surface-container-low dark:bg-neutral-800/40 rounded-xl border border-outline-variant/10">
+                      <div className="w-16 h-16 bg-surface-container dark:bg-neutral-800 rounded-lg overflow-hidden shrink-0">
+                        {item.imageUrl ? (
+                          <img src={getImageUrl(item.imageUrl)} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-on-surface-variant/20"><Icon name="precision_manufacturing" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-on-surface dark:text-white truncate">{item.name}</p>
+                        <p className="text-xs text-secondary font-bold">{formatCurrency(item.price)}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 rounded-md border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:bg-surface-container"><Icon name="remove" className="text-xs" /></button>
+                          <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
+                          <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 rounded-md border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:bg-surface-container"><Icon name="add" className="text-xs" /></button>
+                        </div>
+                      </div>
+                      <button onClick={() => removeFromCart(item.id)} className="text-error hover:bg-error/10 p-2 rounded-full transition-all">
+                        <Icon name="delete" className="text-sm" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="p-6 bg-surface-container-low dark:bg-neutral-900/50 border-t border-outline-variant/20">
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-on-surface-variant">Subtotal</span>
+                    <span className="font-bold">{formatCurrency(subtotal)}</span>
+                  </div>
+                  {subtotal >= 5000 && (
+                    <div className="flex justify-between text-sm text-emerald-600 dark:text-emerald-400 font-bold">
+                      <span className="flex items-center gap-1"><Icon name="verified" className="text-xs" /> Loyalty Discount (10%)</span>
+                      <span>-{formatCurrency(subtotal * 0.1)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold border-t border-outline-variant/20 pt-2 text-on-surface dark:text-white">
+                    <span>Total</span>
+                    <span>{formatCurrency(subtotal >= 5000 ? subtotal * 0.9 : subtotal)}</span>
+                  </div>
+                  {subtotal >= 5000 && (
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium italic">
+                      * 10% Loyalty Discount applied on orders over Rs. 5,000
+                    </p>
+                  )}
+                </div>
+                <Button 
+                  onClick={handleCheckout} 
+                  disabled={items.length === 0 || checkingOut} 
+                  className="w-full py-4 rounded-xl text-lg font-bold bg-secondary text-on-secondary shadow-lg shadow-secondary/20 transition-all hover:scale-[1.02] active:scale-95"
+                >
+                  {checkingOut ? <Icon name="sync" className="animate-spin" /> : "Complete Purchase"}
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

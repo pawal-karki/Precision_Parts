@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,39 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth";
+
+const loginCodeSlides = [
+  {
+    filename: "auth.js",
+    label: "Sign in",
+    code: `user.login({
+  email: "you@example.com",
+  password: "••••••••",
+  remember: true
+})
+// ✓ Authenticated`,
+  },
+  {
+    filename: "session.js",
+    label: "Session",
+    code: `session.create({
+  role: "customer",
+  token: "eyJhbGci...",
+  expires: "7d"
+})
+// ✓ Session active`,
+  },
+  {
+    filename: "dashboard.js",
+    label: "Ready",
+    code: `dashboard.load({
+  bookings: true,
+  history: true,
+  notifications: true
+})
+// ✓ All set`,
+  },
+];
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,6 +51,12 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const iv = setInterval(() => setActiveSlide((p) => (p + 1) % loginCodeSlides.length), 4000);
+    return () => clearInterval(iv);
+  }, []);
 
   const validate = () => {
     const e = {};
@@ -56,54 +95,77 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex auth-gradient">
-      {/* Left panel */}
+      {/* Left panel — animated code terminal */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-on-surface items-center justify-center">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "repeating-linear-gradient(-45deg,transparent,transparent 40px,currentColor 40px,currentColor 41px)" }} />
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "repeating-linear-gradient(-45deg,transparent,transparent 40px,currentColor 40px,currentColor 41px)" }} />
         <motion.div
-          className="relative z-10 max-w-md px-12"
+          className="relative z-10 w-full max-w-md px-12"
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <div className="flex items-center gap-3 mb-12">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-10">
             <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center text-white">
               <Icon name="precision_manufacturing" filled className="text-2xl" />
             </div>
             <div>
               <h2 className="text-2xl font-headline font-extrabold text-white">Precision Parts</h2>
-              <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Inventory & Service Hub</span>
+              <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Inventory &amp; Service Hub</span>
             </div>
           </div>
 
-          <h3 className="text-4xl font-headline font-extrabold text-white leading-tight mb-6">
-            Book your motor
+          <h3 className="text-3xl font-headline font-extrabold text-white leading-tight mb-8">
+            Sign in to your
             <br />
-            <span className="text-secondary">service smarter.</span>
+            <span className="text-secondary">service account.</span>
           </h3>
 
-          <p className="text-white/50 text-lg leading-relaxed mb-12">
-            Book appointments, track service progress, and receive maintenance reminders from one app.
-          </p>
-
-          <div className="space-y-4">
-            {[
-              { icon: "event_available", text: "Instant appointment booking" },
-              { icon: "schedule", text: "Live service status updates" },
-              { icon: "smart_toy", text: "AI-powered maintenance predictions" },
-            ].map((item, i) => (
-              <motion.div
-                key={item.text}
-                className="flex items-center gap-3 text-white/60"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + i * 0.1 }}
-              >
-                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                  <Icon name={item.icon} className="text-secondary text-sm" />
-                </div>
-                <span className="text-sm">{item.text}</span>
-              </motion.div>
-            ))}
+          {/* Code terminal */}
+          <div className="border border-white/10 overflow-hidden rounded-lg">
+            {/* Title bar */}
+            <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between">
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-white/20" />
+                <div className="w-3 h-3 rounded-full bg-white/20" />
+                <div className="w-3 h-3 rounded-full bg-white/20" />
+              </div>
+              <span className="text-xs font-mono text-white/40">{loginCodeSlides[activeSlide].filename}</span>
+            </div>
+            {/* Code body */}
+            <div className="p-6 font-mono text-sm min-h-[210px]">
+              <pre className="text-white/70">
+                {loginCodeSlides[activeSlide].code.split("\n").map((line, li) => (
+                  <div key={`${activeSlide}-${li}`} className="leading-loose code-line-reveal" style={{ animationDelay: `${li * 80}ms` }}>
+                    <span className="text-white/20 select-none w-7 inline-block text-right mr-3">{li + 1}</span>
+                    <span className="inline-flex">
+                      {line.split("").map((ch, ci) => (
+                        <span key={`${activeSlide}-${li}-${ci}`} className="code-char-reveal" style={{ animationDelay: `${li * 80 + ci * 15}ms` }}>
+                          {ch === " " ? "\u00A0" : ch}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </pre>
+            </div>
+            {/* Status bar */}
+            <div className="px-5 py-3 border-t border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-xs font-mono text-white/40">Ready</span>
+              </div>
+              {/* Slide dots */}
+              <div className="flex gap-1.5">
+                {loginCodeSlides.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveSlide(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${i === activeSlide ? "w-5 bg-secondary" : "w-1.5 bg-white/20"}`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -194,7 +256,7 @@ export default function Login() {
           >
             <p className="text-xs text-on-surface-variant">
               <span className="font-semibold text-secondary">Demo credentials:</span>{" "}
-              <br />Admin: <code className="text-secondary">admin@precision-parts.com</code> / <code>Demo123!</code>
+              <br />Admin: <code className="text-secondary">mail.pawal.karki@gmail.com</code> / <code>Demo123!</code>
               <br />Staff: <code className="text-secondary">s.mitchell@precision.com</code> / <code>Demo123!</code>
               <br />Customer: <code className="text-secondary">e.schmidt@email.de</code> / <code>Demo123!</code>
             </p>
