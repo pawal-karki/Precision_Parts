@@ -6,7 +6,7 @@ using CleanApp.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Resend;
+
 
 namespace CleanApp.Infrastructure;
 
@@ -32,18 +32,8 @@ public static class DependencyInjection
         services.AddScoped<IAiPredictionRepository, AiPredictionRepository>();
         services.AddScoped<IMonthlyProjectionRepository, MonthlyProjectionRepository>();
 
-        // ── Email (Resend) ──────────────────────────────────────────────────
-        services.Configure<ResendEmailOptions>(
-            configuration.GetSection(ResendEmailOptions.SectionName));
-
-        services.AddOptions();
-        services.AddHttpClient<ResendClient>();
-        services.Configure<ResendClientOptions>(o =>
-        {
-            o.ApiToken = configuration[$"{ResendEmailOptions.SectionName}:ApiToken"]!;
-        });
-        services.AddTransient<IResend, ResendClient>();
-        services.AddTransient<IEmailService, ResendEmailService>();
+        // ── Email (SMTP) ──────────────────────────────────────────────────
+        services.AddTransient<IEmailService, SmtpEmailService>();
 
         return services;
     }
