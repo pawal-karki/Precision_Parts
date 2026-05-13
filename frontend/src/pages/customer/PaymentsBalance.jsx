@@ -287,19 +287,19 @@ export default function PaymentsBalance() {
         {/* Detail Modal */}
         <AnimatePresence>
           {selectedInvoice && (
-            <>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedInvoice(null)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               />
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white dark:bg-[#1C1C1C] rounded-2xl shadow-2xl z-[101] overflow-hidden flex flex-col"
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="relative w-full max-w-2xl bg-white dark:bg-[#1C1C1C] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
               >
                 <div className="p-6 border-b border-surface-container dark:border-neutral-800/50 flex justify-between items-center bg-stone-50 dark:bg-neutral-900/50">
                   <div>
@@ -339,7 +339,7 @@ export default function PaymentsBalance() {
                    <Button onClick={() => { handlePay(selectedInvoice); setSelectedInvoice(null); }}>Pay {fmtNPR(selectedInvoice.amount)}</Button>
                 </div>
               </motion.div>
-            </>
+            </div>
           )}
         </AnimatePresence>
 
