@@ -31,7 +31,7 @@ public class LowStockAlertJob
         var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
         var lowStockParts = await db.Parts
-            .Where(p => p.IsActive && p.StockQty < p.ReorderLevel)
+            .Where(p => p.IsActive && p.StockQty < 10)
             .ToListAsync();
 
         if (!lowStockParts.Any())
@@ -54,7 +54,7 @@ public class LowStockAlertJob
 
         foreach (var part in lowStockParts)
         {
-            var alertMsg = $"{part.Name} (SKU: {part.Sku}) stock at {part.StockQty} units — below minimum threshold of {part.ReorderLevel}.";
+            var alertMsg = $"{part.Name} (SKU: {part.Sku}) stock at {part.StockQty} units — below minimum threshold of 10.";
 
             if (existingAlerts.Any(e => e.Contains(part.Sku)))
                 continue;
@@ -62,9 +62,9 @@ public class LowStockAlertJob
             db.Notifications.Add(new Notification
             {
                 UserId   = admin.Id,
-                Title    = part.StockQty < 10 ? "Critical: Low Stock Alert" : "Low Stock Warning",
+                Title    = "Critical: Low Stock Alert",
                 Message  = alertMsg,
-                Severity = part.StockQty < 10 ? NotificationSeverity.Error : NotificationSeverity.Warning,
+                Severity = NotificationSeverity.Error,
                 Category = "inventory",
                 IsRead   = false
             });

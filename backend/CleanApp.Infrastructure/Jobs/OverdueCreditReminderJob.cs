@@ -4,6 +4,7 @@ using CleanApp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using CleanApp.Application.Email;
 
 namespace CleanApp.Infrastructure.Jobs;
 
@@ -26,6 +27,7 @@ public class OverdueCreditReminderJob
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
         var cutoffDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-30));
 
@@ -79,6 +81,16 @@ public class OverdueCreditReminderJob
                 Category = "billing",
                 IsRead = false
             });
+
+            try
+            {
+                await emailService.SendOverdueCreditReminderAsync(profile.User.Email, profile.User.FullName, profile.OutstandingCredit);
+                _logger.LogInformation("OverdueCreditReminderJob: Email reminder sent to {Email}.", profile.User.Email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OverdueCreditReminderJob: Failed to send email reminder to {Email}.", profile.User.Email);
+            }
 
             newAlerts++;
         }

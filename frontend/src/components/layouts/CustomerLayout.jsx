@@ -308,7 +308,7 @@ export default function CustomerLayout() {
                   </div>
                   {subtotal >= 5000 && (
                     <div className="flex justify-between text-sm text-emerald-600 dark:text-emerald-400 font-bold">
-                      <span className="flex items-center gap-1"><Icon name="verified" className="text-xs" /> Loyalty Discount (10%)</span>
+                      <span className="flex items-center gap-1"><Icon name="verified" className="text-xs" /> 10% Discount</span>
                       <span>-{formatCurrency(subtotal * 0.1)}</span>
                     </div>
                   )}
@@ -318,7 +318,7 @@ export default function CustomerLayout() {
                   </div>
                   {subtotal >= 5000 && (
                     <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium italic">
-                      * 10% Loyalty Discount applied on orders over Rs. 5,000
+                      * 10% Discount applied on orders over Rs. 5,000
                     </p>
                   )}
                 </div>

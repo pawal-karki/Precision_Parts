@@ -133,13 +133,9 @@ public class CustomerOrdersService : ICustomerOrdersService
             _parts.Update(part);
         }
 
-        // 2. Loyalty Logic: 10% discount if current order >= 5000 OR historical max >= 5000
-        var historicalMax = 0m;
-        var previousInvoices = await _invoices.ListByCustomerIdWithItemsAsync(customerId, 100, cancellationToken);
-        if (previousInvoices.Any()) historicalMax = previousInvoices.Max(i => i.TotalAmount);
-
-        bool isLoyaltyEligible = subtotal >= 5000m || historicalMax >= 5000m;
-        decimal discount = isLoyaltyEligible ? subtotal * 0.10m : 0m;
+        // 2. Discount Logic: 10% discount if current order >= 5000
+        bool isDiscountEligible = subtotal >= 5000m;
+        decimal discount = isDiscountEligible ? subtotal * 0.10m : 0m;
         decimal total = subtotal - discount;
 
         // 3. Create Invoice
