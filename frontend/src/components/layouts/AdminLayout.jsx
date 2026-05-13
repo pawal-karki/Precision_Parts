@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import { NotificationBell } from "@/components/shared/NotificationBell";
 
 const navItems = [
   { to: "/admin", icon: "dashboard", label: "Dashboard", end: true },
@@ -152,18 +153,7 @@ export default function AdminLayout() {
             </div>
 
             <div className="flex items-center gap-3 md:gap-6">
-              <NavLink
-                to="/admin/notifications"
-                className={({ isActive }) =>
-                  cn(
-                    "hidden sm:block transition-all relative",
-                    isActive ? "text-secondary" : "text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white"
-                  )
-                }
-              >
-                <Icon name="notifications" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-white dark:ring-neutral-950" />
-              </NavLink>
+              <NotificationBell to="/admin/notifications" />
               <button
                 type="button"
                 onClick={toggle}

@@ -9,6 +9,7 @@ import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency } from "@/lib/currency";
+import { NotificationBell } from "@/components/shared/NotificationBell";
 
 const sidebarItems = [
   { to: "/customer", icon: "dashboard", label: "Overview", end: true },
@@ -113,13 +114,7 @@ export default function CustomerLayout() {
                   </span>
                 )}
               </button>
-              <NavLink
-                to="/customer/notifications"
-                className="p-2 rounded-full hover:bg-stone-100/50 dark:hover:bg-neutral-800/50 transition-all relative"
-              >
-                <Icon name="notifications" className="text-neutral-700 dark:text-neutral-300" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full" />
-              </NavLink>
+              <NotificationBell to="/customer/notifications" />
               <button
                 type="button"
                 onClick={toggle}
