@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using CleanApp.Application.Email;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using AppEmailMessage = CleanApp.Application.Email.EmailMessage;
 
 namespace CleanApp.Infrastructure.Email;
@@ -9,31 +10,37 @@ namespace CleanApp.Infrastructure.Email;
 public sealed class SmtpEmailService : IEmailService
 {
     private readonly ILogger<SmtpEmailService> _log;
-    private const string SmtpHost = "smtp.gmail.com";
-    private const int SmtpPort = 587;
-    private const string SmtpUser = "np05cp4a230099@iic.edu.np";
-    private const string SmtpPass = "fyek ctet qmaf lxpu";
-    private const string FromEmail = "np05cp4a230099@iic.edu.np";
-    private const string FromName = "Precision Parts";
+    private readonly string _host;
+    private readonly int _port;
+    private readonly string _user;
+    private readonly string _pass;
+    private readonly string _fromEmail;
+    private readonly string _fromName;
 
-    public SmtpEmailService(ILogger<SmtpEmailService> log)
+    public SmtpEmailService(ILogger<SmtpEmailService> log, IConfiguration config)
     {
         _log = log;
+        _host = config["Smtp:Host"] ?? config["Smtp__Host"] ?? "smtp.gmail.com";
+        _port = int.Parse(config["Smtp:Port"] ?? config["Smtp__Port"] ?? "587");
+        _user = config["Smtp:User"] ?? config["Smtp__User"] ?? "";
+        _pass = config["Smtp:Pass"] ?? config["Smtp__Pass"] ?? "";
+        _fromEmail = config["Smtp:FromEmail"] ?? config["Smtp__FromEmail"] ?? _user;
+        _fromName = config["Smtp:FromName"] ?? config["Smtp__FromName"] ?? "Precision Parts";
     }
 
     public async Task SendAsync(AppEmailMessage message, CancellationToken ct = default)
     {
         try
         {
-            using var client = new SmtpClient(SmtpHost, SmtpPort)
+            using var client = new SmtpClient(_host, _port)
             {
-                Credentials = new NetworkCredential(SmtpUser, SmtpPass),
+                Credentials = new NetworkCredential(_user, _pass),
                 EnableSsl = true
             };
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(FromEmail, FromName),
+                From = new MailAddress(_fromEmail, _fromName),
                 Subject = message.Subject,
                 Body = message.HtmlBody ?? message.TextBody,
                 IsBodyHtml = !string.IsNullOrEmpty(message.HtmlBody)
@@ -53,7 +60,7 @@ public sealed class SmtpEmailService : IEmailService
     public Task SendWelcomeAsync(string toEmail, string fullName, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
         {
-            From = FromEmail,
+            From = _fromEmail,
             To = toEmail,
             Subject = "Welcome to Precision Parts 🔧",
             HtmlBody = WelcomeHtml(fullName),
@@ -62,7 +69,7 @@ public sealed class SmtpEmailService : IEmailService
     public Task SendLowStockAlertAsync(string toEmail, IReadOnlyList<LowStockItem> items, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
         {
-            From = FromEmail,
+            From = _fromEmail,
             To = toEmail,
             Subject = $"Low Stock Alert – {items.Count} item(s) need attention",
             HtmlBody = LowStockHtml(items),
@@ -71,7 +78,7 @@ public sealed class SmtpEmailService : IEmailService
     public Task SendOverdueCreditReminderAsync(string toEmail, string customerName, decimal amount, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
         {
-            From = FromEmail,
+            From = _fromEmail,
             To = toEmail,
             Subject = "Overdue Balance Reminder – Precision Parts",
             HtmlBody = OverdueCreditHtml(customerName, amount),
@@ -80,7 +87,7 @@ public sealed class SmtpEmailService : IEmailService
     public Task SendInvoiceReceiptAsync(string toEmail, string customerName, string invoiceRef, decimal total, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
         {
-            From = FromEmail,
+            From = _fromEmail,
             To = toEmail,
             Subject = $"Your Precision Parts Invoice – {invoiceRef}",
             HtmlBody = InvoiceHtml(customerName, invoiceRef, total),
@@ -89,7 +96,7 @@ public sealed class SmtpEmailService : IEmailService
     public Task SendResetPasswordOtpAsync(string toEmail, string fullName, string otp, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
         {
-            From = FromEmail,
+            From = _fromEmail,
             To = toEmail,
             Subject = "Password Reset OTP – Precision Parts",
             HtmlBody = ResetPasswordOtpHtml(fullName, otp),
