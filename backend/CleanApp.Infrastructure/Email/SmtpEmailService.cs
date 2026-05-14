@@ -43,42 +43,59 @@ public sealed class SmtpEmailService : IEmailService
         };
 
         if (attachment != null && attachmentName != null)
-        {
             builder.Attachments.Add(attachmentName, attachment);
-        }
 
         email.Body = builder.ToMessageBody();
+
+        // Use a dedicated 30-second timeout so the HTTP request's CancellationToken
+        // (which fires when the client disconnects / request times out) cannot abort
+        // an in-flight SMTP connection.  We still honour explicit app-level cancellation
+        // via a linked token.
+        using var smtpCts = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken.None);
+        smtpCts.CancelAfter(TimeSpan.FromSeconds(30));
+        var smtpToken = smtpCts.Token;
 
         using var client = new SmtpClient();
         try
         {
             _log.LogInformation("Connecting to SMTP server {Host}:{Port}...", _host, _port);
-            
-            // Port 465 is for Implicit SSL (SslOnConnect), while 587/25 use STARTTLS
-            var socketOptions = _port == 465 
-                ? SecureSocketOptions.SslOnConnect 
+
+            // Port 465 → Implicit SSL; 587/25 → STARTTLS
+            var socketOptions = _port == 465
+                ? SecureSocketOptions.SslOnConnect
                 : SecureSocketOptions.StartTls;
 
-            await client.ConnectAsync(_host, _port, socketOptions, ct);
-            
+            await client.ConnectAsync(_host, _port, socketOptions, smtpToken);
+
             _log.LogInformation("Authenticating as {User}...", _user);
-            await client.AuthenticateAsync(_user, _pass.Replace(" ", ""), ct);
-            
+            await client.AuthenticateAsync(_user, _pass.Replace(" ", ""), smtpToken);
+
             _log.LogInformation("Sending email to {To}...", message.To);
-            await client.SendAsync(email, ct);
-            
-            await client.DisconnectAsync(true, ct);
+            await client.SendAsync(email, smtpToken);
+
+            await client.DisconnectAsync(true, smtpToken);
             _log.LogInformation("Email sent successfully to {To}", message.To);
+        }
+        catch (OperationCanceledException) when (smtpCts.IsCancellationRequested)
+        {
+            _log.LogError(
+                "SMTP connect to {Host}:{Port} timed out (30 s). " +
+                "Check that the server can reach the host and that the port is not blocked. " +
+                "Tip: port 587 (STARTTLS) is usually open where 465 is blocked.",
+                _host, _port);
+            throw new Exception(
+                $"SMTP connection to {_host}:{_port} timed out. " +
+                "The server may be blocking outbound connections on that port. " +
+                "Try changing Smtp:Port to 587 in your configuration.", null);
         }
         catch (Exception ex)
         {
-            _log.LogError(ex, "MailKit failed to send email to {To}. Host: {Host}, Port: {Port}, User: {User}", message.To, _host, _port, _user);
-            
-            // Re-throw with a more descriptive message for the UI if possible
+            _log.LogError(ex, "MailKit failed to send email to {To}. Host: {Host}, Port: {Port}, User: {User}",
+                message.To, _host, _port, _user);
+
             if (ex.Message.Contains("Authentication failed"))
-            {
                 throw new Exception("SMTP Authentication failed. Please check your Gmail App Password and ensure it doesn't have spaces.", ex);
-            }
+
             throw;
         }
     }
