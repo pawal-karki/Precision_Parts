@@ -4,7 +4,11 @@ import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
-import { motion, PageTransition, AnimatePresence } from "@/components/ui/motion";
+import {
+  motion,
+  PageTransition,
+  AnimatePresence,
+} from "@/components/ui/motion";
 import { useAuth } from "@/lib/auth";
 import { formatCurrency } from "@/lib/currency";
 
@@ -17,11 +21,14 @@ function SystemAlertsBanner({ overdueCredit }) {
       type: "warning",
       icon: "credit_card_off",
       title: "Overdue Credit Reminder",
-      message: "You have an unpaid credit balance outstanding for more than 1 month. Please settle it to avoid account restrictions.",
+      message:
+        "You have an unpaid credit balance outstanding for more than 1 month. Please settle it to avoid account restrictions.",
       href: "/customer/payments",
       cta: "View Payments",
     },
-  ].filter(Boolean).filter((a) => !dismissed.includes(a.id));
+  ]
+    .filter(Boolean)
+    .filter((a) => !dismissed.includes(a.id));
 
   if (alerts.length === 0) return null;
   return (
@@ -38,11 +45,23 @@ function SystemAlertsBanner({ overdueCredit }) {
             <Icon name={alert.icon} className="text-lg" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-amber-800 dark:text-amber-300">{alert.title}</p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">{alert.message}</p>
-            <Link to={alert.href} className="text-xs font-bold underline underline-offset-2 mt-1 inline-block text-amber-700 dark:text-amber-400">{alert.cta} →</Link>
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+              {alert.title}
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+              {alert.message}
+            </p>
+            <Link
+              to={alert.href}
+              className="text-xs font-bold underline underline-offset-2 mt-1 inline-block text-amber-700 dark:text-amber-400"
+            >
+              {alert.cta} →
+            </Link>
           </div>
-          <button onClick={() => setDismissed((d) => [...d, alert.id])} className="text-amber-600 hover:text-amber-800 p-1 shrink-0">
+          <button
+            onClick={() => setDismissed((d) => [...d, alert.id])}
+            className="text-amber-600 hover:text-amber-800 p-1 shrink-0"
+          >
             <Icon name="close" className="text-sm" />
           </button>
         </motion.div>
@@ -82,7 +101,10 @@ function VehicleCoverImage({ vehicle }) {
       role="img"
       aria-label={label}
     >
-      <Icon name="directions_car" className="text-5xl text-on-surface-variant/45 dark:text-neutral-600" />
+      <Icon
+        name="directions_car"
+        className="text-5xl text-on-surface-variant/45 dark:text-neutral-600"
+      />
     </div>
   );
 }
@@ -95,8 +117,12 @@ function StatCard({ label, value, delay = 0, className = "" }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
     >
-      <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant dark:text-neutral-500 mb-1">{label}</p>
-      <h2 className="text-2xl sm:text-3xl font-extrabold font-headline text-on-surface dark:text-neutral-100">{value}</h2>
+      <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant dark:text-neutral-500 mb-1">
+        {label}
+      </p>
+      <h2 className="text-2xl sm:text-3xl font-extrabold font-headline text-on-surface dark:text-neutral-100">
+        {value}
+      </h2>
     </motion.div>
   );
 }
@@ -123,7 +149,11 @@ export default function CustomerDashboard() {
         if (!cancelled) {
           setData(dashboard);
           setVehicles(Array.isArray(vehicleList) ? vehicleList : []);
-          setActivity(Array.isArray(dashboard?.recentActivity) ? dashboard.recentActivity : []);
+          setActivity(
+            Array.isArray(dashboard?.recentActivity)
+              ? dashboard.recentActivity
+              : [],
+          );
           setInvoices(ledger?.pendingInvoices || []);
         }
       } catch {
@@ -138,10 +168,13 @@ export default function CustomerDashboard() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const parseMoney = (value) => Number(String(value ?? "0").replace(/[Rs.\s$,]/g, "")) || 0;
+  const parseMoney = (value) =>
+    Number(String(value ?? "0").replace(/[Rs.\s$,]/g, "")) || 0;
 
   const pendingPayments = data?.pendingPayments ?? "Rs. 0.00";
   const totalSpent = data?.totalSpent ?? "Rs. 0.00";
@@ -169,7 +202,10 @@ export default function CustomerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        >
           <Icon name="sync" className="text-3xl text-secondary" />
         </motion.div>
       </div>
@@ -196,7 +232,11 @@ export default function CustomerDashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Total Spent" value={totalSpent} delay={0} />
           <StatCard label="Active Orders" value={activeOrders} delay={0.04} />
-          <StatCard label="Loyalty Points" value={loyaltyPoints.toLocaleString()} delay={0.08} />
+          <StatCard
+            label="Loyalty Points"
+            value={loyaltyPoints.toLocaleString()}
+            delay={0.08}
+          />
           <motion.div
             className="bg-tertiary-container dark:bg-[#1C1C1C] rounded-xl p-6 flex flex-col justify-between shadow-sm dark:border dark:border-neutral-800/50"
             initial={{ opacity: 0, y: 16 }}
@@ -239,28 +279,56 @@ export default function CustomerDashboard() {
             <div className="space-y-4">
               {vehicles.length > 0 ? (
                 vehicles.slice(0, 2).map((v, i) => (
-                  <div key={v.id || i} className={`flex items-center gap-4 p-3 rounded-lg ${i === 0 ? "bg-tertiary-fixed dark:bg-[#1C1C1C] dark:border dark:border-neutral-800" : "bg-secondary-fixed dark:bg-[#1C1C1C] dark:border dark:border-neutral-800"}`}>
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-full ${i === 0 ? "text-tertiary dark:text-neutral-300 dark:bg-neutral-800 bg-white" : "text-secondary dark:text-neutral-300 dark:bg-neutral-800 bg-white"}`}>
-                      <Icon name={i === 0 ? "slow_motion_video" : "tire_repair"} />
+                  <div
+                    key={v.id || i}
+                    className={`flex items-center gap-4 p-3 rounded-lg ${i === 0 ? "bg-tertiary-fixed dark:bg-[#1C1C1C] dark:border dark:border-neutral-800" : "bg-secondary-fixed dark:bg-[#1C1C1C] dark:border dark:border-neutral-800"}`}
+                  >
+                    <div
+                      className={`w-10 h-10 flex items-center justify-center rounded-full ${i === 0 ? "text-tertiary dark:text-neutral-300 dark:bg-neutral-800 bg-white" : "text-secondary dark:text-neutral-300 dark:bg-neutral-800 bg-white"}`}
+                    >
+                      <Icon
+                        name={i === 0 ? "slow_motion_video" : "tire_repair"}
+                      />
                     </div>
                     <div className="flex-1">
-                      <h4 className={`text-sm font-bold ${i === 0 ? "text-on-tertiary-fixed dark:text-neutral-200" : "text-on-secondary-fixed dark:text-neutral-200"}`}>
-                        {i === 0 ? "Brake Pad Wear" : "Tire Pressure Optimization"}
+                      <h4
+                        className={`text-sm font-bold ${i === 0 ? "text-on-tertiary-fixed dark:text-neutral-200" : "text-on-secondary-fixed dark:text-neutral-200"}`}
+                      >
+                        {i === 0
+                          ? "Brake Pad Wear"
+                          : "Tire Pressure Optimization"}
                       </h4>
-                      <p className={`text-xs ${i === 0 ? "text-on-tertiary-fixed-variant dark:text-neutral-500" : "text-on-secondary-fixed-variant dark:text-neutral-500"}`}>
-                        {v.nickname || v.name || "Vehicle"}: {v.healthScore >= 90 ? "All systems nominal" : "maintenance recommended"}
+                      <p
+                        className={`text-xs ${i === 0 ? "text-on-tertiary-fixed-variant dark:text-neutral-500" : "text-on-secondary-fixed-variant dark:text-neutral-500"}`}
+                      >
+                        {v.nickname || v.name || "Vehicle"}:{" "}
+                        {v.healthScore >= 90
+                          ? "All systems nominal"
+                          : "maintenance recommended"}
                       </p>
                     </div>
-                    <span className={`text-xs font-bold ${v.healthScore < 70 ? "text-error dark:text-red-400" : "text-secondary dark:text-neutral-400"}`}>
-                      {v.healthScore >= 90 ? "Good" : v.healthScore >= 70 ? "Minor" : "Critical"}
+                    <span
+                      className={`text-xs font-bold ${v.healthScore < 70 ? "text-error dark:text-red-400" : "text-secondary dark:text-neutral-400"}`}
+                    >
+                      {v.healthScore >= 90
+                        ? "Good"
+                        : v.healthScore >= 70
+                          ? "Minor"
+                          : "Critical"}
                     </span>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-8 text-on-surface-variant dark:text-neutral-500">
                   <Icon name="directions_car" className="text-4xl mb-2" />
-                  <p className="text-sm">No vehicles registered. Add one in your profile.</p>
-                  <Button variant="outline" className="mt-4 dark:border-neutral-700 dark:text-neutral-300" onClick={() => navigate("/customer/profile")}>
+                  <p className="text-sm">
+                    No vehicles registered. Add one in your profile.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-4 dark:border-neutral-700 dark:text-neutral-300"
+                    onClick={() => navigate("/customer/profile")}
+                  >
                     <Icon name="add" className="text-sm" /> Add Vehicle
                   </Button>
                 </div>
@@ -271,7 +339,9 @@ export default function CustomerDashboard() {
           {/* Managed Vehicles */}
           <div className="md:col-span-12 lg:col-span-6 space-y-4">
             <div className="flex items-baseline justify-between">
-              <h3 className="font-headline font-bold text-xl dark:text-neutral-100">Managed Vehicles</h3>
+              <h3 className="font-headline font-bold text-xl dark:text-neutral-100">
+                Managed Vehicles
+              </h3>
               <Link
                 to="/customer/profile"
                 className="text-sm font-bold text-secondary flex items-center gap-1 hover:underline dark:text-neutral-400 dark:hover:text-neutral-300"
@@ -299,20 +369,37 @@ export default function CustomerDashboard() {
                     </div>
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-headline font-extrabold text-base dark:text-neutral-200">{vehicle.nickname || vehicle.name || "My Vehicle"}</h4>
-                        <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${(vehicle.healthScore || 100) >= 90 ? "bg-on-secondary-container dark:bg-emerald-900/40 text-white dark:text-emerald-400" : "bg-tertiary-container dark:bg-red-900/40 text-on-tertiary-container dark:text-red-400"}`}>
-                          {(vehicle.healthScore || 100) >= 90 ? "OPTIMAL" : "SERVICE DUE"}
+                        <h4 className="font-headline font-extrabold text-base dark:text-neutral-200">
+                          {vehicle.nickname || vehicle.name || "My Vehicle"}
+                        </h4>
+                        <span
+                          className={`px-2 py-1 text-[10px] font-bold rounded-full ${(vehicle.healthScore || 100) >= 90 ? "bg-on-secondary-container dark:bg-emerald-900/40 text-white dark:text-emerald-400" : "bg-tertiary-container dark:bg-red-900/40 text-on-tertiary-container dark:text-red-400"}`}
+                        >
+                          {(vehicle.healthScore || 100) >= 90
+                            ? "OPTIMAL"
+                            : "SERVICE DUE"}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white/50 dark:bg-neutral-800 p-2 rounded-lg">
-                          <p className="text-[10px] uppercase font-bold text-on-surface-variant dark:text-neutral-500 mb-1">Mileage</p>
-                          <p className="text-sm font-bold dark:text-neutral-300">{vehicle.mileageKm ?? "—"} km</p>
+                          <p className="text-[10px] uppercase font-bold text-on-surface-variant dark:text-neutral-500 mb-1">
+                            Mileage
+                          </p>
+                          <p className="text-sm font-bold dark:text-neutral-300">
+                            {vehicle.mileageKm ?? "—"} km
+                          </p>
                         </div>
                         <div className="bg-white/50 dark:bg-neutral-800 p-2 rounded-lg">
-                          <p className="text-[10px] uppercase font-bold text-on-surface-variant dark:text-neutral-500 mb-1">Health</p>
-                          <p className={`text-sm font-bold ${(vehicle.healthScore || 100) >= 90 ? "text-emerald-600 dark:text-emerald-400" : (vehicle.healthScore || 100) >= 70 ? "text-amber-600 dark:text-amber-400" : "text-error dark:text-red-400"}`}>
-                            {vehicle.healthScore || 100} <span className="font-medium text-[10px] text-on-surface-variant dark:text-neutral-500">/ 100</span>
+                          <p className="text-[10px] uppercase font-bold text-on-surface-variant dark:text-neutral-500 mb-1">
+                            Health
+                          </p>
+                          <p
+                            className={`text-sm font-bold ${(vehicle.healthScore || 100) >= 90 ? "text-emerald-600 dark:text-emerald-400" : (vehicle.healthScore || 100) >= 70 ? "text-amber-600 dark:text-amber-400" : "text-error dark:text-red-400"}`}
+                          >
+                            {vehicle.healthScore || 100}{" "}
+                            <span className="font-medium text-[10px] text-on-surface-variant dark:text-neutral-500">
+                              / 100
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -331,23 +418,34 @@ export default function CustomerDashboard() {
             transition={{ delay: 0.24 }}
           >
             <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 shadow-sm border border-surface-container dark:border-neutral-800/50">
-              <h3 className="font-headline font-bold text-xl mb-6 dark:text-neutral-100">Recent Activity</h3>
+              <h3 className="font-headline font-bold text-xl mb-6 dark:text-neutral-100">
+                Recent Activity
+              </h3>
               {activity.length === 0 ? (
-                <p className="text-center text-on-surface-variant dark:text-neutral-500 py-6 text-sm">No recent activity yet.</p>
+                <p className="text-center text-on-surface-variant dark:text-neutral-500 py-6 text-sm">
+                  No recent activity yet.
+                </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activity.slice(0, 6).map((item, index) => (
                     <div key={item.id || index} className="flex gap-4">
                       <div className="flex flex-col items-center">
-                        <div className={`w-2 h-2 rounded-full mt-1.5 ${index === 0 ? "bg-secondary dark:bg-emerald-500" : "bg-surface-container-highest dark:bg-neutral-700"}`} />
+                        <div
+                          className={`w-2 h-2 rounded-full mt-1.5 ${index === 0 ? "bg-secondary dark:bg-emerald-500" : "bg-surface-container-highest dark:bg-neutral-700"}`}
+                        />
                       </div>
                       <div className="flex-1 pb-4 border-b border-surface-container dark:border-neutral-800 last:border-0">
-                        <p className="text-xs font-bold text-on-surface-variant dark:text-neutral-500 uppercase mb-1">{item.date}</p>
+                        <p className="text-xs font-bold text-on-surface-variant dark:text-neutral-500 uppercase mb-1">
+                          {item.date}
+                        </p>
                         <h5 className="text-sm font-bold text-on-surface dark:text-neutral-200">
-                          {item.type === "Order" ? "Parts Purchase" : "Service Update"}
+                          {item.type === "Order"
+                            ? "Parts Purchase"
+                            : "Service Update"}
                         </h5>
                         <p className="text-xs text-on-surface-variant dark:text-neutral-400">
-                          {item.description} {item.amount ? `— ${item.amount}` : ""}
+                          {item.description}{" "}
+                          {item.amount ? `— ${item.amount}` : ""}
                         </p>
                       </div>
                     </div>
@@ -375,16 +473,30 @@ export default function CustomerDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.28 }}
         >
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
-            loyaltyEligible ? "bg-emerald-500 text-white" : "bg-secondary/10 text-secondary"
-          }`}>
-            <Icon name={loyaltyEligible ? "verified" : "workspace_premium"} filled className="text-3xl" />
+          <div
+            className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+              loyaltyEligible
+                ? "bg-emerald-500 text-white"
+                : "bg-secondary/10 text-secondary"
+            }`}
+          >
+            <Icon
+              name={loyaltyEligible ? "verified" : "workspace_premium"}
+              filled
+              className="text-3xl"
+            />
           </div>
           <div className="flex-1">
-            <h3 className={`font-headline font-bold text-lg ${
-              loyaltyEligible ? "text-emerald-700 dark:text-emerald-400" : "text-on-surface dark:text-white"
-            }`}>
-              {loyaltyEligible ? "🎉 10% Discount Unlocked!" : "Loyalty Program"}
+            <h3
+              className={`font-headline font-bold text-lg ${
+                loyaltyEligible
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-on-surface dark:text-white"
+              }`}
+            >
+              {loyaltyEligible
+                ? "🎉 10% Discount Unlocked!"
+                : "Loyalty Program"}
             </h3>
             <p className="text-sm text-on-surface-variant dark:text-neutral-400 mt-1">
               {loyaltyEligible
@@ -394,7 +506,11 @@ export default function CustomerDashboard() {
           </div>
           <Button
             variant={loyaltyEligible ? "default" : "outline"}
-            className={loyaltyEligible ? "bg-emerald-500 hover:bg-emerald-600 text-white shrink-0" : "shrink-0"}
+            className={
+              loyaltyEligible
+                ? "bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
+                : "shrink-0"
+            }
             onClick={() => navigate("/customer/loyalty")}
           >
             <Icon name="emoji_events" className="text-sm" />
