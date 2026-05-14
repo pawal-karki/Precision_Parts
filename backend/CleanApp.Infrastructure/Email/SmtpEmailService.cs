@@ -52,16 +52,14 @@ public sealed class SmtpEmailService : IEmailService
         using var client = new SmtpClient();
         try
         {
-            // Set a reasonable timeout (15 seconds)
-            client.Timeout = 15000;
-
             _log.LogInformation("Connecting to SMTP server {Host}:{Port}...", _host, _port);
             
-            // Port 465 uses SSL/TLS from the start.
-            // Using SslOnConnect for 465, or Auto for others.
-            var options = _port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
-            
-            await client.ConnectAsync(_host, _port, options, ct);
+            // Port 465 is for Implicit SSL (SslOnConnect), while 587/25 use STARTTLS
+            var socketOptions = _port == 465 
+                ? SecureSocketOptions.SslOnConnect 
+                : SecureSocketOptions.StartTls;
+
+            await client.ConnectAsync(_host, _port, socketOptions, ct);
             
             _log.LogInformation("Authenticating as {User}...", _user);
             await client.AuthenticateAsync(_user, _pass.Replace(" ", ""), ct);
