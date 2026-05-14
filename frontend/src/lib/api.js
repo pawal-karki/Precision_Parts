@@ -66,14 +66,18 @@ class ApiClient {
   uploadPartImage(file) {
     const fd = new FormData();
     fd.append("file", file);
+    const headers = {};
+    const token = localStorage.getItem("pp_token");
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     return fetch(`${BASE}/admin/parts/upload`, {
       method: "POST",
+      headers,
       body: fd,
       credentials: "include",
-    }).then(async res => {
+    }).then(async (res) => {
       if (!res.ok) {
         const b = await res.json().catch(() => ({}));
-        throw new Error(b.error || "Upload failed");
+        throw new Error(b.message || b.error || `HTTP ${res.status}`);
       }
       return res.json();
     });
@@ -112,11 +116,18 @@ class ApiClient {
   // ── Staff: POS & Invoice ──────────────────────────────────────
   getPosProducts() { return this._get("/staff/pos/products"); }
   createPosSale(dto) { return this._post("/staff/pos/checkout", dto); }
+  getStaffPosHistory(take = 150) { return this._get(`/staff/pos/history?take=${take}`); }
+  getStaffPosSaleDetail(id) { return this._get(`/staff/pos/history/${id}`); }
+  updateStaffPosSale(id, dto) { return this._put(`/staff/pos/history/${id}`, dto); }
+  getStaffPartRequests()   { return this._get("/staff/part-requests"); }
+  updateStaffPartRequestStatus(id, dto) { return this._put(`/staff/part-requests/${id}/status`, dto); }
   getInvoice()             { return this._get("/staff/invoice"); }
 
   // ── Customer: Dashboard ───────────────────────────────────────
   getCustomerDashboard()   { return this._get("/customer/dashboard"); }
   getCustomerLedger()      { return this._get("/customer/dashboard/ledger"); }
+  getCustomerPosInvoices() { return this._get("/customer/invoices/pos"); }
+  payCustomerInvoice(id)   { return this._post(`/customer/invoices/${id}/pay`, {}); }
   getCustomerLoyalty()     { return this._get("/customer/loyalty"); }
   createCustomerOrder(dto) { return this._post("/customer/checkout", dto); }
 
@@ -179,4 +190,4 @@ export const getImageUrl = (url) => {
   if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
   const baseUrl = BASE.replace('/api', '');
   return `${baseUrl}${url}`;
-};
+};

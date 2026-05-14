@@ -16,7 +16,10 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken ct)
     {
-        var result = await _auth.LoginAsync(dto, ct);
+        var ip = ClientIpResolver.GetClientIp(HttpContext);
+        var ua = Request.Headers["User-Agent"].ToString();
+        var client = new LoginClientInfo(ip, string.IsNullOrEmpty(ua) ? null : ua);
+        var result = await _auth.LoginAsync(dto, client, ct);
         if (result is null)
             return Unauthorized(new { message = "Invalid email or password" });
 

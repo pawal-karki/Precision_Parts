@@ -60,7 +60,7 @@ public class CustomerRepository : ICustomerRepository
     }
 
     public Task<CustomerProfile?> GetProfileByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        _db.CustomerProfiles.FirstOrDefaultAsync(x => x.UserId == id, cancellationToken);
+        _db.CustomerProfiles.Include(x => x.User).FirstOrDefaultAsync(x => x.UserId == id, cancellationToken);
 
     public Task UpdateProfileAsync(CustomerProfile profile, CancellationToken cancellationToken = default)
     {
@@ -87,6 +87,7 @@ public class CustomerRepository : ICustomerRepository
 
         var invoices = await _db.Invoices
             .AsNoTracking()
+            .Include(i => i.Items)
             .Where(i => i.CustomerId == userId)
             .OrderByDescending(i => i.IssueDate)
             .ToListAsync(cancellationToken);
@@ -100,6 +101,59 @@ public class CustomerRepository : ICustomerRepository
         return (appointments, invoices, partRequests);
     }
 
+    public async Task<Dictionary<Guid, int>> GetPartRequestCountsByCustomerIdAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await _db.PartRequests
+            .AsNoTracking()
+            .GroupBy(pr => pr.CustomerId)
+            .Select(g => new { CustomerId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(x => x.CustomerId, x => x.Count);
+    }
+
+    public async Task<IReadOnlyList<PartRequest>> ListPartRequestsForCustomerAsync(Guid customerId, CancellationToken cancellationToken = default) =>
+        await _db.PartRequests
+            .AsNoTracking()
+            .Where(pr => pr.CustomerId == customerId)
+            .OrderByDescending(pr => pr.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<PartRequest>> ListAllPartRequestsForStaffAsync(CancellationToken cancellationToken = default) =>
+        await _db.PartRequests
+            .AsNoTracking()
+            .Include(pr => pr.Customer)
+            .OrderByDescending(pr => pr.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+    public Task<PartRequest?> GetPartRequestByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.PartRequests
+            .Include(pr => pr.Customer)
+            .FirstOrDefaultAsync(pr => pr.Id == id, cancellationToken);
+
+    public void AddUserLoginAudit(UserLoginAudit audit) => _db.UserLoginAudits.Add(audit);
+
+    public async Task<(IReadOnlyList<UserLoginAudit> Items, int TotalCount)> ListUserLoginAuditsAsync(
+        Guid userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var q = _db.UserLoginAudits.AsNoTracking().Where(a => a.UserId == userId);
+        var total = await q.CountAsync(cancellationToken);
+        var items = await q
+            .OrderByDescending(a => a.OccurredAtUtc)
+            .ThenByDescending(a => a.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+        return (items, total);
+    }
+
+    public Task<Guid?> GetLatestUserLoginAuditIdAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        _db.UserLoginAudits.AsNoTracking()
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.OccurredAtUtc)
+            .ThenByDescending(a => a.Id)
+            .Select(a => (Guid?)a.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
     public void Add(User user) => _db.Users.Add(user);
 
     public void AddProfile(CustomerProfile profile) => _db.CustomerProfiles.Add(profile);
@@ -112,4 +166,4 @@ public class CustomerRepository : ICustomerRepository
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _db.SaveChangesAsync(cancellationToken);
-}
+}

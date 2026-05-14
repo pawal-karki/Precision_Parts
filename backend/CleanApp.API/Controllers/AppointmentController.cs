@@ -52,11 +52,20 @@ public class AppointmentController : ControllerBase
             return BadRequest(new { message = "You can only book one appointment in a day. To change your appointment, please cancel your booked appointment first." });
         }
 
+        Vehicle? linkedVehicle = null;
+        if (dto.VehicleId is { } vehicleId && vehicleId != Guid.Empty)
+        {
+            linkedVehicle = await _db.Vehicles
+                .FirstOrDefaultAsync(v => v.Id == vehicleId && v.CustomerId == userId, ct);
+            if (linkedVehicle is null)
+                return BadRequest(new { message = "Selected vehicle was not found in your garage." });
+        }
+
         var appointment = new Appointment
         {
             CustomerId = userId,
             VehicleId = dto.VehicleId,
-            ScheduledAtUtc = dto.ScheduledAt.ToUniversalTime(),
+            ScheduledAtUtc = scheduledAt,
             Status = AppointmentStatus.Booked,
             PickupRequired = dto.PickupRequired,
             Notes = dto.Notes
@@ -79,6 +88,13 @@ public class AppointmentController : ControllerBase
             await _db.SaveChangesAsync(ct);
         }
 
+        // Tie scheduled service date to the vehicle's "last service" record in the garage
+        if (linkedVehicle is not null)
+        {
+            linkedVehicle.LastServiceDate = DateOnly.FromDateTime(scheduledAt);
+            await _db.SaveChangesAsync(ct);
+        }
+
         var response = new AppointmentResponseDto
         {
             Id = appointment.Id,
@@ -86,7 +102,8 @@ public class AppointmentController : ControllerBase
             ScheduledAtUtc = appointment.ScheduledAtUtc,
             Status = appointment.Status.ToString(),
             PickupRequired = appointment.PickupRequired,
-            Notes = appointment.Notes
+            Notes = appointment.Notes,
+            VehicleName = linkedVehicle?.Nickname
         };
 
         return Ok(response);

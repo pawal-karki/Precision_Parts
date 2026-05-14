@@ -29,4 +29,5 @@ public class User : BaseEntity
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public ICollection<UserLoginAudit> LoginAudits { get; set; } = new List<UserLoginAudit>();
 }

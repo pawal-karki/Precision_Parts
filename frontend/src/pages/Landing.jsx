@@ -5,8 +5,26 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedGear from "@/components/landing/AnimatedGear";
 import AnimatedWave from "@/components/landing/AnimatedWave";
+import { useAuth } from "@/lib/auth";
+import { getImageUrl } from "@/lib/api";
 
 /* ────────────────────────── data ────────────────────────── */
+
+function dashboardPathForRole(role) {
+  const r = (role || "").toLowerCase();
+  if (r === "admin") return "/admin";
+  if (r === "staff") return "/staff";
+  return "/customer";
+}
+
+/** Primary CTA for logged-in users (hero / bottom CTA). */
+function loggedInPrimaryCta(user) {
+  const r = user?.role?.toLowerCase();
+  if (r === "customer") return { to: "/customer/booking", label: "Book an appointment" };
+  if (r === "staff") return { to: "/staff", label: "Staff portal" };
+  if (r === "admin") return { to: "/admin", label: "Admin console" };
+  return { to: "/customer", label: "Dashboard" };
+}
 
 const heroWords = ["book", "schedule", "track", "relax"];
 
@@ -268,6 +286,7 @@ const visualMap = { inventory: InventoryVisual, pos: POSVisual, ai: AIVisual, se
 /* ────────────────────────── sections ────────────────────────── */
 
 function Navigation() {
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -311,14 +330,40 @@ function Navigation() {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Link to="/login" className={`text-on-surface-variant hover:text-on-surface transition-all ${scrolled ? "text-xs" : "text-sm"}`}>
-              Sign in
-            </Link>
-            <Link to="/signup">
-              <Button variant="secondary" size={scrolled ? "sm" : "default"} className="rounded-full px-6">
-                Get Started
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <div className="flex items-center gap-2.5 min-w-0 max-w-[220px]">
+                  <div className="w-9 h-9 rounded-full bg-surface-container border border-outline-variant/30 overflow-hidden shrink-0 flex items-center justify-center">
+                    {user.imageUrl ? (
+                      <img src={getImageUrl(user.imageUrl)} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-bold text-secondary">
+                        {(user.fullName || user.name || user.email || "?").charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-on-surface font-medium truncate ${scrolled ? "text-xs max-w-[100px]" : "text-sm max-w-[140px]"}`}>
+                    {user.fullName || user.name || user.email}
+                  </span>
+                </div>
+                <Link to={dashboardPathForRole(user.role)}>
+                  <Button variant="secondary" size={scrolled ? "sm" : "default"} className="rounded-full px-6">
+                    Dashboard
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className={`text-on-surface-variant hover:text-on-surface transition-all ${scrolled ? "text-xs" : "text-sm"}`}>
+                  Sign in
+                </Link>
+                <Link to="/signup">
+                  <Button variant="secondary" size={scrolled ? "sm" : "default"} className="rounded-full px-6">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2" aria-label="Menu">
@@ -343,13 +388,38 @@ function Navigation() {
               </a>
             ))}
           </div>
-          <div className="flex gap-4 pt-8 border-t border-outline-variant/30">
-            <Link to="/login" className="flex-1" onClick={() => setMobileOpen(false)}>
-              <Button variant="outline" className="w-full rounded-full h-14 text-base">Sign in</Button>
-            </Link>
-            <Link to="/signup" className="flex-1" onClick={() => setMobileOpen(false)}>
-              <Button variant="secondary" className="w-full rounded-full h-14 text-base">Get Started</Button>
-            </Link>
+          <div className="flex flex-col gap-4 pt-8 border-t border-outline-variant/30">
+            {user ? (
+              <>
+                <div className="flex items-center gap-3 px-1">
+                  <div className="w-11 h-11 rounded-full bg-surface-container border border-outline-variant/30 overflow-hidden shrink-0 flex items-center justify-center">
+                    {user.imageUrl ? (
+                      <img src={getImageUrl(user.imageUrl)} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-secondary">
+                        {(user.fullName || user.name || user.email || "?").charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-on-surface-variant uppercase tracking-widest font-mono">Signed in</p>
+                    <p className="font-headline font-bold text-on-surface truncate">{user.fullName || user.name || user.email}</p>
+                  </div>
+                </div>
+                <Link to={dashboardPathForRole(user.role)} onClick={() => setMobileOpen(false)}>
+                  <Button variant="secondary" className="w-full rounded-full h-14 text-base">Go to dashboard</Button>
+                </Link>
+              </>
+            ) : (
+              <div className="flex gap-4">
+                <Link to="/login" className="flex-1" onClick={() => setMobileOpen(false)}>
+                  <Button variant="outline" className="w-full rounded-full h-14 text-base">Sign in</Button>
+                </Link>
+                <Link to="/signup" className="flex-1" onClick={() => setMobileOpen(false)}>
+                  <Button variant="secondary" className="w-full rounded-full h-14 text-base">Get Started</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -358,6 +428,7 @@ function Navigation() {
 }
 
 function HeroSection() {
+  const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const [wordIdx, setWordIdx] = useState(0);
 
@@ -417,9 +488,9 @@ function HeroSection() {
           </p>
 
           <div className={`flex flex-col sm:flex-row items-start gap-4 transition-all duration-700 delay-300 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-            <Link to="/signup" state={{ intent: "booking" }}>
+            <Link to={user ? loggedInPrimaryCta(user).to : "/signup"} state={user ? undefined : { intent: "booking" }}>
               <Button variant="secondary" size="lg" className="px-8 h-14 text-base rounded-full group">
-                Book an appointment
+                {user ? loggedInPrimaryCta(user).label : "Book an appointment"}
                 <Icon name="arrow_forward" className="text-base ml-1 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
@@ -755,6 +826,7 @@ function TestimonialsSection() {
 }
 
 function CTASection() {
+  const { user } = useAuth();
   const [sRef, sVis] = useInView(0.2);
   const [mouse, setMouse] = useState({ x: 50, y: 50 });
 
@@ -783,9 +855,9 @@ function CTASection() {
                   Join thousands of customers booking motor service appointments in minutes.
                 </p>
                 <div className="flex flex-col sm:flex-row items-start gap-4">
-                  <Link to="/signup" state={{ intent: "booking" }}>
+                  <Link to={user ? loggedInPrimaryCta(user).to : "/signup"} state={user ? undefined : { intent: "booking" }}>
                     <Button variant="secondary" size="lg" className="px-8 h-14 text-base rounded-full group">
-                      Book an appointment
+                      {user ? loggedInPrimaryCta(user).label : "Book an appointment"}
                       <Icon name="arrow_forward" className="text-base ml-1 transition-transform group-hover:translate-x-1" />
                     </Button>
                   </Link>

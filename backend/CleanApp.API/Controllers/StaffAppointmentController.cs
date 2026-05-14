@@ -69,6 +69,15 @@ public class StaffAppointmentController : ControllerBase
     {
         var scheduledAt = dto.ScheduledAt.ToUniversalTime();
 
+        Vehicle? linkedVehicle = null;
+        if (dto.VehicleId is { } vehicleId && vehicleId != Guid.Empty)
+        {
+            linkedVehicle = await _db.Vehicles
+                .FirstOrDefaultAsync(v => v.Id == vehicleId && v.CustomerId == dto.CustomerId, ct);
+            if (linkedVehicle is null)
+                return BadRequest(new { message = "Vehicle does not belong to the selected customer." });
+        }
+
         var appointment = new Appointment
         {
             CustomerId = dto.CustomerId,
@@ -94,6 +103,13 @@ public class StaffAppointmentController : ControllerBase
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (linkedVehicle is not null)
+        {
+            linkedVehicle.LastServiceDate = DateOnly.FromDateTime(scheduledAt);
+            await _db.SaveChangesAsync(ct);
+        }
+
         return Ok(new { id = appointment.Id, message = "Appointment created successfully." });
     }
 

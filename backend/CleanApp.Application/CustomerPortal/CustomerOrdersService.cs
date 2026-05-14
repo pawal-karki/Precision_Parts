@@ -78,13 +78,14 @@ public class CustomerOrdersService : ICustomerOrdersService
         var user = await _customers.GetCustomerByIdWithDetailsAsync(customerId, cancellationToken);
         if (user == null) return null;
 
-        var totalSpent = user.CustomerProfile?.TotalSpent ?? 0m;
+        // Invoice aggregates are the source of truth (profile.TotalSpent can drift if invoices
+        // were created without updating CustomerProfile, or from legacy data).
+        var (sumInvoices, maxSingle) = await _invoices.GetCustomerSpendAggregatesAsync(user.Id, cancellationToken);
+        var profileTotal = user.CustomerProfile?.TotalSpent ?? 0m;
+        var totalSpent = Math.Max(sumInvoices, profileTotal);
+
         var tier = user.CustomerProfile?.LoyaltyTier ?? "standard";
         var loyaltyPoints = (int)Math.Min(99999, totalSpent * 0.28m);
-
-        // Compute max single order from actual invoice history
-        var invoices = await _invoices.ListByCustomerIdWithItemsAsync(user.Id, 100, cancellationToken);
-        var maxSingle = invoices.Any() ? invoices.Max(i => i.TotalAmount) : 0m;
 
         var discountEligible = maxSingle >= 5000m;
         var discountPercent  = discountEligible ? 10 : 0;

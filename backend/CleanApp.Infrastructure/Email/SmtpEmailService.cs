@@ -28,7 +28,7 @@ public sealed class SmtpEmailService : IEmailService
         _fromName = config["Smtp:FromName"] ?? config["Smtp__FromName"] ?? "Precision Parts";
     }
 
-    public async Task SendAsync(AppEmailMessage message, CancellationToken ct = default)
+    public async Task SendAsync(AppEmailMessage message, byte[]? attachment = null, string? attachmentName = null, CancellationToken ct = default)
     {
         try
         {
@@ -46,6 +46,11 @@ public sealed class SmtpEmailService : IEmailService
                 IsBodyHtml = !string.IsNullOrEmpty(message.HtmlBody)
             };
             mailMessage.To.Add(message.To);
+            
+            if (attachment != null && attachmentName != null)
+            {
+                mailMessage.Attachments.Add(new Attachment(new MemoryStream(attachment), attachmentName, "application/pdf"));
+            }
 
             await client.SendMailAsync(mailMessage, ct);
             _log.LogInformation("Email sent to {To} – subject: {Subject}", message.To, message.Subject);
@@ -64,7 +69,7 @@ public sealed class SmtpEmailService : IEmailService
             To = toEmail,
             Subject = "Welcome to Precision Parts 🔧",
             HtmlBody = WelcomeHtml(fullName),
-        }, ct);
+        }, null, null, ct);
 
     public Task SendLowStockAlertAsync(string toEmail, IReadOnlyList<LowStockItem> items, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
@@ -73,7 +78,7 @@ public sealed class SmtpEmailService : IEmailService
             To = toEmail,
             Subject = $"Low Stock Alert – {items.Count} item(s) need attention",
             HtmlBody = LowStockHtml(items),
-        }, ct);
+        }, null, null, ct);
 
     public Task SendOverdueCreditReminderAsync(string toEmail, string customerName, decimal amount, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
@@ -82,16 +87,16 @@ public sealed class SmtpEmailService : IEmailService
             To = toEmail,
             Subject = "Overdue Balance Reminder – Precision Parts",
             HtmlBody = OverdueCreditHtml(customerName, amount),
-        }, ct);
+        }, null, null, ct);
 
-    public Task SendInvoiceReceiptAsync(string toEmail, string customerName, string invoiceRef, decimal total, CancellationToken ct = default)
+    public Task SendInvoiceReceiptAsync(string toEmail, string customerName, string invoiceRef, decimal total, byte[]? pdfAttachment = null, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
         {
             From = _fromEmail,
             To = toEmail,
             Subject = $"Your Precision Parts Invoice – {invoiceRef}",
             HtmlBody = InvoiceHtml(customerName, invoiceRef, total),
-        }, ct);
+        }, pdfAttachment, $"Invoice_{invoiceRef}.pdf", ct);
 
     public Task SendResetPasswordOtpAsync(string toEmail, string fullName, string otp, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
@@ -100,7 +105,7 @@ public sealed class SmtpEmailService : IEmailService
             To = toEmail,
             Subject = "Password Reset OTP – Precision Parts",
             HtmlBody = ResetPasswordOtpHtml(fullName, otp),
-        }, ct);
+        }, null, null, ct);
 
     private static string WelcomeHtml(string name) => $@"
         <div style=""font-family:Inter,sans-serif;max-width:600px;margin:auto;background:#fff;padding:40px;border-radius:12px;border:1px solid #e5e7eb"">

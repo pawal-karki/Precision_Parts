@@ -14,6 +14,8 @@ public class CustomerListItemDto
     public List<string> Vehicles { get; set; } = new();
     public string LastOrder { get; set; } = "";
     public double Credit { get; set; }
+    /// <summary>Count of custom part sourcing requests (customer portal).</summary>
+    public int PartRequestCount { get; set; }
 }
 
 public class CustomerCreateDto
@@ -51,6 +53,18 @@ public class ProfileUpdateDto
     public string? Region { get; set; }
 }
 
+public class CustomerPartRequestRowDto
+{
+    public Guid Id { get; set; }
+    public string PartName { get; set; } = "";
+    public string? PartNumber { get; set; }
+    public string? VehicleModel { get; set; }
+    public string? Description { get; set; }
+    public string? Urgency { get; set; }
+    public string Status { get; set; } = "";
+    public DateTime CreatedAtUtc { get; set; }
+}
+
 // ── CRM Detailed Report ───────────────────────────────────────────────────
 
 public class CustomerDetailReportDto
@@ -70,6 +84,7 @@ public class CustomerDetailReportDto
     public int InvoiceCount { get; set; }
     public int PartRequestCount { get; set; }
     public DateTime? LastLoginAtUtc { get; set; }
+    public List<CustomerPartRequestRowDto> PartRequests { get; set; } = new();
     public List<RecentPurchaseDto> RecentPurchases { get; set; } = new();
     public List<RecentPurchaseDto> FullPurchases { get; set; } = new();
     public List<CustomerAppointmentDto> Appointments { get; set; } = new();
@@ -119,6 +134,7 @@ public class ActivityLogItemDto
 
 public class LoginActivityItemDto
 {
+    public Guid Id { get; set; }
     public DateTime TimestampUtc { get; set; }
     public string IpAddress { get; set; } = "—";
     public string Device { get; set; } = "Unknown";

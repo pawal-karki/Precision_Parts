@@ -26,11 +26,13 @@ public static class DependencyInjection
         services.AddScoped<IAdminStaffService, AdminStaffService>();
 
         services.AddScoped<ICustomerDashboardService, CustomerDashboardService>();
+        services.AddScoped<ICustomerInvoiceService, CustomerInvoiceService>();
         services.AddScoped<ICustomerOrdersService, CustomerOrdersService>();
         services.AddScoped<ICustomerAiService, CustomerAiService>();
 
         services.AddScoped<INotificationsService, NotificationsService>();
         services.AddScoped<IStaffPosService, StaffPosService>();
+        services.AddScoped<IPartRequestsStaffService, PartRequestsStaffService>();
 
         return services;
     }

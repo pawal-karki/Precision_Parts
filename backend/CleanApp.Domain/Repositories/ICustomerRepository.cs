@@ -21,6 +21,21 @@ public interface ICustomerRepository
     Task<(List<Appointment> appointments, List<Invoice> invoices, List<PartRequest> partRequests)>
         GetActivityDataAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task<Dictionary<Guid, int>> GetPartRequestCountsByCustomerIdAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<PartRequest>> ListPartRequestsForCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<PartRequest>> ListAllPartRequestsForStaffAsync(CancellationToken cancellationToken = default);
+
+    Task<PartRequest?> GetPartRequestByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default);
+
+    void AddUserLoginAudit(UserLoginAudit audit);
+
+    Task<(IReadOnlyList<UserLoginAudit> Items, int TotalCount)> ListUserLoginAuditsAsync(
+        Guid userId, int page, int pageSize, CancellationToken cancellationToken = default);
+
+    Task<Guid?> GetLatestUserLoginAuditIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
     void Add(User user);
     void AddProfile(CustomerProfile profile);
     void AddVehicle(Vehicle vehicle);

@@ -6,6 +6,7 @@ using CleanApp.API.OpenApi;
 using CleanApp.Application;
 using CleanApp.Application.Ai;
 using CleanApp.Application.Auth;
+using CleanApp.Application.Staff;
 using CleanApp.Infrastructure;
 using CleanApp.Infrastructure.Jobs;
 using CleanApp.Infrastructure.Persistence;
@@ -13,6 +14,7 @@ using CleanApp.Infrastructure.Seeding;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,21 +59,43 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 
-    // Read JWT from cookie if no Authorization header
+    // Prefer Authorization Bearer (SPA localStorage); fall back to HttpOnly cookie.
+    // Always taking the cookie first can leave a stale pp_auth and ignore a valid Bearer,
+    // which clears the client session on /auth/me after a full page load.
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
-            if (context.Request.Cookies.TryGetValue("pp_auth", out var token))
+            var authHeader = context.Request.Headers.Authorization.ToString();
+            if (!string.IsNullOrEmpty(authHeader) &&
+                authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
-                context.Token = token;
+                context.Token = authHeader["Bearer ".Length..].Trim();
+                return Task.CompletedTask;
             }
+
+            if (context.Request.Cookies.TryGetValue("pp_auth", out var cookieToken) &&
+                !string.IsNullOrEmpty(cookieToken))
+            {
+                context.Token = cookieToken;
+            }
+
             return Task.CompletedTask;
         }
     };
 });
 
 builder.Services.AddAuthorization();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    if (builder.Environment.IsDevelopment())
+    {
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    }
+});
 
 // ── Gemini AI service ───────────────────────────────────────────
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
@@ -87,6 +111,8 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 builder.Services.AddTransient<LowStockAlertJob>();
 builder.Services.AddTransient<OverdueCreditReminderJob>();
+builder.Services.AddTransient<InvoiceReceiptEmailJob>();
+builder.Services.AddSingleton<IInvoiceReceiptEmailQueue, HangfireInvoiceReceiptEmailQueue>();
 
 // ── CORS ────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -120,6 +146,7 @@ if (swaggerEnabled)
 }
 
 // ── Middleware pipeline ─────────────────────────────────────────
+app.UseForwardedHeaders();
 app.UseCors("CorsPolicy");
 app.UseStaticFiles();
 app.UseAuthentication();

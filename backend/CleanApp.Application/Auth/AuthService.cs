@@ -33,13 +33,30 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<AuthResponseDto?> LoginAsync(LoginDto dto, CancellationToken ct)
+    public async Task<AuthResponseDto?> LoginAsync(LoginDto dto, LoginClientInfo? client, CancellationToken ct)
     {
         var user = await _users.GetByEmailAsync(dto.Email.ToLowerInvariant(), ct);
         if (user is null) return null;
         if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash)) return null;
 
-        user.LastLoginAtUtc = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+        user.LastLoginAtUtc = now;
+
+        var ip = string.IsNullOrWhiteSpace(client?.IpAddress) ? "unknown" : client.IpAddress.Trim();
+        if (ip.Length > 64) ip = ip[..64];
+
+        var ua = client?.UserAgent;
+        if (!string.IsNullOrEmpty(ua) && ua.Length > 512) ua = ua[..512];
+
+        _customers.AddUserLoginAudit(new UserLoginAudit
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            OccurredAtUtc = now,
+            IpAddress = ip,
+            UserAgent = string.IsNullOrWhiteSpace(ua) ? null : ua
+        });
+
         await _users.SaveChangesAsync(ct);
 
         return BuildResponse(user);

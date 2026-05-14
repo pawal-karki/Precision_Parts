@@ -13,6 +13,8 @@ const navItems = [
   { to: "/staff/customers", icon: "group", label: "Customers" },
   { to: "/staff/bookings", icon: "calendar_month", label: "Bookings" },
   { to: "/staff/sales", icon: "point_of_sale", label: "Sales / POS" },
+  { to: "/staff/pos-history", icon: "receipt_long", label: "POS history" },
+  { to: "/staff/part-requests", icon: "build", label: "Part requests" },
   { to: "/staff/search", icon: "search", label: "Advanced Search" },
 ];
 

@@ -56,18 +56,19 @@ export default function OrderHistory() {
   );
 
   const totalSpent = useMemo(
-    () => orders.reduce((sum, o) => sum + parseAmount(o.total), 0),
+    () => orders.reduce((sum, o) => sum + parseAmount(o.totalAmount || o.total), 0),
     [orders]
   );
 
   const spendingData = useMemo(() => {
     const monthMap = {};
     orders.forEach((o) => {
-      if (!o.date) return;
-      const d = new Date(o.date);
+      const dateVal = o.orderDate || o.date;
+      if (!dateVal) return;
+      const d = new Date(dateVal);
       if (isNaN(d)) return;
       const key = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-      monthMap[key] = (monthMap[key] || 0) + parseAmount(o.total);
+      monthMap[key] = (monthMap[key] || 0) + parseAmount(o.totalAmount || o.total);
     });
     return Object.entries(monthMap)
       .map(([month, amount]) => ({ month, amount: Math.round(amount) }))
@@ -91,7 +92,7 @@ export default function OrderHistory() {
   const handleExportCSV = () => {
     const header = "Order ID,Date,Items,Status,Total\n";
     const rows = orders
-      .map((o) => `${o.id},${o.date},"${o.items}",${o.status},${o.total}`)
+      .map((o) => `${o.orderNumber || o.id},${o.orderDate || o.date},"${o.itemsSummary || o.items}",${o.status},${o.totalAmount || o.total}`)
       .join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -248,9 +249,9 @@ export default function OrderHistory() {
                         className="hover:bg-background dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
                         onClick={() => setSelectedOrder(order)}
                       >
-                        <td className="px-6 py-4 text-sm text-on-surface dark:text-neutral-200">{order.date}</td>
-                        <td className="px-6 py-4 text-sm font-mono text-secondary">{order.id}</td>
-                        <td className="px-6 py-4 text-sm font-medium text-on-surface dark:text-white">{order.items}</td>
+                        <td className="px-6 py-4 text-sm text-on-surface dark:text-neutral-200">{order.orderDate || order.date}</td>
+                        <td className="px-6 py-4 text-sm font-mono text-secondary">{order.orderNumber || order.id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-on-surface dark:text-white truncate max-w-[300px]">{order.itemsSummary || order.items}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${badge.color}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
@@ -258,7 +259,7 @@ export default function OrderHistory() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-on-surface dark:text-white">
-                          {typeof order.total === "number" ? fmtNPR(order.total) : order.total}
+                          {order.amountStr || fmtNPR(order.totalAmount || order.total)}
                         </td>
                       </motion.tr>
                     );
@@ -296,13 +297,13 @@ export default function OrderHistory() {
       </div>
 
       {/* Order Detail Modal */}
-      <Modal open={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={`Order ${selectedOrder?.id}`} size="md">
+      <Modal open={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={`Order ${selectedOrder?.orderNumber || selectedOrder?.id || ""}`} size="md">
         {selectedOrder && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Date</p>
-                <p className="font-semibold text-on-surface dark:text-white">{selectedOrder.date}</p>
+                <p className="font-semibold text-on-surface dark:text-white">{selectedOrder.orderDate || selectedOrder.date}</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Status</p>
@@ -311,17 +312,40 @@ export default function OrderHistory() {
                   {(statusBadgeMap[selectedOrder.status] || statusBadgeMap.Delivered).label}
                 </span>
               </div>
-              <div>
-                <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Items</p>
-                <p className="font-semibold text-on-surface dark:text-white">{selectedOrder.items}</p>
+              <div className="col-span-2">
+                <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Summary</p>
+                <p className="font-semibold text-on-surface dark:text-white">{selectedOrder.itemsSummary || (typeof selectedOrder.items === "string" ? selectedOrder.items : "—")}</p>
               </div>
-              <div>
+              <div className="col-span-2">
                 <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Total</p>
                 <p className="font-extrabold text-lg text-on-surface dark:text-white">
-                  {typeof selectedOrder.total === "number" ? fmtNPR(selectedOrder.total) : selectedOrder.total}
+                  {selectedOrder.amountStr || fmtNPR(selectedOrder.totalAmount || selectedOrder.total)}
                 </p>
               </div>
             </div>
+            {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-2">Line items</p>
+                <ul className="space-y-2 max-h-56 overflow-y-auto rounded-lg border border-surface-container dark:border-neutral-800/50 divide-y divide-surface-container dark:divide-neutral-800/50">
+                  {selectedOrder.items.map((item, idx) => (
+                    <li key={idx} className="flex justify-between gap-3 px-3 py-2 text-sm">
+                      <span className="text-on-surface dark:text-neutral-200 min-w-0">
+                        <span className="font-medium">{item.description}</span>
+                        <span className="block text-xs text-on-surface-variant">
+                          Qty {item.quantity ?? item.Quantity ?? "—"}
+                          {item.unitPrice != null || item.UnitPrice != null
+                            ? ` · ${fmtNPR(item.unitPrice ?? item.UnitPrice)} ea`
+                            : ""}
+                        </span>
+                      </span>
+                      <span className="font-bold text-on-surface dark:text-white shrink-0">
+                        {fmtNPR(item.lineTotal ?? item.LineTotal ?? 0)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="flex gap-3 pt-4 border-t border-surface-container dark:border-neutral-800/50">
               <Button variant="ghost" className="flex-1" onClick={() => setSelectedOrder(null)}>Close</Button>
             </div>

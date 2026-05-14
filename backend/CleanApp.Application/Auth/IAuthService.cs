@@ -2,7 +2,7 @@ namespace CleanApp.Application.Auth;
 
 public interface IAuthService
 {
-    Task<AuthResponseDto?> LoginAsync(LoginDto dto, CancellationToken ct = default);
+    Task<AuthResponseDto?> LoginAsync(LoginDto dto, LoginClientInfo? client = null, CancellationToken ct = default);
     Task<AuthResponseDto?> RegisterAsync(RegisterDto dto, CancellationToken ct = default);
     Task<AuthResponseDto?> GetUserByIdAsync(Guid userId, CancellationToken ct = default);
     Task<(bool Success, string Message)> RequestPasswordResetAsync(string email, CancellationToken ct = default);

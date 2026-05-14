@@ -39,6 +39,8 @@ import AdvancedSearch from "@/pages/staff/AdvancedSearch";
 import StaffSettings from "@/pages/staff/StaffSettings";
 import StaffProfile from "@/pages/staff/StaffProfile";
 import StaffBookings from "@/pages/staff/StaffBookings";
+import StaffPosHistory from "@/pages/staff/StaffPosHistory";
+import PartRequestsOps from "@/pages/staff/PartRequestsOps";
 
 
 import CustomerDashboard from "@/pages/customer/CustomerDashboard";
@@ -79,9 +81,11 @@ export default function App() {
                 <Route path="vendors" element={<VendorManagement />} />
                 <Route path="vendors/:id" element={<VendorProfile />} />
                 <Route path="purchase-invoices" element={<PurchaseInvoice />} />
+                <Route path="part-requests" element={<PartRequestsOps />} />
                 <Route path="reports" element={<FinancialReports />} />
                 <Route path="inventory-reports" element={<InventoryReports />} />
                 <Route path="sales" element={<SalesPOS />} />
+                <Route path="pos-history" element={<StaffPosHistory />} />
                 <Route path="invoice" element={<InvoiceView />} />
                 <Route path="customers" element={<CustomerManagement />} />
                 <Route path="customers/:id" element={<CustomerProfile />} />
@@ -101,6 +105,8 @@ export default function App() {
                 <Route path="customers" element={<CustomerManagement />} />
                 <Route path="customers/:id" element={<CustomerProfile />} />
                 <Route path="sales" element={<SalesPOS />} />
+                <Route path="pos-history" element={<StaffPosHistory />} />
+                <Route path="part-requests" element={<PartRequestsOps />} />
                 <Route path="invoice" element={<InvoiceView />} />
                 <Route path="search" element={<AdvancedSearch />} />
                 <Route path="settings" element={<StaffSettings />} />
@@ -122,6 +128,7 @@ export default function App() {
                 <Route path="booking" element={<ServiceBooking />} />
                 <Route path="booking-success" element={<BookingSuccess />} />
                 <Route path="payments" element={<PaymentsBalance />} />
+                <Route path="store-purchases" element={<Navigate to="/customer/payments" replace />} />
                 <Route path="reviews" element={<ReviewsFeedback />} />
                 <Route path="loyalty" element={<LoyaltyProgram />} />
               </Route>

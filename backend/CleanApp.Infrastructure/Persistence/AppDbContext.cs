@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<AiPrediction> AiPredictions => Set<AiPrediction>();
     public DbSet<PartRequest> PartRequests => Set<PartRequest>();
     public DbSet<MonthlyProjection> MonthlyProjections => Set<MonthlyProjection>();
+    public DbSet<UserLoginAudit> UserLoginAudits => Set<UserLoginAudit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,6 +66,18 @@ public class AppDbContext : DbContext
             entity.HasMany(x => x.Reviews)
                 .WithOne(x => x.Customer)
                 .HasForeignKey(x => x.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserLoginAudit>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.IpAddress).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.UserAgent).HasMaxLength(512);
+            entity.HasIndex(x => new { x.UserId, x.OccurredAtUtc });
+            entity.HasOne(x => x.User)
+                .WithMany(u => u.LoginAudits)
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -149,6 +162,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Invoice>(entity =>
         {
             entity.HasIndex(x => x.InvoiceNumber).IsUnique();
+
+            entity.HasOne(x => x.CreatedBy)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasMany(x => x.Items)
                 .WithOne(x => x.Invoice)

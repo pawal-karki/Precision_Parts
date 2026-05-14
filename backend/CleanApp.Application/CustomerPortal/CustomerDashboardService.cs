@@ -22,7 +22,9 @@ public class CustomerDashboardService : ICustomerDashboardService
             return null;
 
         var p = user.CustomerProfile;
-        var totalSpent = p?.TotalSpent ?? 0m;
+        var (sumInvoices, _) = await _invoices.GetCustomerSpendAggregatesAsync(user.Id, cancellationToken);
+        var profileTotal = p?.TotalSpent ?? 0m;
+        var totalSpent = Math.Max(sumInvoices, profileTotal);
         var outstanding = p?.OutstandingCredit ?? 0m;
         
         var pending = outstanding > 0 ? outstanding : 0;
@@ -73,8 +75,10 @@ public class CustomerDashboardService : ICustomerDashboardService
         // Fetch all invoices for this customer with items included
         var invoices = await _invoices.ListByCustomerIdWithItemsAsync(user.Id, 100, cancellationToken);
         
-        // Use OutstandingCredit from profile as the source of truth for total balance
-        var totalOutstanding = user.CustomerProfile?.OutstandingCredit ?? 0m;
+        // Use the higher of profile credit and open invoice balances so POS dues always surface.
+        var pendingBalanceSum = invoices.Where(i => i.Status != InvoiceStatus.Paid).Sum(i => i.BalanceDue);
+        var profileBal = user.CustomerProfile?.OutstandingCredit ?? 0m;
+        var totalOutstanding = Math.Max(profileBal, pendingBalanceSum);
 
         // Map pending invoices
         var pendingInvoices = invoices

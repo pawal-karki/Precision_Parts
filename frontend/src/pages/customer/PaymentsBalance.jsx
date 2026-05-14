@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { motion, PageTransition, fadeInUp, AnimatePresence } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { formatCurrency } from "@/lib/currency";
 
@@ -14,53 +15,110 @@ function fmtNPR(amount) {
 export default function PaymentsBalance() {
   const toast = useToast();
   const [invoices, setInvoices] = useState([]);
+  const [posHistory, setPosHistory] = useState([]);
   const [activity, setActivity] = useState([]);
   const [totalBalance, setTotalBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
   const [lastUpdated] = useState(new Date());
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const ledger = await api.getCustomerLedger();
-        if (!cancelled && ledger) {
-          const pending = (ledger.pendingInvoices || []).map((inv) => ({
+  const loadLedger = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [ledger, posList] = await Promise.all([
+        api.getCustomerLedger(),
+        api.getCustomerPosInvoices().catch(() => []),
+      ]);
+
+      if (ledger) {
+        const pending = (ledger.pendingInvoices || []).map((inv) => ({
+          id: inv.invoiceNumber || "N/A",
+          realId: inv.id,
+          due: formatDate(inv.dueDate || inv.issueDate),
+          issueDate: formatDate(inv.issueDate),
+          desc:
+            inv.items?.length > 0
+              ? inv.items.map((x) => x.description).join(", ")
+              : `Invoice issued on ${formatDate(inv.issueDate)}`,
+          amount: Number(inv.balanceDue) || 0,
+          totalAmount: Number(inv.totalAmount) || 0,
+          status: inv.status || "Unknown",
+          items: inv.items || [],
+        }));
+        setInvoices(pending);
+        setActivity(ledger.recentActivity || []);
+        setTotalBalance(Number(ledger.totalOutstandingBalance) || 0);
+      }
+
+      const pos = Array.isArray(posList) ? posList : [];
+      setPosHistory(
+        [...pos]
+          .sort((a, b) => String(b.issueDate || "").localeCompare(String(a.issueDate || "")))
+          .map((inv) => ({
             id: inv.invoiceNumber || "N/A",
             realId: inv.id,
             due: formatDate(inv.dueDate || inv.issueDate),
-            desc: inv.items?.length > 0 ? inv.items.map(x => x.description).join(", ") : `Invoice issued on ${formatDate(inv.issueDate)}`,
+            issueDate: formatDate(inv.issueDate),
+            desc:
+              inv.items?.length > 0
+                ? inv.items.map((x) => x.description).join(", ")
+                : "In-store purchase",
             amount: Number(inv.balanceDue) || 0,
+            totalAmount: Number(inv.totalAmount) || 0,
             status: inv.status || "Unknown",
-            items: inv.items || []
-          }));
-          setInvoices(pending);
-          setActivity(ledger.recentActivity || []);
-          setTotalBalance(Number(ledger.totalOutstandingBalance) || 0);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error("Ledger load error:", err);
-          toast("Could not load financial data. Please try again later.", "error");
-          setInvoices([]);
-          setActivity([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+            items: inv.items || [],
+            isPos: true,
+          }))
+      );
+    } catch (err) {
+      console.error("Ledger load error:", err);
+      toast("Could not load financial data. Please try again later.", "error");
+      setInvoices([]);
+      setPosHistory([]);
+      setActivity([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    void loadLedger();
+  }, [loadLedger]);
 
   const totalOutstanding = totalBalance;
 
-  const handlePay = (inv) => {
-    toast(`Payment initiated for ${inv.id} — ${fmtNPR(inv.amount)}`, "success");
+  const handlePay = async (inv) => {
+    if (!inv?.realId) {
+      toast("Missing invoice id", "error");
+      return;
+    }
+    setPaying(true);
+    try {
+      await api.payCustomerInvoice(inv.realId);
+      toast(`Paid ${fmtNPR(inv.amount)} for ${inv.id}`, "success");
+      await loadLedger();
+    } catch (e) {
+      toast(e?.message || "Payment failed", "error");
+    } finally {
+      setPaying(false);
+    }
   };
 
-  const handleClearBalance = () => {
-    toast("Full payment processing initiated", "success");
+  const handleClearBalance = async () => {
+    if (invoices.length === 0) return;
+    setPaying(true);
+    try {
+      for (const inv of invoices) {
+        if (inv.realId) await api.payCustomerInvoice(inv.realId);
+      }
+      toast("All listed invoices marked paid.", "success");
+      await loadLedger();
+    } catch (e) {
+      toast(e?.message || "Could not clear all invoices", "error");
+    } finally {
+      setPaying(false);
+    }
   };
 
   const handleDownloadStatement = () => {
@@ -99,7 +157,7 @@ export default function PaymentsBalance() {
               Payments & Ledger
             </h1>
             <p className="text-on-surface-variant dark:text-neutral-400 mt-2">
-              Financial overview and statement management.
+              Outstanding balances, in-store (POS) purchases, and ledger activity in one place.
             </p>
           </div>
           <div className="text-left md:text-right">
@@ -131,10 +189,10 @@ export default function PaymentsBalance() {
               <div className="flex gap-3 flex-wrap mt-6">
                 <button
                   onClick={handleClearBalance}
-                  disabled={totalOutstanding === 0}
+                  disabled={totalOutstanding === 0 || paying}
                   className="px-5 py-2 bg-secondary text-on-secondary rounded-lg text-sm font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
-                  {totalOutstanding === 0 ? "No Balance Due" : "Clear Full Balance"}
+                  {paying ? "Processing…" : totalOutstanding === 0 ? "No Balance Due" : "Clear Full Balance"}
                 </button>
                 <button
                   onClick={handleDownloadStatement}
@@ -216,7 +274,7 @@ export default function PaymentsBalance() {
               ) : (
                 invoices.map((inv) => (
                   <motion.div
-                    key={inv.id}
+                    key={inv.realId || inv.id}
                     className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-5 rounded-xl border border-surface-container dark:border-neutral-800/50 hover:shadow-lg transition-all"
                     whileHover={{ y: -2 }}
                   >
@@ -227,14 +285,16 @@ export default function PaymentsBalance() {
                         </div>
                         <div>
                           <h4 className="font-bold font-headline text-on-surface dark:text-white">{inv.id}</h4>
-                          <p className="text-xs text-on-surface-variant truncate max-w-[200px]">Due: {inv.due} · {inv.desc}</p>
+                          <p className="text-xs text-on-surface-variant truncate max-w-[200px]">
+                            Due: {inv.due} · {inv.desc}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 self-end sm:self-auto">
                         <span className="font-bold font-headline text-on-surface dark:text-white">{fmtNPR(inv.amount)}</span>
                         <div className="flex gap-2">
                           <Button size="sm" variant="ghost" onClick={() => setSelectedInvoice(inv)}>Details</Button>
-                          <Button size="sm" onClick={() => handlePay(inv)}>Pay</Button>
+                          <Button size="sm" disabled={paying} onClick={() => handlePay(inv)}>Pay</Button>
                         </div>
                       </div>
                     </div>
@@ -284,6 +344,84 @@ export default function PaymentsBalance() {
           </motion.div>
         </div>
 
+        {/* In-store (POS) — full history on same page */}
+        <motion.section
+          className="space-y-4"
+          variants={fadeInUp}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.25 }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+            <h2 className="font-headline text-xl font-bold text-on-surface dark:text-white">
+              In-store purchases (POS)
+            </h2>
+            <p className="text-xs text-on-surface-variant max-w-md">
+              Staff-run counter invoices. Open amounts also appear under unpaid invoices above when due on account.
+            </p>
+          </div>
+          {posHistory.length === 0 ? (
+            <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl border border-surface-container dark:border-neutral-800/50 p-8 text-center text-sm text-on-surface-variant">
+              No in-store POS purchases on your account yet.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {posHistory.map((row) => {
+                const unpaid =
+                  String(row.status).toLowerCase() !== "paid" && Number(row.amount) > 0;
+                const statusLower = String(row.status).toLowerCase();
+                const badgeVariant =
+                  statusLower === "paid" ? "success" : statusLower === "unpaid" || statusLower === "partial" ? "warning" : "neutral";
+                return (
+                  <motion.div
+                    key={row.realId}
+                    layout
+                    className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-4 sm:p-5 rounded-xl border border-surface-container dark:border-neutral-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                        <Icon name="point_of_sale" className="text-secondary text-lg" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono font-bold text-on-surface dark:text-white text-sm">
+                            {row.id}
+                          </span>
+                          <Badge variant={badgeVariant}>{row.status}</Badge>
+                        </div>
+                        <p className="text-xs text-on-surface-variant mt-0.5 truncate">
+                          {row.issueDate} · {row.desc}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                      <div className="text-right text-sm">
+                        <p className="text-[10px] font-bold text-outline uppercase">Invoice total</p>
+                        <p className="font-bold text-on-surface dark:text-white">{fmtNPR(row.totalAmount)}</p>
+                        {unpaid && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                            Due {fmtNPR(row.amount)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => setSelectedInvoice(row)}>
+                          Details
+                        </Button>
+                        {unpaid && (
+                          <Button size="sm" disabled={paying} onClick={() => handlePay(row)}>
+                            Pay
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </motion.section>
+
         {/* Detail Modal */}
         <AnimatePresence>
           {selectedInvoice && (
@@ -311,19 +449,24 @@ export default function PaymentsBalance() {
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6">
-                   <div className="mb-6 grid grid-cols-2 gap-4 text-sm">
+                   <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                       <div className="p-3 bg-surface-container rounded-xl">
-                         <span className="text-[10px] font-bold text-outline block mb-1">ISSUE DATE</span>
-                         <span className="font-bold">{selectedInvoice.due}</span>
+                         <span className="text-[10px] font-bold text-outline block mb-1">ISSUE / DUE</span>
+                         <span className="font-bold">{selectedInvoice.issueDate || selectedInvoice.due}</span>
                       </div>
                       <div className="p-3 bg-surface-container rounded-xl">
-                         <span className="text-[10px] font-bold text-outline block mb-1">TOTAL AMOUNT</span>
-                         <span className="font-bold text-secondary">{fmtNPR(selectedInvoice.amount)}</span>
+                         <span className="text-[10px] font-bold text-outline block mb-1">INVOICE TOTAL</span>
+                         <span className="font-bold text-secondary">{fmtNPR(selectedInvoice.totalAmount ?? selectedInvoice.amount)}</span>
+                      </div>
+                      <div className="p-3 bg-surface-container rounded-xl">
+                         <span className="text-[10px] font-bold text-outline block mb-1">BALANCE DUE</span>
+                         <span className="font-bold text-amber-700 dark:text-amber-400">{fmtNPR(selectedInvoice.amount)}</span>
                       </div>
                    </div>
                    <h4 className="text-xs font-bold text-outline uppercase tracking-widest mb-3">Line Items</h4>
                    <div className="space-y-2">
-                      {selectedInvoice.items.map((item, idx) => (
+                      {selectedInvoice.items?.length ? (
+                      selectedInvoice.items.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center p-3 border-b border-surface-container dark:border-neutral-800/50 last:border-0">
                            <div>
                               <p className="font-bold text-sm">{item.description}</p>
@@ -331,12 +474,17 @@ export default function PaymentsBalance() {
                            </div>
                            <span className="font-bold text-sm">{fmtNPR(item.lineTotal)}</span>
                         </div>
-                      ))}
+                      ))
+                      ) : (
+                        <p className="text-sm text-on-surface-variant">No line items.</p>
+                      )}
                    </div>
                 </div>
                 <div className="p-6 bg-surface-container dark:bg-neutral-900/50 border-t border-surface-container dark:border-neutral-800/50 flex justify-end gap-3">
                    <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
-                   <Button onClick={() => { handlePay(selectedInvoice); setSelectedInvoice(null); }}>Pay {fmtNPR(selectedInvoice.amount)}</Button>
+                   {Number(selectedInvoice.amount) > 0 && String(selectedInvoice.status).toLowerCase() !== "paid" && (
+                   <Button onClick={() => { void handlePay(selectedInvoice); setSelectedInvoice(null); }} disabled={paying}>Pay {fmtNPR(selectedInvoice.amount)}</Button>
+                   )}
                 </div>
               </motion.div>
             </div>

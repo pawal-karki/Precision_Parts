@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useList, store } from "@/lib/store";
 import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
@@ -223,6 +224,22 @@ export default function PartsManagement() {
                 Add Part
               </Button>
             </section>
+
+            <Link
+              to="/admin/part-requests"
+              className="flex items-center gap-3 p-4 mb-8 rounded-xl border border-secondary/25 bg-secondary/5 dark:bg-secondary/10 dark:border-secondary/35 text-on-surface hover:bg-secondary/10 dark:hover:bg-secondary/15 transition-colors group"
+            >
+              <div className="w-11 h-11 rounded-lg bg-secondary/15 dark:bg-secondary/20 flex items-center justify-center text-secondary shrink-0">
+                <Icon name="build" className="text-xl" />
+              </div>
+              <div className="text-left min-w-0 flex-1">
+                <p className="text-sm font-extrabold font-headline">Custom part requests (sourcing queue)</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Customers submit custom part needs from the portal — open the operations queue to update status and align with purchasing.
+                </p>
+              </div>
+              <Icon name="arrow_forward" className="text-secondary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
 
             {/* Stats Bar */}
             <motion.div

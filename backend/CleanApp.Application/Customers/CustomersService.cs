@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using CleanApp.Domain.Entities;
 using CleanApp.Domain.Enums;
 using CleanApp.Domain.Repositories;
@@ -15,6 +14,7 @@ public class CustomersService : ICustomersService
     public async Task<IReadOnlyList<CustomerListItemDto>> ListForStaffAsync(CancellationToken cancellationToken = default)
     {
         var list = await _customers.ListCustomersWithProfileAndVehiclesOrderedAsync(cancellationToken);
+        var partCounts = await _customers.GetPartRequestCountsByCustomerIdAsync(cancellationToken);
         return list.Select(u =>
         {
             var p = u.CustomerProfile;
@@ -28,11 +28,12 @@ public class CustomersService : ICustomersService
                 Email = u.Email,
                 Phone = u.Phone ?? "",
                 Status = status,
-                TotalSpent = "$" + (p?.TotalSpent ?? 0).ToString("N0", CultureInfo.InvariantCulture),
+                TotalSpent = DisplayMoney.Format(p?.TotalSpent ?? 0, 0),
                 LoyaltyTier = p?.LoyaltyTier ?? "Bronze",
                 Vehicles = u.Vehicles.Select(v => v.Nickname ?? $"{v.Year} {v.Make} {v.Model}".Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList(),
                 LastOrder = p?.LastOrderDate?.ToString("yyyy-MM-dd") ?? u.CreatedAtUtc.ToString("yyyy-MM-dd"),
-                Credit = (double)(p?.OutstandingCredit ?? 0)
+                Credit = (double)(p?.OutstandingCredit ?? 0),
+                PartRequestCount = partCounts.GetValueOrDefault(u.Id, 0)
             };
         }).ToList();
     }
@@ -171,6 +172,19 @@ public class CustomersService : ICustomersService
                 Services = a.Services.Select(s => s.ServiceType?.Name ?? "Service").ToList()
             }).ToList();
 
+        var partRequests = await _customers.ListPartRequestsForCustomerAsync(user.Id, cancellationToken);
+        var partRequestRows = partRequests.Select(pr => new CustomerPartRequestRowDto
+        {
+            Id = pr.Id,
+            PartName = pr.PartName,
+            PartNumber = pr.PartNumber,
+            VehicleModel = pr.VehicleModel,
+            Description = pr.Description,
+            Urgency = pr.Urgency,
+            Status = pr.Status,
+            CreatedAtUtc = pr.CreatedAtUtc
+        }).ToList();
+
         return new CustomerDetailReportDto
         {
             PublicId = user.PublicId,
@@ -186,8 +200,9 @@ public class CustomersService : ICustomersService
             VehicleCount = user.Vehicles.Count,
             AppointmentCount = user.Appointments.Count,
             InvoiceCount = user.Invoices.Count,
-            PartRequestCount = 0, 
+            PartRequestCount = partRequestRows.Count,
             LastLoginAtUtc = user.LastLoginAtUtc,
+            PartRequests = partRequestRows,
             RecentPurchases = recentPurchases,
             FullPurchases = allPurchases,
             Appointments = appointments,
@@ -231,7 +246,7 @@ public class CustomersService : ICustomersService
             Icon = "receipt_long",
             Title = $"Invoice {i.InvoiceNumber}",
             Detail = i.Status.ToString(),
-            Amount = "$" + i.TotalAmount.ToString("N2", CultureInfo.InvariantCulture),
+            Amount = DisplayMoney.Format(i.TotalAmount),
             Timestamp = i.IssueDate
         }));
 
@@ -258,7 +273,7 @@ public class CustomersService : ICustomersService
         };
     }
 
-    // ── Login Activity (simulated from LastLoginAtUtc) ────────────────────
+    // ── Login Activity (persisted sign-ins) ───────────────────────────────
 
     public async Task<PagedResult<LoginActivityItemDto>> GetLoginActivityAsync(
         int publicId, int page, int pageSize, CancellationToken cancellationToken = default)
@@ -266,39 +281,17 @@ public class CustomersService : ICustomersService
         var user = await _customers.GetCustomerByPublicIdWithDetailsAsync(publicId, cancellationToken)
             ?? throw new KeyNotFoundException("Customer not found.");
 
-        // Simulate login history based on account creation and last login
-        var logs = new List<LoginActivityItemDto>();
+        var latestId = await _customers.GetLatestUserLoginAuditIdAsync(user.Id, cancellationToken);
+        var (audits, total) = await _customers.ListUserLoginAuditsAsync(user.Id, page, pageSize, cancellationToken);
 
-        if (user.LastLoginAtUtc.HasValue)
+        var items = audits.Select(a => new LoginActivityItemDto
         {
-            logs.Add(new LoginActivityItemDto
-            {
-                TimestampUtc = user.LastLoginAtUtc.Value,
-                IpAddress = "192.168.1.1",
-                Device = "Chrome / Windows",
-                IsActive = user.IsActive
-            });
-        }
-
-        // Generate synthetic history entries backwards
-        var rng = new Random(user.Id.GetHashCode());
-        var current = DateTime.UtcNow.AddDays(-rng.Next(1, 5));
-        int mockCount = rng.Next(5, 15);
-        for (int i = 0; i < mockCount; i++)
-        {
-            logs.Add(new LoginActivityItemDto
-            {
-                TimestampUtc = current,
-                IpAddress = $"192.168.{rng.Next(1, 10)}.{rng.Next(1, 255)}",
-                Device = rng.Next(2) == 0 ? "Chrome / Windows" : "Safari / iOS",
-                IsActive = false
-            });
-            current = current.AddDays(-rng.Next(1, 14));
-        }
-
-        logs = logs.OrderByDescending(x => x.TimestampUtc).ToList();
-        var total = logs.Count;
-        var items = logs.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            Id = a.Id,
+            TimestampUtc = a.OccurredAtUtc,
+            IpAddress = string.IsNullOrWhiteSpace(a.IpAddress) ? "—" : a.IpAddress,
+            Device = FormatLoginDeviceLabel(a.UserAgent),
+            IsActive = user.IsActive && latestId.HasValue && a.Id == latestId.Value
+        }).ToList();
 
         return new PagedResult<LoginActivityItemDto>
         {
@@ -307,6 +300,15 @@ public class CustomersService : ICustomersService
             Page = page,
             PageSize = pageSize
         };
+    }
+
+    private static string FormatLoginDeviceLabel(string? userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(userAgent))
+            return "Unknown";
+
+        var s = userAgent.Trim();
+        return s.Length <= 120 ? s : s[..120] + "…";
     }
 
     public async Task<List<CustomerAppointmentDto>> GetServiceHistoryAsync(int publicId, CancellationToken cancellationToken = default)

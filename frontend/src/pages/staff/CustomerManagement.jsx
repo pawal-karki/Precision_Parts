@@ -26,6 +26,7 @@ import {
   staggerContainer,
 } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
+import { formatCurrency, parseMoneyAmount } from "@/lib/currency";
 
 const emptyCustomer = {
   name: "",
@@ -33,7 +34,7 @@ const emptyCustomer = {
   email: "",
   phone: "",
   status: "Active",
-  totalSpent: "$0",
+  totalSpent: 0,
   loyaltyTier: "Bronze",
   vehicles: [],
   credit: 0,
@@ -235,6 +236,7 @@ export default function CustomerManagement() {
                 <TableHead className="px-6">Customer</TableHead>
                 <TableHead className="px-6">Type</TableHead>
                 <TableHead className="px-6">Total Spent</TableHead>
+                <TableHead className="px-6 w-14 text-center" title="Custom part requests">✓</TableHead>
                 <TableHead className="px-6">Loyalty</TableHead>
                 <TableHead className="px-6">Vehicles</TableHead>
                 <TableHead className="px-6">Status</TableHead>
@@ -271,7 +273,12 @@ export default function CustomerManagement() {
                         {customer.type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-6 font-bold">{customer.totalSpent}</TableCell>
+                    <TableCell className="px-6 font-bold">
+                      {formatCurrency(parseMoneyAmount(customer.totalSpent))}
+                    </TableCell>
+                    <TableCell className="px-6 text-center text-lg" title={Number(customer.partRequestCount) > 0 ? "Has custom part requests" : "No part requests"}>
+                      {Number(customer.partRequestCount) > 0 ? "✅" : "—"}
+                    </TableCell>
                     <TableCell className="px-6">
                       <span className={`text-xs font-bold uppercase ${tierColor(customer.loyaltyTier)}`}>
                         {customer.loyaltyTier}
@@ -392,7 +399,7 @@ export default function CustomerManagement() {
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
-                  Credit ($)
+                  Credit (Rs.)
                 </label>
                 <Input
                   type="number"

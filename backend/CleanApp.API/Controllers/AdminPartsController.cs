@@ -6,7 +6,7 @@ namespace CleanApp.API.Controllers;
 
 [ApiController]
 [Route("api/admin/parts")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class AdminPartsController : ControllerBase
 {
     private readonly IPartsService _parts;

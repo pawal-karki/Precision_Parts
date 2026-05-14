@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,9 @@ export default function SalesPOS() {
     email: "",
   });
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  /** "paid" = settled at counter; "due" = on account (requires linked customer). */
+  const [posPaymentTiming, setPosPaymentTiming] = useState("paid");
 
   useEffect(() => {
     Promise.all([api.getPosProducts(), api.getCustomers()])
@@ -48,6 +51,12 @@ export default function SalesPOS() {
       .catch(() => toast("Could not load POS catalog", "error"));
   }, []);
 
+  const hasLinkedCustomer = Boolean(selectedCustomer?.userId);
+
+  useEffect(() => {
+    if (!hasLinkedCustomer && posPaymentTiming === "due") setPosPaymentTiming("paid");
+  }, [hasLinkedCustomer, posPaymentTiming]);
+
   const filtered = useMemo(
     () =>
       products.filter(
@@ -56,6 +65,16 @@ export default function SalesPOS() {
           p.sku.toLowerCase().includes(search.toLowerCase())
       ),
     [products, search]
+  );
+
+  const filteredCustomers = useMemo(
+    () =>
+      customers.filter(
+        (c) =>
+          c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+          (c.email && c.email.toLowerCase().includes(customerSearch.toLowerCase()))
+      ),
+    [customers, customerSearch]
   );
 
   function addToCart(product) {
@@ -100,6 +119,8 @@ export default function SalesPOS() {
         tax,
         discount: loyaltyDiscount,
         total,
+        payInFull: posPaymentTiming === "paid",
+        onAccount: posPaymentTiming === "due",
         items: cart.map(item => ({
           sku: item.sku,
           quantity: item.qty,
@@ -108,7 +129,8 @@ export default function SalesPOS() {
       };
 
       const response = await api.createPosSale(dto);
-      const invoiceId = response.invoiceId;
+      const invoiceNumber =
+        response.invoiceNumber ?? response.invoiceId ?? response.InvoiceNumber ?? response.InvoiceId;
 
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -119,7 +141,7 @@ export default function SalesPOS() {
       });
 
       const invoice = {
-        id: invoiceId,
+        id: invoiceNumber,
         date: dateStr,
         dueDate,
         customer: {
@@ -149,12 +171,24 @@ export default function SalesPOS() {
       addSale({ ...invoice, timestamp: now.toISOString() });
       store.set("lastInvoice", invoice);
 
-      toast("Sale completed and saved to database!", "success");
+      if (posPaymentTiming === "due") {
+        toast(
+          "Sale recorded on account. Customer can pay under Payments in their portal.",
+          "success"
+        );
+      } else {
+        toast(
+          selectedCustomer.email
+            ? "Sale completed. Receipt email is sending in the background."
+            : "Sale completed and saved to database!",
+          "success"
+        );
+      }
       setCart([]);
       const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/staff";
       navigate(`${basePath}/invoice`);
     } catch (err) {
-      toast("Failed to process sale. Check inventory levels.", "error");
+      toast(err?.message || "Failed to process sale. Check inventory levels.", "error");
     }
   }
 
@@ -163,7 +197,7 @@ export default function SalesPOS() {
       <div className="grid grid-cols-12 gap-8 -mt-4">
         {/* Products */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
-          <section className="flex justify-between items-end">
+          <section className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
             <div>
               <h1 className="text-3xl font-extrabold text-on-surface dark:text-white tracking-tight font-headline">
                 Point of Sale
@@ -172,6 +206,13 @@ export default function SalesPOS() {
                 Search parts, add to cart, apply discounts.
               </p>
             </div>
+            <Link
+              to={`${location.pathname.startsWith("/admin") ? "/admin" : "/staff"}/pos-history`}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:underline shrink-0"
+            >
+              <Icon name="receipt_long" className="text-lg" />
+              POS sales history
+            </Link>
           </section>
 
           {/* Search */}
@@ -256,25 +297,45 @@ export default function SalesPOS() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="pt-2 max-h-40 overflow-y-auto space-y-1">
-                      {customers.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => {
-                            setSelectedCustomer(c);
-                            setCustomerPickerOpen(false);
-                          }}
-                          className={cn(
-                            "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                            selectedCustomer.id === c.id
-                              ? "bg-secondary/10 text-secondary font-medium"
-                              : "hover:bg-surface-container-low dark:hover:bg-neutral-800 text-on-surface-variant"
-                          )}
-                        >
-                          {c.name}
-                          <span className="text-[10px] ml-2 opacity-60">{c.loyaltyTier}</span>
-                        </button>
-                      ))}
+                    <div className="pt-2 max-h-60 overflow-y-auto space-y-1">
+                      <div className="px-1 mb-2">
+                        <div className="relative">
+                          <Icon name="search" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-xs" />
+                          <Input
+                            autoFocus
+                            placeholder="Search name or email..."
+                            value={customerSearch}
+                            onChange={(e) => setCustomerSearch(e.target.value)}
+                            className="h-8 pl-8 text-xs bg-surface-container-low dark:bg-neutral-800 border-none ring-1 ring-surface-container dark:ring-neutral-700 focus:ring-secondary/50"
+                          />
+                        </div>
+                      </div>
+                      {filteredCustomers.length === 0 ? (
+                        <p className="text-[10px] text-center py-4 text-on-surface-variant opacity-50">No customers found</p>
+                      ) : (
+                        filteredCustomers.map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              setSelectedCustomer(c);
+                              setCustomerPickerOpen(false);
+                              setCustomerSearch("");
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                              selectedCustomer.id === c.id
+                                ? "bg-secondary/10 text-secondary font-medium"
+                                : "hover:bg-surface-container-low dark:hover:bg-neutral-800 text-on-surface-variant"
+                            )}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="truncate">{c.name}</span>
+                              <Badge variant="ghost" className="text-[9px] opacity-60 px-1 h-4">{c.loyaltyTier}</Badge>
+                            </div>
+                            {c.email && <p className="text-[10px] opacity-50 truncate">{c.email}</p>}
+                          </button>
+                        ))
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -364,6 +425,43 @@ export default function SalesPOS() {
               <div className="flex justify-between text-lg font-extrabold pt-2 border-t border-surface-container dark:border-neutral-800">
                 <span>Total</span>
                 <span>{formatCurrency(total)}</span>
+              </div>
+
+              <div className="rounded-xl border border-surface-container dark:border-neutral-800 p-3 space-y-2 mt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-outline">Payment</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPosPaymentTiming("paid")}
+                    className={cn(
+                      "rounded-lg py-2 px-2 text-xs font-bold transition-colors",
+                      posPaymentTiming === "paid"
+                        ? "bg-secondary text-on-secondary"
+                        : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant hover:bg-surface-container"
+                    )}
+                  >
+                    Paid now
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!hasLinkedCustomer}
+                    title={!hasLinkedCustomer ? "Select a customer for on-account sales" : undefined}
+                    onClick={() => setPosPaymentTiming("due")}
+                    className={cn(
+                      "rounded-lg py-2 px-2 text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                      posPaymentTiming === "due"
+                        ? "bg-amber-600 text-white"
+                        : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant hover:bg-surface-container"
+                    )}
+                  >
+                    Due / on account
+                  </button>
+                </div>
+                {posPaymentTiming === "due" && (
+                  <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-snug">
+                    Balance will appear on the customer&apos;s Payments page until they pay online.
+                  </p>
+                )}
               </div>
 
               <Button

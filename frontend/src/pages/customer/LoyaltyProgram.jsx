@@ -244,12 +244,15 @@ export default function LoyaltyProgram() {
 
   /* ─── derived data (prefer backend loyalty API values) ─────────── */
   const { totalSpent, singleOrderMax, recentOrders } = useMemo(() => {
-    const clientTotal  = orders.reduce((s, o) => s + parseMoney(o.totalAmount || o.amount || 0), 0);
-    const clientMax    = orders.reduce((m, o) => Math.max(m, parseMoney(o.totalAmount || o.amount || 0)), 0);
+    const clientTotal = orders.reduce((s, o) => s + parseMoney(o.totalAmount || o.amount || 0), 0);
+    const clientMax = orders.reduce((m, o) => Math.max(m, parseMoney(o.totalAmount || o.amount || 0)), 0);
+    const apiTotal = parseMoney(loyaltyApi?.totalSpent);
+    const apiMax = parseMoney(loyaltyApi?.maxSingleOrderAmount);
     return {
-      totalSpent:     loyaltyApi?.totalSpent         ?? clientTotal,
-      singleOrderMax: loyaltyApi?.maxSingleOrderAmount ?? clientMax,
-      recentOrders:   orders.slice(0, 10),
+      // Prefer the higher of API vs order history so totals never sit below a visible invoice (profile drift).
+      totalSpent: Math.max(apiTotal, clientTotal),
+      singleOrderMax: Math.max(apiMax, clientMax),
+      recentOrders: orders.slice(0, 10),
     };
   }, [orders, loyaltyApi]);
 
@@ -470,21 +473,27 @@ export default function LoyaltyProgram() {
                  </div>
                  <h4 className="text-xs font-bold text-outline uppercase tracking-widest mb-3">Order Items</h4>
                  <div className="space-y-2">
-                    {selectedOrder.items?.length > 0 ? (
-                      selectedOrder.items.map((item, idx) => (
+                    {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                      selectedOrder.items.map((item, idx) => {
+                        const desc = item.description ?? item.Description ?? "Item";
+                        const qty = item.quantity ?? item.Quantity;
+                        const unit = item.unitPrice ?? item.UnitPrice;
+                        const line = item.lineTotal ?? item.LineTotal ?? 0;
+                        const type = (item.itemType ?? item.ItemType ?? "part").toLowerCase();
+                        return (
                         <div key={idx} className="flex justify-between items-center p-3 border-b border-surface-container dark:border-neutral-800/50 last:border-0">
                            <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-secondary">
-                                 <Icon name={item.itemType === "service" ? "build" : "precision_manufacturing"} className="text-xs" />
+                                 <Icon name={type === "service" ? "build" : "precision_manufacturing"} className="text-xs" />
                               </div>
                               <div>
-                                <p className="font-bold text-sm">{item.description}</p>
-                                <p className="text-[10px] text-on-surface-variant uppercase">Qty: {item.quantity} · {fmtNPR(item.unitPrice)} ea</p>
+                                <p className="font-bold text-sm">{desc}</p>
+                                <p className="text-[10px] text-on-surface-variant uppercase">Qty: {qty} · {fmtNPR(unit)} ea</p>
                               </div>
                            </div>
-                           <span className="font-bold text-sm">{fmtNPR(item.lineTotal)}</span>
+                           <span className="font-bold text-sm">{fmtNPR(line)}</span>
                         </div>
-                      ))
+                      )})
                     ) : (
                       <p className="text-xs text-on-surface-variant p-4 bg-surface-container rounded-xl italic">No item breakdown available for this invoice.</p>
                     )}

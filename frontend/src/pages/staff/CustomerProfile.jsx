@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { formatNpt, formatDate } from "@/lib/utils";
+import { formatCurrency, parseMoneyAmount } from "@/lib/currency";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell
 } from "@/components/ui/data-table";
 
-const TABS = ["Overview", "Vehicles", "Service History", "Purchases", "Activity Log", "Login Activity"];
+const TABS = ["Overview", "Vehicles", "Service History", "Purchases", "Part requests", "Activity Log", "Login Activity"];
 
 // ── Pagination Component ─────────────────────────────────────────────────
 
@@ -59,12 +60,13 @@ function OverviewTab({ customer, report, reportLoading }) {
   return (
     <div className="space-y-6">
       {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {[
-          { label: "Total Spent", value: `$${(report?.totalSpent ?? 0).toLocaleString()}`, icon: "payments", color: "text-secondary" },
-          { label: "Outstanding Credit", value: `$${(report?.outstandingCredit ?? 0).toLocaleString()}`, icon: "account_balance", color: report?.outstandingCredit > 0 ? "text-red-500" : "text-emerald-600" },
+          { label: "Total Spent", value: formatCurrency(Number(report?.totalSpent ?? 0)), icon: "payments", color: "text-secondary" },
+          { label: "Outstanding Credit", value: formatCurrency(Number(report?.outstandingCredit ?? 0)), icon: "account_balance", color: report?.outstandingCredit > 0 ? "text-red-500" : "text-emerald-600" },
           { label: "Appointments", value: report?.appointmentCount ?? "—", icon: "calendar_month", color: "text-violet-600" },
           { label: "Vehicles", value: report?.vehicleCount ?? customer?.vehicles?.length ?? "—", icon: "directions_car", color: "text-amber-600" },
+          { label: "Part requests", value: reportLoading ? "—" : (report?.partRequestCount ?? 0), icon: "build", color: "text-teal-600" },
         ].map(stat => (
           <div key={stat.label} className="bg-white dark:bg-[#1C1C1C] rounded-xl p-4 border border-slate-200 dark:border-neutral-800">
             <div className="flex items-center gap-2 mb-2">
@@ -102,7 +104,7 @@ function OverviewTab({ customer, report, reportLoading }) {
                 <TableRow key={p.invoiceNumber}>
                   <TableCell className="font-mono text-secondary dark:text-secondary">{p.invoiceNumber}</TableCell>
                   <TableCell>{formatDate(p.issueDate)}</TableCell>
-                  <TableCell className="font-bold">${p.totalAmount?.toLocaleString()}</TableCell>
+                  <TableCell className="font-bold">{formatCurrency(Number(p.totalAmount ?? 0))}</TableCell>
                   <TableCell>
                     <Badge variant={p.status === "Paid" ? "success" : p.status === "Unpaid" ? "warning" : "neutral"}>
                       {p.status}
@@ -234,11 +236,66 @@ function PurchasesTab({ publicId }) {
               <TableRow key={p.invoiceNumber}>
                 <TableCell className="font-mono text-secondary dark:text-secondary">{p.invoiceNumber}</TableCell>
                 <TableCell>{formatDate(p.issueDate)}</TableCell>
-                <TableCell className="font-bold">${p.totalAmount.toLocaleString()}</TableCell>
+                <TableCell className="font-bold">{formatCurrency(Number(p.totalAmount ?? 0))}</TableCell>
                 <TableCell>
                   <Badge variant={p.status === "Paid" ? "success" : p.status === "Unpaid" ? "warning" : "neutral"}>
                     {p.status}
                   </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+}
+
+function PartRequestsTab({ report, reportLoading }) {
+  const list = report?.partRequests ?? [];
+  const prBadge = (s) => {
+    const x = String(s || "").toLowerCase();
+    if (x === "available") return "success";
+    if (x === "sourcing") return "info";
+    if (x === "cancelled") return "neutral";
+    return "warning";
+  };
+  return (
+    <div className="bg-white dark:bg-[#1C1C1C] rounded-xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-neutral-800">
+        <h3 className="text-lg font-bold font-headline text-slate-900 dark:text-white">Custom part requests</h3>
+        <p className="text-xs text-slate-500 mt-1">Submitted from the customer portal (Part request).</p>
+      </div>
+      {reportLoading ? (
+        <div className="p-6"><TabSkeleton /></div>
+      ) : list.length === 0 ? (
+        <p className="text-slate-500 text-sm p-6 text-center">No custom part requests on file.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Submitted (NPT)</TableHead>
+              <TableHead>Part</TableHead>
+              <TableHead>Vehicle</TableHead>
+              <TableHead>Urgency</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {list.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="font-mono text-xs whitespace-nowrap text-slate-500">{formatNpt(r.createdAtUtc)}</TableCell>
+                <TableCell>
+                  <div className="font-bold text-slate-900 dark:text-white">{r.partName}</div>
+                  {r.partNumber && <div className="text-xs font-mono text-secondary">{r.partNumber}</div>}
+                  {r.description && <div className="text-xs text-slate-500 mt-1 max-w-md line-clamp-2">{r.description}</div>}
+                </TableCell>
+                <TableCell className="text-sm text-slate-600 dark:text-slate-300">{r.vehicleModel || "—"}</TableCell>
+                <TableCell>
+                  <Badge variant={String(r.urgency).toLowerCase() === "critical" ? "error" : "neutral"}>{r.urgency || "Normal"}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={prBadge(r.status)}>{r.status}</Badge>
                 </TableCell>
               </TableRow>
             ))}
@@ -274,6 +331,7 @@ function ActivityLogTab({ publicId }) {
   const typeColor = (type) => {
     if (type === "Booking") return "text-violet-600 bg-violet-50 dark:bg-violet-900/20";
     if (type === "Invoice") return "text-secondary bg-secondary/5 dark:bg-secondary/20";
+    if (type === "PartRequest") return "text-teal-700 bg-teal-50 dark:bg-teal-900/25 dark:text-teal-300";
     return "text-amber-600 bg-amber-50 dark:bg-amber-900/20";
   };
 
@@ -391,7 +449,7 @@ function LoginActivityTab({ publicId, customer }) {
               </TableHeader>
               <TableBody>
                 {(data?.items ?? []).map((log, i) => (
-                  <TableRow key={i}>
+                  <TableRow key={log.id ?? `login-${i}`}>
                     <TableCell className="font-mono text-xs whitespace-nowrap text-slate-500">
                       {formatNpt(log.timestampUtc)}
                     </TableCell>
@@ -500,7 +558,17 @@ export default function CustomerProfile() {
                 {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
               </span>
             </div>
-            <h2 className="text-2xl font-extrabold font-headline text-slate-900 dark:text-white">{customer.name}</h2>
+            <h2 className="text-2xl font-extrabold font-headline text-slate-900 dark:text-white inline-flex items-center justify-center gap-2 flex-wrap">
+              <span>{customer.name}</span>
+              {(Number(report?.partRequestCount) > 0 || Number(customer.partRequestCount) > 0) && (
+                <span className="text-2xl leading-none" title="Has submitted custom part requests (customer portal)">✅</span>
+              )}
+            </h2>
+            {(Number(report?.partRequestCount) > 0 || Number(customer.partRequestCount) > 0) && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 px-1">
+                Custom parts sourcing — open the <span className="font-bold text-secondary">Part requests</span> tab for details.
+              </p>
+            )}
             <Badge variant={customer.status === "Active" ? "success" : "error"} className="mt-2">
               {customer.status}
             </Badge>
@@ -528,12 +596,14 @@ export default function CustomerProfile() {
             <div className="grid grid-cols-2 gap-3 mt-6">
               <div className="bg-slate-50 dark:bg-neutral-800 rounded-xl p-3">
                 <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Spent</p>
-                <p className="text-lg font-extrabold mt-1 text-slate-900 dark:text-white">{customer.totalSpent}</p>
+                <p className="text-lg font-extrabold mt-1 text-slate-900 dark:text-white">
+                  {formatCurrency(parseMoneyAmount(customer.totalSpent))}
+                </p>
               </div>
               <div className="bg-slate-50 dark:bg-neutral-800 rounded-xl p-3">
                 <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Credit</p>
                 <p className={`text-lg font-extrabold mt-1 ${customer.credit > 0 ? "text-red-500" : "text-emerald-600"}`}>
-                  ${customer.credit?.toLocaleString()}
+                  {formatCurrency(Number(customer.credit ?? 0))}
                 </p>
               </div>
             </div>
@@ -579,6 +649,7 @@ export default function CustomerProfile() {
           {activeTab === "Vehicles" && <VehiclesTab customer={customer} />}
           {activeTab === "Service History" && <ServiceHistoryTab publicId={id} />}
           {activeTab === "Purchases" && <PurchasesTab publicId={id} />}
+          {activeTab === "Part requests" && <PartRequestsTab report={report} reportLoading={reportLoading} />}
           {activeTab === "Activity Log" && <ActivityLogTab publicId={id} />}
           {activeTab === "Login Activity" && <LoginActivityTab publicId={id} customer={customer} />}
         </div>

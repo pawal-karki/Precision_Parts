@@ -3,6 +3,8 @@ using CleanApp.Domain.Repositories;
 using CleanApp.Infrastructure.Email;
 using CleanApp.Infrastructure.Persistence;
 using CleanApp.Infrastructure.Persistence.Repositories;
+using CleanApp.Infrastructure.Pdf;
+using CleanApp.Application.Pdf;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,8 +34,9 @@ public static class DependencyInjection
         services.AddScoped<IAiPredictionRepository, AiPredictionRepository>();
         services.AddScoped<IMonthlyProjectionRepository, MonthlyProjectionRepository>();
 
-        // ── Email (SMTP) ──────────────────────────────────────────────────
+        // ── Services ──────────────────────────────────────────────────────
         services.AddTransient<IEmailService, SmtpEmailService>();
+        services.AddTransient<IPdfService, InvoicePdfGenerator>();
 
         return services;
     }

@@ -39,7 +39,7 @@ public class EmailController : ControllerBase
                 To       = req.To,
                 Subject  = req.Subject,
                 HtmlBody = req.HtmlBody,
-            }, ct);
+            }, ct: ct);
 
             return NoContent();
         }
@@ -72,7 +72,7 @@ public class EmailController : ControllerBase
                       <p>Your Precision Parts backend is successfully sending emails via <strong>Resend</strong>.</p>
                     </div>
                     """,
-            }, ct);
+            }, ct: ct);
 
             return NoContent();
         }

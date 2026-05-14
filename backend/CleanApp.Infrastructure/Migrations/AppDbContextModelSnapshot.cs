@@ -172,6 +172,9 @@ namespace CleanApp.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uuid");
 
@@ -187,6 +190,9 @@ namespace CleanApp.Infrastructure.Migrations
 
                     b.Property<DateTime>("IssueDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StaffNotes")
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -206,6 +212,8 @@ namespace CleanApp.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId");
+
+                    b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("CustomerId");
 
@@ -677,6 +685,34 @@ namespace CleanApp.Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("CleanApp.Domain.Entities.UserLoginAudit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "OccurredAtUtc");
+
+                    b.ToTable("UserLoginAudits");
+                });
+
             modelBuilder.Entity("CleanApp.Domain.Entities.Vehicle", b =>
                 {
                     b.Property<Guid>("Id")
@@ -853,12 +889,19 @@ namespace CleanApp.Infrastructure.Migrations
                         .HasForeignKey("AppointmentId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("CleanApp.Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("CleanApp.Domain.Entities.User", "Customer")
                         .WithMany("Invoices")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Appointment");
+
+                    b.Navigation("CreatedBy");
 
                     b.Navigation("Customer");
                 });
@@ -949,6 +992,17 @@ namespace CleanApp.Infrastructure.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("CleanApp.Domain.Entities.UserLoginAudit", b =>
+                {
+                    b.HasOne("CleanApp.Domain.Entities.User", "User")
+                        .WithMany("LoginAudits")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CleanApp.Domain.Entities.Vehicle", b =>
                 {
                     b.HasOne("CleanApp.Domain.Entities.User", "Customer")
@@ -996,6 +1050,8 @@ namespace CleanApp.Infrastructure.Migrations
                     b.Navigation("CustomerProfile");
 
                     b.Navigation("Invoices");
+
+                    b.Navigation("LoginAudits");
 
                     b.Navigation("Notifications");
 

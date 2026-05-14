@@ -4,7 +4,7 @@ namespace CleanApp.Application.Email;
 public interface IEmailService
 {
     /// <summary>Send a plain HTML email.</summary>
-    Task SendAsync(EmailMessage message, CancellationToken ct = default);
+    Task SendAsync(EmailMessage message, byte[]? attachment = null, string? attachmentName = null, CancellationToken ct = default);
 
     /// <summary>Send a welcome email after customer registration.</summary>
     Task SendWelcomeAsync(string toEmail, string fullName, CancellationToken ct = default);
@@ -16,7 +16,7 @@ public interface IEmailService
     Task SendOverdueCreditReminderAsync(string toEmail, string customerName, decimal amount, CancellationToken ct = default);
 
     /// <summary>Send an invoice / receipt to a customer.</summary>
-    Task SendInvoiceReceiptAsync(string toEmail, string customerName, string invoiceRef, decimal total, CancellationToken ct = default);
+    Task SendInvoiceReceiptAsync(string toEmail, string customerName, string invoiceRef, decimal total, byte[]? pdfAttachment = null, CancellationToken ct = default);
 
     /// <summary>Send a password reset OTP.</summary>
     Task SendResetPasswordOtpAsync(string toEmail, string fullName, string otp, CancellationToken ct = default);

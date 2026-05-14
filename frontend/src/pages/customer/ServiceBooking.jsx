@@ -32,23 +32,28 @@ export default function ServiceBooking() {
   const [pastBookings, setPastBookings] = useState([]);
 
   const [services, setServices] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [appts, svcs] = await Promise.all([
+        const [appts, svcs, vehList] = await Promise.all([
           api.getAppointments(),
-          api.getAvailableServices()
+          api.getAvailableServices(),
+          api.getVehicles().catch(() => []),
         ]);
         if (!cancelled) {
+          if (Array.isArray(vehList)) setVehicles(vehList);
           if (Array.isArray(appts)) {
             const formatted = appts.map(book => ({
               id: book.referenceNumber,
               realId: book.id,
               date: new Date(book.scheduledAtUtc).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
               services: book.services?.join(", ") || "General Service",
+              vehicle: book.vehicleName || "—",
               status: book.status
             }));
             setPastBookings(formatted);
@@ -116,19 +121,26 @@ export default function ServiceBooking() {
       const scheduledDate = new Date(calYear, calMonth, selectedDay, hours, minutes);
       
       const dateStr = `${monthNames[calMonth]} ${selectedDay}, ${calYear}`;
-      const result = await api.createAppointment({
+      const selectedVeh = vehicles.find((v) => String(v.id) === String(selectedVehicleId));
+
+      const payload = {
         scheduledAt: scheduledDate.toISOString(),
         pickupRequired: false,
         notes: `Services: ${selectedItems.map(s => s.name).join(", ")}`,
         serviceTypeIds: selectedItems.map(s => s.id),
-      });
+      };
+      if (selectedVehicleId) payload.vehicleId = selectedVehicleId;
+
+      const result = await api.createAppointment(payload);
+      const vehicleDisplay = result?.vehicleName || selectedVeh?.nickname || selectedVeh?.name || "Not specified";
+
       navigate("/customer/booking-success", {
         state: {
           booking: {
             referenceNumber: result?.referenceNumber || `SRV-${Date.now().toString(36).toUpperCase().slice(-6)}`,
             date: dateStr,
             time: selectedTime,
-            vehicle: "My Vehicle",
+            vehicle: vehicleDisplay,
             services: selectedItems.map(s => ({ name: s.name, price: s.price })),
             total,
           }
@@ -255,6 +267,31 @@ export default function ServiceBooking() {
                 <Icon name="build" className="text-secondary" />
                 Service Selection
               </h2>
+              <div className="mb-5 pb-5 border-b border-stone-200/60 dark:border-neutral-700/50">
+                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5 block">
+                  Garage vehicle
+                </label>
+                <p className="text-[11px] text-on-surface-variant mb-2">
+                  Choose which profile vehicle is being serviced. Your garage &quot;last service&quot; date updates to this appointment.
+                </p>
+                <select
+                  value={selectedVehicleId}
+                  onChange={(e) => setSelectedVehicleId(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant/40 dark:border-neutral-600 bg-background dark:bg-neutral-900 text-on-surface dark:text-neutral-100 text-sm px-3 py-2.5 font-medium focus:ring-2 focus:ring-secondary focus:border-secondary outline-none"
+                >
+                  <option value="">Not linked to a specific vehicle</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.nickname || v.name || "My vehicle"}
+                    </option>
+                  ))}
+                </select>
+                {vehicles.length === 0 && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-2">
+                    Add vehicles under Profile → Garage to select one here.
+                  </p>
+                )}
+              </div>
               <div className="space-y-3">
                 {services.map((svc) => {
                   const isChecked = selectedServices.includes(svc.id);
@@ -298,6 +335,14 @@ export default function ServiceBooking() {
             <div className="bg-surface-container-lowest dark:bg-[#1C1C1C] rounded-xl p-6 shadow-[0_12px_40px_rgba(45,52,50,0.06)] sticky top-24 border border-stone-200/50 dark:border-neutral-700/50">
               <h2 className="font-extrabold font-headline text-xl mb-6 dark:text-white">Booking Summary</h2>
               <div className="space-y-4 mb-8">
+                <div className="flex justify-between items-start">
+                  <div className="text-xs text-on-surface-variant font-medium">Vehicle</div>
+                  <div className="text-sm font-bold text-right dark:text-white max-w-[55%]">
+                    {selectedVehicleId
+                      ? (vehicles.find((v) => String(v.id) === String(selectedVehicleId))?.nickname || "Selected")
+                      : "—"}
+                  </div>
+                </div>
                 <div className="flex justify-between items-start">
                   <div className="text-xs text-on-surface-variant font-medium">Service Date</div>
                   <div className="text-sm font-bold text-right dark:text-white">
@@ -364,11 +409,12 @@ export default function ServiceBooking() {
             </div>
           </div>
           <div className="bg-surface-container-low dark:bg-[#1C1C1C] rounded-2xl overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[520px]">
+            <table className="w-full text-left border-collapse min-w-[640px]">
               <thead className="bg-surface-container-high dark:bg-neutral-800">
                 <tr>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Service ID</th>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Vehicle</th>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Services Performed</th>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider text-right">Actions</th>
@@ -379,6 +425,7 @@ export default function ServiceBooking() {
                   <tr key={booking.id} className={`hover:bg-surface-container dark:hover:bg-neutral-800 transition-colors ${i % 2 === 1 ? "bg-white/40 dark:bg-[#0A0A0A]/30" : ""}`}>
                     <td className="px-6 py-4 font-bold font-headline text-sm dark:text-white">{booking.id}</td>
                     <td className="px-6 py-4 text-sm text-on-surface-variant">{booking.date}</td>
+                    <td className="px-6 py-4 text-sm text-on-surface dark:text-neutral-200 max-w-[140px] truncate" title={booking.vehicle}>{booking.vehicle}</td>
                     <td className="px-6 py-4 text-sm text-on-surface dark:text-neutral-200">{booking.services}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${

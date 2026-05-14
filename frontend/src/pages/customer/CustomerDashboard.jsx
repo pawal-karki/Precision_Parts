@@ -51,10 +51,41 @@ function SystemAlertsBanner({ overdueCredit }) {
   );
 }
 
-const vehicleImages = [
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuCZvy7Xe_tfhvoxNwYTS__GRT5AwO57W1Qi4BbF_pkhr511N3Vwf9TWSNbZFTko9GX_KiO_OWPyysWz-kZHC8dV1JKC7Qe1UMGUjOnARMyV1ltOg1M-JVFvs5aD5YrJaGk9m2HCGqMOK15-psHxeHKVqvgxe8PxBWJOn3nBL3TnRMlwpWcGUM3hSEGpC2p9QGzGzlJoXDqn1bDGKyRWXJgXJqgJt8NaVlXSLhItKEUFhRUp_1-cYU8gmtNwJHCKOp2s-Lm82xKgBw",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuBtFUKzMjx-pn14rhUJGqm1HYKNkgpuLxwuNJ-L9lpMee5TIlhUFT0hoUz0lIgjc4DPEAVb5vdbX5rWC8DI0fpI6bkQwHP8kdUx98ufcuT1vYRSwiLmxj4T-KDyAquKXabAosk0UyR9DCAUMFwlr4-PY4SupbqRIHjcm2GDNxkfWpBn9QyVhPAKzY2J1ZeeA99BriEo7myi9mtH63cL2xRRFK1TunxLvbyzSp5KfmxTZYf05JzNVt8LgqFCXK6E2PiWFFd3O64u-w",
-];
+/** Garage photo from API `imageUrl`, or neutral placeholder when missing / failed to load. */
+function VehicleCoverImage({ vehicle }) {
+  const raw = (vehicle?.imageUrl ?? vehicle?.image_url ?? "").trim();
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [raw]);
+
+  const showImg = Boolean(raw) && !failed;
+  const label = vehicle?.nickname || vehicle?.name || "Vehicle";
+
+  if (showImg) {
+    return (
+      <img
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+        src={raw}
+        alt={label}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-container-high to-surface-container-highest dark:from-neutral-800 dark:to-neutral-950"
+      role="img"
+      aria-label={label}
+    >
+      <Icon name="directions_car" className="text-5xl text-on-surface-variant/45 dark:text-neutral-600" />
+    </div>
+  );
+}
 
 function StatCard({ label, value, delay = 0, className = "" }) {
   return (
@@ -264,11 +295,7 @@ export default function CustomerDashboard() {
                     transition={{ delay: 0.18 + idx * 0.08 }}
                   >
                     <div className="h-36 overflow-hidden">
-                      <img
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        src={vehicleImages[idx % vehicleImages.length]}
-                        alt={vehicle.nickname || "Vehicle"}
-                      />
+                      <VehicleCoverImage vehicle={vehicle} />
                     </div>
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-3">

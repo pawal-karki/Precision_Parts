@@ -7,6 +7,7 @@ public class Invoice : BaseEntity
     public string InvoiceNumber { get; set; } = string.Empty;
     public Guid? CustomerId { get; set; }
     public Guid? AppointmentId { get; set; }
+    public Guid? CreatedByUserId { get; set; }
     public DateTime IssueDate { get; set; } = DateTime.UtcNow;
     public DateTime? DueDate { get; set; }
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Unpaid;
@@ -15,8 +16,10 @@ public class Invoice : BaseEntity
     public decimal DiscountAmount { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal BalanceDue { get; set; }
+    public string? StaffNotes { get; set; }
 
     public User? Customer { get; set; }
+    public User? CreatedBy { get; set; }
     public Appointment? Appointment { get; set; }
     public ICollection<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();

@@ -3,12 +3,18 @@
  * All prices in the application are displayed using this function.
  */
 
-const formatter = new Intl.NumberFormat('en-NP', {
-  style: 'currency',
-  currency: 'NPR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+/**
+ * Parse a loose amount from API or legacy mock strings ("$1,234", "Rs. 1,234", number).
+ * @param {unknown} value
+ * @returns {number}
+ */
+export function parseMoneyAmount(value) {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const s = String(value).replace(/,/g, "").replace(/[^0-9.-]/g, "");
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
+}
 
 /**
  * Format a numeric amount as Nepalese Rupees.
