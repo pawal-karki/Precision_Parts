@@ -1,8 +1,9 @@
-using System.Net;
-using System.Net.Mail;
 using CleanApp.Application.Email;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using AppEmailMessage = CleanApp.Application.Email.EmailMessage;
 
 namespace CleanApp.Infrastructure.Email;
@@ -30,34 +31,50 @@ public sealed class SmtpEmailService : IEmailService
 
     public async Task SendAsync(AppEmailMessage message, byte[]? attachment = null, string? attachmentName = null, CancellationToken ct = default)
     {
+        var email = new MimeMessage();
+        email.From.Add(new MailboxAddress(_fromName, _fromEmail));
+        email.To.Add(MailboxAddress.Parse(message.To));
+        email.Subject = message.Subject;
+
+        var builder = new BodyBuilder
+        {
+            HtmlBody = message.HtmlBody,
+            TextBody = message.TextBody
+        };
+
+        if (attachment != null && attachmentName != null)
+        {
+            builder.Attachments.Add(attachmentName, attachment);
+        }
+
+        email.Body = builder.ToMessageBody();
+
+        using var client = new SmtpClient();
         try
         {
-            using var client = new SmtpClient(_host, _port)
-            {
-                Credentials = new NetworkCredential(_user, _pass),
-                EnableSsl = true
-            };
-
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_fromEmail, _fromName),
-                Subject = message.Subject,
-                Body = message.HtmlBody ?? message.TextBody,
-                IsBodyHtml = !string.IsNullOrEmpty(message.HtmlBody)
-            };
-            mailMessage.To.Add(message.To);
+            _log.LogInformation("Connecting to SMTP server {Host}:{Port}...", _host, _port);
             
-            if (attachment != null && attachmentName != null)
-            {
-                mailMessage.Attachments.Add(new Attachment(new MemoryStream(attachment), attachmentName, "application/pdf"));
-            }
-
-            await client.SendMailAsync(mailMessage, ct);
-            _log.LogInformation("Email sent to {To} – subject: {Subject}", message.To, message.Subject);
+            // Gmail on 587 uses STARTTLS
+            await client.ConnectAsync(_host, _port, SecureSocketOptions.StartTls, ct);
+            
+            _log.LogInformation("Authenticating as {User}...", _user);
+            await client.AuthenticateAsync(_user, _pass.Replace(" ", ""), ct);
+            
+            _log.LogInformation("Sending email to {To}...", message.To);
+            await client.SendAsync(email, ct);
+            
+            await client.DisconnectAsync(true, ct);
+            _log.LogInformation("Email sent successfully to {To}", message.To);
         }
         catch (Exception ex)
         {
-            _log.LogError(ex, "Failed to send email to {To}", message.To);
+            _log.LogError(ex, "MailKit failed to send email to {To}. Host: {Host}, Port: {Port}, User: {User}", message.To, _host, _port, _user);
+            
+            // Re-throw with a more descriptive message for the UI if possible
+            if (ex.Message.Contains("Authentication failed"))
+            {
+                throw new Exception("SMTP Authentication failed. Please check your Gmail App Password and ensure it doesn't have spaces.", ex);
+            }
             throw;
         }
     }
