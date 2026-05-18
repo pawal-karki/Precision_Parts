@@ -26,6 +26,7 @@ import {
   TableCell,
 } from "@/components/ui/data-table";
 import { Combobox } from "@/components/ui/combobox";
+import { Pagination, DEFAULT_PAGE_SIZE } from "@/components/ui/pagination";
 import { ImageDropzone } from "@/components/shared/ImageDropzone";
 
 const emptyForm = {
@@ -93,6 +94,16 @@ export default function PartsManagement() {
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.sku.toLowerCase().includes(search.toLowerCase())
   );
+
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / DEFAULT_PAGE_SIZE));
+  const paginated = filtered.slice(
+    (page - 1) * DEFAULT_PAGE_SIZE,
+    page * DEFAULT_PAGE_SIZE,
+  );
+  useEffect(() => {
+    setPage(1);
+  }, [search, parts.length]);
 
   const stats = {
     total: parts.length,
@@ -294,7 +305,7 @@ export default function PartsManagement() {
                 </TableHeader>
                 <TableBody>
                   <AnimatePresence mode="popLayout">
-                    {filtered.map((part, i) => {
+                    {paginated.map((part, i) => {
                       const status = calcStatus(part.stock, part.minStock);
                       return (
                         <motion.tr
@@ -352,6 +363,18 @@ export default function PartsManagement() {
                 <div className="py-12 text-center text-on-surface-variant dark:text-neutral-500">
                   <Icon name="search_off" className="text-4xl mb-2" />
                   <p className="text-sm font-medium">No parts found</p>
+                </div>
+              )}
+              {totalPages > 1 && (
+                <div className="px-4 py-3 border-t border-surface-container dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <p className="text-sm text-slate-500">
+                    Showing{" "}
+                    <span className="font-bold text-slate-800 dark:text-neutral-200">
+                      {paginated.length}
+                    </span>{" "}
+                    of {filtered.length} parts (page {page}/{totalPages})
+                  </p>
+                  <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
                 </div>
               )}
               </div>

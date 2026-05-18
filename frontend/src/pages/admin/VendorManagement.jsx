@@ -24,6 +24,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/data-table";
+import { Pagination, DEFAULT_PAGE_SIZE } from "@/components/ui/pagination";
 
 const emptyForm = {
   name: "",
@@ -67,6 +68,16 @@ export default function VendorManagement() {
       v.contact.toLowerCase().includes(search.toLowerCase()) ||
       v.location.toLowerCase().includes(search.toLowerCase())
   );
+
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / DEFAULT_PAGE_SIZE));
+  const paginated = filtered.slice(
+    (page - 1) * DEFAULT_PAGE_SIZE,
+    page * DEFAULT_PAGE_SIZE,
+  );
+  useEffect(() => {
+    setPage(1);
+  }, [search, vendors.length]);
 
   const openAdd = () => {
     setEditing(null);
@@ -192,7 +203,7 @@ export default function VendorManagement() {
           </TableHeader>
           <TableBody>
             <AnimatePresence mode="popLayout">
-              {filtered.map((vendor, i) => (
+              {paginated.map((vendor, i) => (
                 <motion.tr
                   key={vendor.id}
                   layout
@@ -261,6 +272,18 @@ export default function VendorManagement() {
       <div className="py-12 text-center text-on-surface-variant dark:text-neutral-500">
         <Icon name="search_off" className="text-4xl mb-2" />
         <p className="text-sm font-medium">No vendors found</p>
+      </div>
+    )}
+    {totalPages > 1 && (
+      <div className="px-4 py-3 border-t border-surface-container dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <p className="text-sm text-slate-500">
+          Showing{" "}
+          <span className="font-bold text-slate-800 dark:text-neutral-200">
+            {paginated.length}
+          </span>{" "}
+          of {filtered.length} vendors (page {page}/{totalPages})
+        </p>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     )}
 

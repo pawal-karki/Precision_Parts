@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { formatCurrency } from "@/lib/currency";
+import { Pagination, DEFAULT_PAGE_SIZE } from "@/components/ui/pagination";
 
 function fmtNPR(amount) {
   return formatCurrency(amount);
@@ -22,6 +23,33 @@ export default function PaymentsBalance() {
   const [paying, setPaying] = useState(false);
   const [lastUpdated] = useState(new Date());
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [posPage, setPosPage] = useState(1);
+
+  const invoiceTotalPages = Math.max(
+    1,
+    Math.ceil(invoices.length / DEFAULT_PAGE_SIZE),
+  );
+  const paginatedInvoices = invoices.slice(
+    (invoicePage - 1) * DEFAULT_PAGE_SIZE,
+    invoicePage * DEFAULT_PAGE_SIZE,
+  );
+
+  const posTotalPages = Math.max(
+    1,
+    Math.ceil(posHistory.length / DEFAULT_PAGE_SIZE),
+  );
+  const paginatedPosHistory = posHistory.slice(
+    (posPage - 1) * DEFAULT_PAGE_SIZE,
+    posPage * DEFAULT_PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setInvoicePage(1);
+  }, [invoices.length]);
+  useEffect(() => {
+    setPosPage(1);
+  }, [posHistory.length]);
 
   const loadLedger = useCallback(async () => {
     setLoading(true);
@@ -272,7 +300,7 @@ export default function PaymentsBalance() {
                   <p className="text-sm mt-1">You're all caught up — great work!</p>
                 </div>
               ) : (
-                invoices.map((inv) => (
+                paginatedInvoices.map((inv) => (
                   <motion.div
                     key={inv.realId || inv.id}
                     className="bg-surface-container-lowest dark:bg-[#1C1C1C] p-5 rounded-xl border border-surface-container dark:border-neutral-800/50 hover:shadow-lg transition-all"
@@ -300,6 +328,22 @@ export default function PaymentsBalance() {
                     </div>
                   </motion.div>
                 ))
+              )}
+              {invoiceTotalPages > 1 && (
+                <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <p className="text-sm text-slate-500">
+                    Showing{" "}
+                    <span className="font-bold text-slate-800 dark:text-neutral-200">
+                      {paginatedInvoices.length}
+                    </span>{" "}
+                    of {invoices.length} invoices (page {invoicePage}/{invoiceTotalPages})
+                  </p>
+                  <Pagination
+                    page={invoicePage}
+                    totalPages={invoiceTotalPages}
+                    onPageChange={setInvoicePage}
+                  />
+                </div>
               )}
             </div>
           </motion.div>
@@ -366,7 +410,7 @@ export default function PaymentsBalance() {
             </div>
           ) : (
             <div className="space-y-2">
-              {posHistory.map((row) => {
+              {paginatedPosHistory.map((row) => {
                 const unpaid =
                   String(row.status).toLowerCase() !== "paid" && Number(row.amount) > 0;
                 const statusLower = String(row.status).toLowerCase();
@@ -418,6 +462,22 @@ export default function PaymentsBalance() {
                   </motion.div>
                 );
               })}
+              {posTotalPages > 1 && (
+                <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <p className="text-sm text-slate-500">
+                    Showing{" "}
+                    <span className="font-bold text-slate-800 dark:text-neutral-200">
+                      {paginatedPosHistory.length}
+                    </span>{" "}
+                    of {posHistory.length} purchases (page {posPage}/{posTotalPages})
+                  </p>
+                  <Pagination
+                    page={posPage}
+                    totalPages={posTotalPages}
+                    onPageChange={setPosPage}
+                  />
+                </div>
+              )}
             </div>
           )}
         </motion.section>

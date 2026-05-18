@@ -17,6 +17,7 @@ import {
   fadeInUp,
   staggerContainer,
 } from "@/components/ui/motion";
+import { Pagination, DEFAULT_PAGE_SIZE } from "@/components/ui/pagination";
 
 function statusVariant(status) {
   return {
@@ -71,6 +72,16 @@ export default function AdvancedSearch() {
 
     return result;
   }, [parts, search, filters, sortBy]);
+
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / DEFAULT_PAGE_SIZE));
+  const paginated = useMemo(
+    () => filtered.slice((page - 1) * DEFAULT_PAGE_SIZE, page * DEFAULT_PAGE_SIZE),
+    [filtered, page],
+  );
+  useEffect(() => {
+    setPage(1);
+  }, [search, filters, sortBy, parts.length]);
 
   function handleAddToCart(part) {
     toast(`${part.name} added to cart`, "success");
@@ -213,7 +224,7 @@ export default function AdvancedSearch() {
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
           >
             <AnimatePresence mode="popLayout">
-              {filtered.map((part) => (
+              {paginated.map((part) => (
                 <motion.div
                   key={part.id}
                   variants={fadeInUp}
@@ -280,6 +291,19 @@ export default function AdvancedSearch() {
               <Button variant="outline" className="mt-4" onClick={clearFilters}>
                 Clear All Filters
               </Button>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <p className="text-sm text-slate-500">
+                Showing{" "}
+                <span className="font-bold text-slate-800 dark:text-neutral-200">
+                  {paginated.length}
+                </span>{" "}
+                of {filtered.length} parts (page {page}/{totalPages})
+              </p>
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
           )}
         </section>
