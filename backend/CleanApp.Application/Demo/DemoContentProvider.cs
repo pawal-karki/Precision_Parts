@@ -120,4 +120,10 @@ public sealed class DemoContentProvider : IDemoContentProvider
             inv.status = "Completed";
         }
     }
+
+    public void AddInvoice(string id, string vendor, string date, string status, double subtotal, double tax, double total, List<PurchaseInvoiceItemDto> items)
+    {
+        var itemObjects = items.Select(i => (object)new { name = i.Name, sku = i.Sku, qty = i.Qty, unitPrice = i.UnitPrice, total = i.Total }).ToArray();
+        _purchaseInvoices.Add(CreateInvoice(id, vendor, date, status, subtotal, tax, total, itemObjects));
+    }
 }

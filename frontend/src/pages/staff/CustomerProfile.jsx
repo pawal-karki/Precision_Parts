@@ -56,6 +56,20 @@ function TabSkeleton() {
 
 function OverviewTab({ customer, report, reportLoading }) {
   const recentPurchases = report?.recentPurchases ?? [];
+  const toast = useToast();
+
+  const sendEmail = async (invoiceId) => {
+    if (!invoiceId) {
+      toast("Invoice ID is missing", "error");
+      return;
+    }
+    try {
+      await api.sendInvoiceEmail(invoiceId);
+      toast("Invoice email queued successfully", "success");
+    } catch (e) {
+      toast("Failed to queue invoice email", "error");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -97,6 +111,7 @@ function OverviewTab({ customer, report, reportLoading }) {
                 <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -109,6 +124,16 @@ function OverviewTab({ customer, report, reportLoading }) {
                     <Badge variant={p.status === "Paid" ? "success" : p.status === "Unpaid" ? "warning" : "neutral"}>
                       {p.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => sendEmail(p.id)}
+                      className="flex items-center gap-1"
+                    >
+                      <Icon name="mail" className="text-sm" /> Send PDF
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -204,6 +229,19 @@ function PurchasesTab({ publicId }) {
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
+  const sendEmail = async (invoiceId) => {
+    if (!invoiceId) {
+      toast("Invoice ID is missing", "error");
+      return;
+    }
+    try {
+      await api.sendInvoiceEmail(invoiceId);
+      toast("Invoice email queued successfully", "success");
+    } catch (e) {
+      toast("Failed to queue invoice email", "error");
+    }
+  };
+
   useEffect(() => {
     if (!publicId) return;
     api.getCustomerPurchases(publicId)
@@ -229,6 +267,7 @@ function PurchasesTab({ publicId }) {
               <TableHead>Issue Date</TableHead>
               <TableHead>Total Amount</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -241,6 +280,16 @@ function PurchasesTab({ publicId }) {
                   <Badge variant={p.status === "Paid" ? "success" : p.status === "Unpaid" ? "warning" : "neutral"}>
                     {p.status}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => sendEmail(p.id)}
+                    className="flex items-center gap-1"
+                  >
+                    <Icon name="mail" className="text-sm" /> Send PDF
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

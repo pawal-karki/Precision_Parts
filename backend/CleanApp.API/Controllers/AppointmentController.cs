@@ -9,6 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CleanApp.API.Controllers;
 
+/// <summary>
+/// Provides customer-facing endpoints for booking, listing, and cancelling service appointments,
+/// as well as browsing available service types. Enforces business rules such as:
+/// a maximum of 7 bookings per time slot, and one appointment per customer per day.
+/// Restricted to authenticated users; write operations require the Customer role.
+/// </summary>
 [ApiController]
 [Route("api/customer/appointments")]
 [Authorize]
@@ -16,11 +22,37 @@ public class AppointmentController : ControllerBase
 {
     private readonly AppDbContext _db;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="AppointmentController"/>
+    /// with the required database context.
+    /// </summary>
+    /// <param name="db">The application database context for appointment data access.</param>
     public AppointmentController(AppDbContext db) => _db = db;
 
+    /// <summary>
+    /// Extracts the authenticated customer's GUID from their JWT claims.
+    /// Throws a <see cref="FormatException"/> if the claim is absent or cannot be parsed.
+    /// </summary>
     private Guid GetUserId() => Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
 
+    /// <summary>
+    /// Books a new service appointment for the authenticated customer.
+    /// Enforces the following business rules before persisting:
+    /// <list type="bullet">
+    ///   <item>Maximum 7 non-cancelled bookings per time slot.</item>
+    ///   <item>One active appointment per customer per calendar day.</item>
+    ///   <item>Vehicle, if specified, must belong to the requesting customer.</item>
+    /// </list>
+    /// On success, optionally links the appointment to a vehicle and updates
+    /// the vehicle's last service date.
+    /// </summary>
+    /// <param name="dto">The appointment booking payload including date/time, vehicle, pickup flag, and service types.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 200 OK with the appointment details on success;
+    /// 400 Bad Request if a business rule is violated (slot full, duplicate booking, or invalid vehicle).
+    /// </returns>
     [HttpPost]
     [Authorize(Roles = "Customer")]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentDto dto, CancellationToken ct)
@@ -42,10 +74,10 @@ public class AppointmentController : ControllerBase
         var endOfDay = startOfDay.AddDays(1);
 
         var userDailyBookings = await _db.Appointments
-            .CountAsync(a => a.CustomerId == userId 
-                          && a.ScheduledAtUtc >= startOfDay 
-                          && a.ScheduledAtUtc < endOfDay 
-                          && a.Status != AppointmentStatus.Cancelled, ct);
+            .CountAsync(a => a.CustomerId == userId
+                              && a.ScheduledAtUtc >= startOfDay
+                              && a.ScheduledAtUtc < endOfDay
+                              && a.Status != AppointmentStatus.Cancelled, ct);
 
         if (userDailyBookings >= 1)
         {
@@ -109,6 +141,12 @@ public class AppointmentController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Retrieves all service appointments associated with the currently authenticated customer,
+    /// ordered by scheduled date descending, with vehicle and service type details included.
+    /// </summary>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>A 200 OK response containing the customer's appointment history.</returns>
     [HttpGet]
     [Authorize(Roles = "Customer")]
     public async Task<IActionResult> List(CancellationToken ct)
@@ -135,6 +173,13 @@ public class AppointmentController : ControllerBase
         return Ok(appointments);
     }
 
+    /// <summary>
+    /// Retrieves the catalogue of all available service types offered by the workshop,
+    /// including name, description, base price, and estimated duration in minutes.
+    /// Accessible by Customer, Admin, and Staff roles.
+    /// </summary>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>A 200 OK response containing the list of available service types.</returns>
     [HttpGet("services")]
     [Authorize(Roles = "Customer,Admin,Staff")]
     public async Task<IActionResult> GetServices(CancellationToken ct)
@@ -152,6 +197,17 @@ public class AppointmentController : ControllerBase
         return Ok(services);
     }
 
+    /// <summary>
+    /// Cancels an existing appointment belonging to the currently authenticated customer.
+    /// Only the appointment owner may cancel it, and only if it has not already been cancelled.
+    /// </summary>
+    /// <param name="id">The unique identifier of the appointment to cancel.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 200 OK with a confirmation message on success;
+    /// 404 Not Found if the appointment does not exist or does not belong to the current user;
+    /// 400 Bad Request if the appointment has already been cancelled.
+    /// </returns>
     [HttpPatch("{id}/cancel")]
     [Authorize(Roles = "Customer")]
     public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
@@ -172,4 +228,3 @@ public class AppointmentController : ControllerBase
         return Ok(new { message = "Appointment successfully cancelled." });
     }
 }
-     

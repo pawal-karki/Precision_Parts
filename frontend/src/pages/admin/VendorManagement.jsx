@@ -103,8 +103,8 @@ export default function VendorManagement() {
     }
     const { city, country } = parseLocation();
     try {
-      if (editing?.entityId) {
-        await api.updateVendor(editing.entityId, {
+      if (editing?.id) {
+        await api.updateVendor(editing.id, {
           name: form.name.trim(),
           contactName: form.contact.trim(),
           email: form.email || null,
@@ -135,9 +135,9 @@ export default function VendorManagement() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget?.entityId) return;
+    if (!deleteTarget?.id) return;
     try {
-      await api.deleteVendor(deleteTarget.entityId);
+      await api.deleteVendor(deleteTarget.id);
       await reloadVendors();
       toast(`${deleteTarget.name} removed`, "success");
       setDeleteTarget(null);

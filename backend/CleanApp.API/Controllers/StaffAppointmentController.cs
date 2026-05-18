@@ -8,6 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CleanApp.API.Controllers;
 
+/// <summary>
+/// Provides staff-facing endpoints for viewing and managing all service appointments.
+/// Mirrors the admin appointment interface but restricts access to the Staff role only.
+/// Supports listing, slot occupancy analysis, appointment creation, and status updates.
+/// </summary>
 [ApiController]
 [Route("api/staff/appointments")]
 [Authorize(Roles = "Staff")]
@@ -15,8 +20,20 @@ public class StaffAppointmentController : ControllerBase
 {
     private readonly AppDbContext _db;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="StaffAppointmentController"/>
+    /// with the required database context.
+    /// </summary>
+    /// <param name="db">The application database context for appointment data access.</param>
     public StaffAppointmentController(AppDbContext db) => _db = db;
 
+    /// <summary>
+    /// Retrieves all service appointments with full details including customer information,
+    /// linked vehicle, scheduled time, status, and associated service types.
+    /// Results are ordered by scheduled date descending.
+    /// </summary>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>A 200 OK response containing the list of all appointments.</returns>
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
     {
@@ -44,6 +61,13 @@ public class StaffAppointmentController : ControllerBase
         return Ok(appointments);
     }
 
+    /// <summary>
+    /// Retrieves the slot occupancy breakdown for a specific date, showing how many
+    /// appointments are booked per time slot versus the maximum capacity of 7 per slot.
+    /// </summary>
+    /// <param name="date">The date for which to retrieve slot occupancy data.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>A 200 OK response containing the list of time slots with occupancy counts.</returns>
     [HttpGet("occupancy")]
     public async Task<IActionResult> GetOccupancy([FromQuery] DateTime date, CancellationToken ct)
     {
@@ -64,6 +88,17 @@ public class StaffAppointmentController : ControllerBase
         return Ok(occupancy);
     }
 
+    /// <summary>
+    /// Creates a new service appointment on behalf of a customer.
+    /// Validates that any linked vehicle belongs to the specified customer before persisting.
+    /// Updates the vehicle's last service date upon successful creation.
+    /// </summary>
+    /// <param name="dto">The appointment creation payload including customer ID, vehicle, schedule time, and services.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 200 OK with the new appointment's ID and a confirmation message on success;
+    /// 400 Bad Request if the vehicle does not belong to the specified customer.
+    /// </returns>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] AdminCreateAppointmentDto dto, CancellationToken ct)
     {
@@ -89,7 +124,7 @@ public class StaffAppointmentController : ControllerBase
         };
 
         _db.Appointments.Add(appointment);
-        
+
         if (dto.ServiceTypeIds.Any())
         {
             foreach (var stId in dto.ServiceTypeIds)
@@ -113,6 +148,19 @@ public class StaffAppointmentController : ControllerBase
         return Ok(new { id = appointment.Id, message = "Appointment created successfully." });
     }
 
+    /// <summary>
+    /// Updates the processing status of an existing appointment
+    /// (e.g., Booked → InProgress → Completed → Cancelled).
+    /// Status values are matched case-insensitively against the <see cref="AppointmentStatus"/> enum.
+    /// </summary>
+    /// <param name="id">The unique identifier of the appointment to update.</param>
+    /// <param name="dto">The status update payload containing the new status string.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 200 OK with a confirmation message on success;
+    /// 404 Not Found if the appointment does not exist;
+    /// 400 Bad Request if the provided status string is invalid.
+    /// </returns>
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateAppointmentStatusDto dto, CancellationToken ct)
     {

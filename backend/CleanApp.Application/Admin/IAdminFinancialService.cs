@@ -10,5 +10,5 @@ public interface IAdminFinancialService
 {
     Task<FinancialSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProfitLossMonthRow>> GetProfitLossAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<FinancialReportRowDto>> GetFinancialReportsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<FinancialReportRowDto>> GetFinancialReportsAsync(string type = "monthly", DateTime? date = null, CancellationToken cancellationToken = default);
 }

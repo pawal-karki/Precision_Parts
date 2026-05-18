@@ -31,24 +31,29 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 export default function FinancialReports() {
   const toast = useToast();
   const [summary, setSummary] = useState(null);
   const [plData, setPlData] = useState([]);
   const [reports, setReports] = useState([]);
+  const [reportType, setReportType] = useState("monthly"); // "daily", "monthly", "yearly"
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     Promise.all([
       api.getFinancialSummary(),
       api.getProfitLoss(),
-      api.getFinancialReports(),
+      api.getFinancialReports(reportType, selectedDate),
     ]).then(([s, p, r]) => {
       setSummary(s);
       setPlData(p);
       setReports(r);
     });
-  }, []);
+  }, [reportType, selectedDate]);
 
   const handleExport = () => {
     if (!reports.length) {
@@ -94,11 +99,48 @@ export default function FinancialReports() {
             Profit/Loss trends, revenue analytics, and exportable data.
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="surface">
-            <Icon name="calendar_today" className="text-sm" />
-            FY {new Date().getFullYear()}
-          </Button>
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex border border-outline-variant rounded-full overflow-hidden">
+            <button 
+              className={cn("px-4 py-2 text-sm font-medium", reportType === 'daily' ? "bg-secondary text-on-secondary" : "bg-surface hover:bg-surface-container-high")}
+              onClick={() => setReportType('daily')}
+            >
+              Daily
+            </button>
+            <button 
+              className={cn("px-4 py-2 text-sm font-medium border-l border-outline-variant", reportType === 'monthly' ? "bg-secondary text-on-secondary" : "bg-surface hover:bg-surface-container-high")}
+              onClick={() => setReportType('monthly')}
+            >
+              Monthly
+            </button>
+            <button 
+              className={cn("px-4 py-2 text-sm font-medium border-l border-outline-variant", reportType === 'yearly' ? "bg-secondary text-on-secondary" : "bg-surface hover:bg-surface-container-high")}
+              onClick={() => setReportType('yearly')}
+            >
+              Yearly
+            </button>
+          </div>
+
+          {reportType === 'daily' && (
+            <div className="relative">
+              <Button variant="surface" onClick={() => setShowCalendar(!showCalendar)}>
+                <Icon name="calendar_today" className="text-sm" />
+                {selectedDate.toLocaleDateString()}
+              </Button>
+              {showCalendar && (
+                <div className="absolute top-12 right-0 z-50">
+                  <Calendar 
+                    selected={selectedDate} 
+                    onSelect={(date) => {
+                      setSelectedDate(date);
+                      setShowCalendar(false);
+                    }} 
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <Button variant="secondary" onClick={handleExport}>
             <Icon name="download" className="text-sm" />
             Export
@@ -179,7 +221,9 @@ export default function FinancialReports() {
         className="bg-white dark:bg-[#1C1C1C] rounded-xl p-8 border border-surface-container-low dark:border-neutral-800/50 mt-8"
       >
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold font-headline">Quarterly Summary</h3>
+          <h3 className="text-lg font-bold font-headline">
+            {reportType === 'daily' ? "Daily" : reportType === 'monthly' ? "Monthly" : "Yearly"} Summary
+          </h3>
           <Button variant="ghost" onClick={handleExport}>
             <Icon name="picture_as_pdf" className="text-sm" />
             Download PDF

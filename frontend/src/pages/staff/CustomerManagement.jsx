@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 import { formatCurrency, parseMoneyAmount } from "@/lib/currency";
+import { generateReportPdf, downloadPdf } from "@/lib/pdf";
 
 const emptyCustomer = {
   name: "",
@@ -83,6 +84,40 @@ export default function CustomerManagement() {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [form, setForm] = useState({ ...emptyCustomer });
   const [vehicleInput, setVehicleInput] = useState("");
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  const generateReport = (type) => {
+    let title = "";
+    let headers = ["Name", "Email", "Phone", "Type", "Status"];
+    let rows = [];
+
+    if (type === "regulars") {
+      title = "Regular Customers Report";
+      const data = customers.filter(c => c.loyaltyTier === "Gold" || c.loyaltyTier === "Platinum" || parseMoneyAmount(c.totalSpent) > 10000);
+      headers = ["Name", "Email", "Tier", "Total Spent"];
+      rows = data.map(c => [c.name, c.email, c.loyaltyTier, c.totalSpent]);
+    } else if (type === "high_spenders") {
+      title = "High Spenders Report";
+      const data = [...customers].sort((a, b) => parseMoneyAmount(b.totalSpent) - parseMoneyAmount(a.totalSpent)).slice(0, 10);
+      headers = ["Name", "Email", "Total Spent"];
+      rows = data.map(c => [c.name, c.email, c.totalSpent]);
+    } else if (type === "pending_credits") {
+      title = "Pending Credits Report";
+      const data = customers.filter(c => c.credit > 0);
+      headers = ["Name", "Email", "Credit Balance"];
+      rows = data.map(c => [c.name, c.email, formatCurrency(c.credit)]);
+    }
+
+    if (rows.length === 0) {
+      toast(`No customers found for ${title}`, "warning");
+      return;
+    }
+
+    const doc = generateReportPdf(title, headers, rows);
+    downloadPdf(doc, `${type}_report.pdf`);
+    toast(`${title} generated`, "success");
+    setReportModalOpen(false);
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -138,11 +173,14 @@ export default function CustomerManagement() {
         toast(`${form.name} updated successfully`, "success");
       } else {
         await api.createCustomer({
-          fullName: form.name.trim(),
-          email: form.email.trim(),
-          phone: form.phone || null,
-          customerType: form.type,
-          password: "Customer@123",
+          Name: form.name.trim(),
+          Email: form.email.trim(),
+          Phone: form.phone || null,
+          Type: form.type,
+          Status: form.status,
+          LoyaltyTier: form.loyaltyTier,
+          Credit: Number(form.credit) || 0,
+          Vehicles: form.vehicles || [],
         });
         toast(`${form.name} added to customers`, "success");
       }
@@ -191,10 +229,16 @@ export default function CustomerManagement() {
               Searchable CRM with vehicle linking and purchase history.
             </p>
           </div>
-          <Button variant="secondary" onClick={openNewModal}>
-            <Icon name="person_add" className="text-sm" />
-            New Customer
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setReportModalOpen(true)}>
+              <Icon name="description" className="text-sm" />
+              Generate Report
+            </Button>
+            <Button variant="secondary" onClick={openNewModal}>
+              <Icon name="person_add" className="text-sm" />
+              New Customer
+            </Button>
+          </div>
         </section>
 
         {/* Search & Filters */}
@@ -274,7 +318,7 @@ export default function CustomerManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell className="px-6 font-bold">
-                      {formatCurrency(parseMoneyAmount(customer.totalSpent))}
+                      {customer.totalSpent}
                     </TableCell>
                     <TableCell className="px-6 text-center text-lg" title={Number(customer.partRequestCount) > 0 ? "Has custom part requests" : "No part requests"}>
                       {Number(customer.partRequestCount) > 0 ? "✅" : "—"}
@@ -472,6 +516,37 @@ export default function CustomerManagement() {
                 <Icon name="delete" className="text-sm" />
                 Delete Customer
               </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Report Selection Modal */}
+        <Modal
+          open={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          title="Generate Customer Report"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-on-surface-variant">
+              Select the type of report you want to generate:
+            </p>
+            <div className="grid grid-cols-1 gap-3">
+              <Button variant="outline" onClick={() => generateReport("regulars")} className="justify-start">
+                <Icon name="groups" className="mr-2" />
+                Regular Customers
+              </Button>
+              <Button variant="outline" onClick={() => generateReport("high_spenders")} className="justify-start">
+                <Icon name="monetization_on" className="mr-2" />
+                High Spenders
+              </Button>
+              <Button variant="outline" onClick={() => generateReport("pending_credits")} className="justify-start">
+                <Icon name="credit_card" className="mr-2" />
+                Pending Credits
+              </Button>
+            </div>
+            <div className="flex justify-end pt-4 border-t border-surface-container dark:border-neutral-800">
+              <Button variant="ghost" onClick={() => setReportModalOpen(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>

@@ -32,6 +32,7 @@ public class InvoiceReceiptEmailJob
         var invoice = await db.Invoices
             .AsNoTracking()
             .Include(i => i.Items)
+            .Include(i => i.Customer)
             .FirstOrDefaultAsync(i => i.Id == invoiceId);
 
         if (invoice is null)

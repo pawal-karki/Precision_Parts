@@ -97,29 +97,24 @@ public class AdminFinancialService : IAdminFinancialService
         return rows;
     }
 
-    public async Task<IReadOnlyList<FinancialReportRowDto>> GetFinancialReportsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<FinancialReportRowDto>> GetFinancialReportsAsync(string type = "monthly", DateTime? date = null, CancellationToken cancellationToken = default)
     {
         var paid = await _invoices.ListPaidWithItemsAsync(cancellationToken);
         var allParts = await _parts.ListWithCategoryAndVendorOrderedBySkuAsync(cancellationToken);
         var partCosts = allParts.ToDictionary(p => p.Id, p => p.CostPrice ?? (p.UnitPrice * 0.6m));
 
-        // Group by Quarter
-        var groups = paid
-            .GroupBy(i => new { i.IssueDate.Year, Quarter = (i.IssueDate.Month - 1) / 3 + 1 })
-            .OrderByDescending(g => g.Key.Year)
-            .ThenByDescending(g => g.Key.Quarter)
-            .Take(4)
-            .ToList();
-
         var result = new List<FinancialReportRowDto>();
         var id = 1;
 
-        foreach (var g in groups)
+        if (type == "daily")
         {
-            decimal rev = g.Sum(i => i.TotalAmount);
+            var targetDate = date ?? DateTime.UtcNow;
+            var dayInvs = paid.Where(i => i.IssueDate.Date == targetDate.Date).ToList();
+            
+            decimal rev = dayInvs.Sum(i => i.TotalAmount);
             decimal exp = 0;
 
-            foreach (var inv in g)
+            foreach (var inv in dayInvs)
             {
                 foreach (var item in inv.Items)
                 {
@@ -135,12 +130,87 @@ public class AdminFinancialService : IAdminFinancialService
 
             result.Add(new FinancialReportRowDto(
                 id++,
-                $"Q{g.Key.Quarter} {g.Key.Year}",
+                targetDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 rev,
                 exp,
                 profit,
                 margin.ToString("0.0", CultureInfo.InvariantCulture) + "%"
             ));
+        }
+        else if (type == "yearly")
+        {
+            var groups = paid
+                .GroupBy(i => i.IssueDate.Year)
+                .OrderByDescending(g => g.Key)
+                .ToList();
+
+            foreach (var g in groups)
+            {
+                decimal rev = g.Sum(i => i.TotalAmount);
+                decimal exp = 0;
+
+                foreach (var inv in g)
+                {
+                    foreach (var item in inv.Items)
+                    {
+                        if (item.ItemType == "part" && item.RefId.HasValue && partCosts.TryGetValue(item.RefId.Value, out var cost))
+                            exp += cost * item.Quantity;
+                        else
+                            exp += item.LineTotal * 0.55m;
+                    }
+                }
+
+                var profit = rev - exp;
+                var margin = rev == 0 ? 0 : Math.Round(100m * profit / rev, 1);
+
+                result.Add(new FinancialReportRowDto(
+                    id++,
+                    g.Key.ToString(),
+                    rev,
+                    exp,
+                    profit,
+                    margin.ToString("0.0", CultureInfo.InvariantCulture) + "%"
+                ));
+            }
+        }
+        else // monthly or default
+        {
+            var groups = paid
+                .GroupBy(i => new { i.IssueDate.Year, i.IssueDate.Month })
+                .OrderByDescending(g => g.Key.Year)
+                .ThenByDescending(g => g.Key.Month)
+                .Take(12)
+                .ToList();
+
+            foreach (var g in groups)
+            {
+                decimal rev = g.Sum(i => i.TotalAmount);
+                decimal exp = 0;
+
+                foreach (var inv in g)
+                {
+                    foreach (var item in inv.Items)
+                    {
+                        if (item.ItemType == "part" && item.RefId.HasValue && partCosts.TryGetValue(item.RefId.Value, out var cost))
+                            exp += cost * item.Quantity;
+                        else
+                            exp += item.LineTotal * 0.55m;
+                    }
+                }
+
+                var profit = rev - exp;
+                var margin = rev == 0 ? 0 : Math.Round(100m * profit / rev, 1);
+
+                var d = new DateTime(g.Key.Year, g.Key.Month, 1);
+                result.Add(new FinancialReportRowDto(
+                    id++,
+                    d.ToString("MMM yyyy", CultureInfo.InvariantCulture),
+                    rev,
+                    exp,
+                    profit,
+                    margin.ToString("0.0", CultureInfo.InvariantCulture) + "%"
+                ));
+            }
         }
 
         return result;

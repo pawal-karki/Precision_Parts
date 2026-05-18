@@ -2,6 +2,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using CleanApp.Domain.Entities;
+using CleanApp.Domain.Enums;
 using CleanApp.Application.Pdf;
 
 namespace CleanApp.Infrastructure.Pdf;
@@ -65,7 +66,15 @@ public class InvoicePdfGenerator : IPdfService
                         row.RelativeItem().AlignRight().PaddingVertical(10).Column(c =>
                         {
                             c.Item().Text($"Date: {invoice.IssueDate:yyyy-MM-dd}").FontSize(9).FontColor("#5a605e");
-                            c.Item().Text($"Due: {invoice.IssueDate.AddDays(30):yyyy-MM-dd}").FontSize(9).FontColor("#5a605e");
+                            
+                            if (invoice.Status == InvoiceStatus.Paid)
+                            {
+                                c.Item().Text("Status: PAID").FontSize(10).Bold().FontColor("#10b981");
+                            }
+                            else
+                            {
+                                c.Item().Text($"Due: {invoice.DueDate?.ToString("yyyy-MM-dd") ?? "N/A"}").FontSize(9).FontColor("#5a605e");
+                            }
                         });
                     });
 

@@ -8,6 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CleanApp.API.Controllers;
 
+/// <summary>
+/// Provides administrative endpoints for managing all service appointments across the system.
+/// Supports full CRUD operations, slot occupancy analysis, and appointment status management.
+/// All operations are restricted to the Admin role.
+/// </summary>
 [ApiController]
 [Route("api/admin/appointments")]
 [Authorize(Roles = "Admin")]
@@ -15,8 +20,20 @@ public class AdminAppointmentController : ControllerBase
 {
     private readonly AppDbContext _db;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="AdminAppointmentController"/>
+    /// with the required database context.
+    /// </summary>
+    /// <param name="db">The application database context for appointment data access.</param>
     public AdminAppointmentController(AppDbContext db) => _db = db;
 
+    /// <summary>
+    /// Retrieves all service appointments in the system with full details including
+    /// customer information, linked vehicle, scheduled time, status, and associated services.
+    /// Results are ordered by scheduled date descending.
+    /// </summary>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>A 200 OK response containing the list of all appointments.</returns>
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
     {
@@ -44,6 +61,14 @@ public class AdminAppointmentController : ControllerBase
         return Ok(appointments);
     }
 
+    /// <summary>
+    /// Retrieves the slot occupancy breakdown for a specific date, showing how many
+    /// appointments are booked per time slot versus the maximum capacity of 7 per slot.
+    /// Used for scheduling and resource planning on the admin calendar view.
+    /// </summary>
+    /// <param name="date">The date for which to retrieve slot occupancy data.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>A 200 OK response containing the list of time slots with occupancy counts.</returns>
     [HttpGet("occupancy")]
     public async Task<IActionResult> GetOccupancy([FromQuery] DateTime date, CancellationToken ct)
     {
@@ -64,6 +89,13 @@ public class AdminAppointmentController : ControllerBase
         return Ok(occupancy);
     }
 
+    /// <summary>
+    /// Creates a new service appointment on behalf of a customer, with optional
+    /// vehicle linkage and service type assignments. Restricted to Admin users.
+    /// </summary>
+    /// <param name="dto">The appointment creation payload including customer ID, vehicle, schedule time, and services.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>A 200 OK response containing the new appointment's ID and a confirmation message.</returns>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] AdminCreateAppointmentDto dto, CancellationToken ct)
     {
@@ -80,7 +112,7 @@ public class AdminAppointmentController : ControllerBase
         };
 
         _db.Appointments.Add(appointment);
-        
+
         if (dto.ServiceTypeIds.Any())
         {
             foreach (var stId in dto.ServiceTypeIds)
@@ -97,6 +129,18 @@ public class AdminAppointmentController : ControllerBase
         return Ok(new { id = appointment.Id, message = "Appointment created successfully." });
     }
 
+    /// <summary>
+    /// Updates the status of an existing appointment (e.g., Booked → InProgress → Completed → Cancelled).
+    /// Status values are matched case-insensitively against the <see cref="AppointmentStatus"/> enum.
+    /// </summary>
+    /// <param name="id">The unique identifier of the appointment to update.</param>
+    /// <param name="dto">The status update payload containing the new status string.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 200 OK with a confirmation message on success;
+    /// 404 Not Found if the appointment does not exist;
+    /// 400 Bad Request if the provided status string is not a valid <see cref="AppointmentStatus"/> value.
+    /// </returns>
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateAppointmentStatusDto dto, CancellationToken ct)
     {
@@ -113,6 +157,15 @@ public class AdminAppointmentController : ControllerBase
         return BadRequest(new { message = "Invalid status." });
     }
 
+    /// <summary>
+    /// Permanently removes an appointment from the system by its unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the appointment to delete.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 200 OK with a confirmation message on success;
+    /// 404 Not Found if the appointment does not exist.
+    /// </returns>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {

@@ -144,6 +144,7 @@ export default function SalesPOS() {
         id: invoiceNumber,
         date: dateStr,
         dueDate,
+        status: posPaymentTiming === "paid" ? "Paid" : "Unpaid",
         customer: {
           name: selectedCustomer.name,
           address: selectedCustomer.email ? `Customer File\n${selectedCustomer.email}` : "Walk-in Customer",

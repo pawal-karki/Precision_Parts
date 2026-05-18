@@ -37,11 +37,25 @@ export function generateInvoicePdf(invoice) {
   doc.text(invoice.customer.name, 25, 74);
   doc.setFontSize(9);
   doc.setTextColor(90, 96, 94);
-  doc.text(invoice.customer.email || "", 25, 80);
+  
+  let currentY = 80;
+  if (invoice.customer.address && invoice.customer.address !== invoice.customer.email) {
+    doc.text(invoice.customer.address, 25, currentY);
+    currentY += 6;
+  }
+  doc.text(invoice.customer.email || "", 25, currentY);
 
   doc.setFontSize(9);
   doc.text(`Date: ${invoice.date}`, pageWidth - 25, 67, { align: "right" });
-  doc.text(`Due: ${invoice.dueDate}`, pageWidth - 25, 73, { align: "right" });
+  if (invoice.status === "Paid") {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(16, 185, 129); // Emerald 600
+    doc.text("Status: PAID", pageWidth - 25, 73, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(90, 96, 94);
+  } else {
+    doc.text(`Due: ${invoice.dueDate}`, pageWidth - 25, 73, { align: "right" });
+  }
 
   autoTable(doc, {
     startY: 95,

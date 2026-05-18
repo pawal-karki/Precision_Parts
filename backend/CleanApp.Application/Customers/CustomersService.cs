@@ -32,7 +32,9 @@ public class CustomersService : ICustomersService
                 LoyaltyTier = p?.LoyaltyTier ?? "Bronze",
                 Vehicles = u.Vehicles.Select(v => v.Nickname ?? $"{v.Year} {v.Make} {v.Model}".Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList(),
                 LastOrder = p?.LastOrderDate?.ToString("yyyy-MM-dd") ?? u.CreatedAtUtc.ToString("yyyy-MM-dd"),
-                Credit = (double)(p?.OutstandingCredit ?? 0),
+                Credit = (double)u.Invoices
+                    .Where(i => i.Status == CleanApp.Domain.Enums.InvoiceStatus.Unpaid)
+                    .Sum(i => i.BalanceDue),
                 PartRequestCount = partCounts.GetValueOrDefault(u.Id, 0)
             };
         }).ToList();
@@ -141,6 +143,7 @@ public class CustomersService : ICustomersService
             .Take(5)
             .Select(i => new RecentPurchaseDto
             {
+                Id = i.Id,
                 InvoiceNumber = i.InvoiceNumber,
                 IssueDate = i.IssueDate,
                 TotalAmount = i.TotalAmount,
@@ -196,7 +199,9 @@ public class CustomersService : ICustomersService
             AccountKind = p?.AccountKind ?? "Individual",
             AccountStatus = p?.AccountStatus ?? "Active",
             TotalSpent = p?.TotalSpent ?? 0,
-            OutstandingCredit = p?.OutstandingCredit ?? 0,
+            OutstandingCredit = user.Invoices
+                .Where(i => i.Status == CleanApp.Domain.Enums.InvoiceStatus.Unpaid)
+                .Sum(i => i.BalanceDue),
             VehicleCount = user.Vehicles.Count,
             AppointmentCount = user.Appointments.Count,
             InvoiceCount = user.Invoices.Count,
@@ -339,6 +344,7 @@ public class CustomersService : ICustomersService
             .OrderByDescending(i => i.IssueDate)
             .Select(i => new RecentPurchaseDto
             {
+                Id = i.Id,
                 InvoiceNumber = i.InvoiceNumber,
                 IssueDate = i.IssueDate,
                 TotalAmount = i.TotalAmount,

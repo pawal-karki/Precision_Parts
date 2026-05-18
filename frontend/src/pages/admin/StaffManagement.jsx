@@ -138,128 +138,130 @@ export default function StaffManagement() {
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <PageTransition className="space-y-10">
-      <section className="flex flex-col md:flex-row justify-between md:items-end items-start gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
-            Staff Management
-          </h1>
-          <p className="text-on-surface-variant dark:text-neutral-500 mt-1">
-            Manage team roles, track status, and control access.
-          </p>
-        </div>
-        <Button variant="secondary" onClick={openAdd}>
-          <Icon name="person_add" className="text-sm" />
-          Add New Staff
-        </Button>
-      </section>
+    <>
+      <PageTransition className="space-y-10">
+        <section className="flex flex-col md:flex-row justify-between md:items-end items-start gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-on-surface dark:text-neutral-100 tracking-tight font-headline">
+              Staff Management
+            </h1>
+            <p className="text-on-surface-variant dark:text-neutral-500 mt-1">
+              Manage team roles, track status, and control access.
+            </p>
+          </div>
+          <Button variant="secondary" onClick={openAdd}>
+            <Icon name="person_add" className="text-sm" />
+            Add New Staff
+          </Button>
+        </section>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-8">
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-              placeholder="Search staff by name, role, or department..."
-            />
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-8">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+                placeholder="Search staff by name, role, or department..."
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {FILTER_OPTIONS.map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-3 py-1.5 text-xs font-bold uppercase rounded-full transition-colors ${
+                  activeFilter === filter
+                    ? "bg-secondary text-white"
+                    : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant dark:text-neutral-400 hover:bg-surface-container dark:hover:bg-neutral-700"
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="flex gap-2">
-          {FILTER_OPTIONS.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-3 py-1.5 text-xs font-bold uppercase rounded-full transition-colors ${
-                activeFilter === filter
-                  ? "bg-secondary text-white"
-                  : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant dark:text-neutral-400 hover:bg-surface-container dark:hover:bg-neutral-700"
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Staff Table */}
-      <div className="overflow-x-auto bg-white dark:bg-[#1C1C1C] rounded-xl border border-surface-container-low dark:border-neutral-800/50 mt-6 shadow-sm">
-        <div className="min-w-[800px]">
-          <Table>
-            <TableHeader>
-              <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
-                <TableHead className="px-6">Name</TableHead>
-                <TableHead className="px-6">Role</TableHead>
-                <TableHead className="px-6">Department</TableHead>
-                <TableHead className="px-6">Email</TableHead>
-                <TableHead className="px-6">Status</TableHead>
-                <TableHead className="px-6 text-right">Actions</TableHead>
-              </tr>
-            </TableHeader>
-            <TableBody>
-              <AnimatePresence mode="popLayout">
-                {filtered.map((member, i) => (
-                  <motion.tr
-                    key={member.id}
-                    layout
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: i * 0.04 } }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="border-b border-surface-container-low/50 dark:border-neutral-800/30 hover:bg-surface-container-low/30 dark:hover:bg-neutral-800/30 transition-colors"
-                  >
-                    <TableCell className="px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-neutral-300">
-                          {member.name.split(" ").map((n) => n[0]).join("")}
+        {/* Staff Table */}
+        <div className="overflow-x-auto bg-white dark:bg-[#1C1C1C] rounded-xl border border-surface-container-low dark:border-neutral-800/50 mt-6 shadow-sm">
+          <div className="min-w-[800px]">
+            <Table>
+              <TableHeader>
+                <tr className="bg-surface-container-low/50 dark:bg-neutral-900/50 border-b border-surface-container dark:border-neutral-800">
+                  <TableHead className="px-6">Name</TableHead>
+                  <TableHead className="px-6">Role</TableHead>
+                  <TableHead className="px-6">Department</TableHead>
+                  <TableHead className="px-6">Email</TableHead>
+                  <TableHead className="px-6">Status</TableHead>
+                  <TableHead className="px-6 text-right">Actions</TableHead>
+                </tr>
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence mode="popLayout">
+                  {filtered.map((member, i) => (
+                    <motion.tr
+                      key={member.id}
+                      layout
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: i * 0.04 } }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="border-b border-surface-container-low/50 dark:border-neutral-800/30 hover:bg-surface-container-low/30 dark:hover:bg-neutral-800/30 transition-colors"
+                    >
+                      <TableCell className="px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-neutral-300">
+                            {member.name.split(" ").map((n) => n[0]).join("")}
+                          </div>
+                          <span className="font-semibold text-on-surface dark:text-neutral-200">
+                            {member.name}
+                          </span>
                         </div>
-                        <span className="font-semibold text-on-surface dark:text-neutral-200">
-                          {member.name}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
-                      {member.role}
-                    </TableCell>
-                    <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
-                      {member.department}
-                    </TableCell>
-                    <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400 font-mono text-xs">
-                      {member.email}
-                    </TableCell>
-                    <TableCell className="px-6">
-                      <Badge variant={statusVariant(member.status)}>{member.status}</Badge>
-                    </TableCell>
-                    <TableCell className="px-6 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openEdit(member)}
-                          className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-surface-container-low dark:hover:bg-neutral-800 hover:text-on-surface dark:hover:text-white transition-colors"
-                        >
-                          <Icon name="edit" className="text-base" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(member)}
-                          className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-error/10 hover:text-error transition-colors"
-                        >
-                          <Icon name="delete" className="text-base" />
-                        </button>
-                      </div>
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-        {filtered.length === 0 && (
-          <div className="py-12 text-center text-on-surface-variant dark:text-neutral-500">
-            <Icon name="search_off" className="text-4xl mb-2" />
-            <p className="text-sm font-medium">No staff members found</p>
+                      </TableCell>
+                      <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
+                        {member.role}
+                      </TableCell>
+                      <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400">
+                        {member.department}
+                      </TableCell>
+                      <TableCell className="px-6 text-on-surface-variant dark:text-neutral-400 font-mono text-xs">
+                        {member.email}
+                      </TableCell>
+                      <TableCell className="px-6">
+                        <Badge variant={statusVariant(member.status)}>{member.status}</Badge>
+                      </TableCell>
+                      <TableCell className="px-6 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEdit(member)}
+                            className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-surface-container-low dark:hover:bg-neutral-800 hover:text-on-surface dark:hover:text-white transition-colors"
+                          >
+                            <Icon name="edit" className="text-base" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(member)}
+                            className="p-1.5 rounded-lg text-on-surface-variant dark:text-neutral-500 hover:bg-error/10 hover:text-error transition-colors"
+                          >
+                            <Icon name="delete" className="text-base" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
           </div>
-        )}
+        </div>
+          {filtered.length === 0 && (
+            <div className="py-12 text-center text-on-surface-variant dark:text-neutral-500">
+              <Icon name="search_off" className="text-4xl mb-2" />
+              <p className="text-sm font-medium">No staff members found</p>
+            </div>
+          )}
+      </PageTransition>
 
       {/* Add / Edit Modal */}
       <Modal
@@ -332,7 +334,7 @@ export default function StaffManagement() {
           </Button>
         </div>
       </Modal>
-    </PageTransition>
+    </>
   );
 }
          

@@ -93,6 +93,7 @@ public class CustomerDetailReportDto
 
 public class RecentPurchaseDto
 {
+    public Guid Id { get; set; }
     public string InvoiceNumber { get; set; } = "";
     public DateTime IssueDate { get; set; }
     public decimal TotalAmount { get; set; }

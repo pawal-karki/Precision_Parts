@@ -105,7 +105,9 @@ export default function InvoiceView() {
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Bill To</p>
               <p className="font-semibold text-on-surface dark:text-white">{invoice.customer?.name}</p>
-              <p className="whitespace-pre-line text-on-surface-variant mt-1">{invoice.customer?.address}</p>
+              {invoice.customer?.address && invoice.customer?.address !== invoice.customer?.email && (
+                <p className="whitespace-pre-line text-on-surface-variant mt-1">{invoice.customer?.address}</p>
+              )}
               <p className="text-on-surface-variant mt-1">{invoice.customer?.email}</p>
             </div>
             <div className="md:text-right">

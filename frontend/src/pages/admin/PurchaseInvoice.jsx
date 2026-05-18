@@ -107,11 +107,15 @@ export default function PurchaseInvoice() {
       total,
     };
 
-    addInvoice(po);
-    setSelectedInvoice(po);
-    setShowNewModal(false);
-    setNewPo({ vendor: "", items: [{ ...emptyItem }] });
-    toast(`Purchase order ${id} created`, "success");
+    api.createPurchaseInvoice(po)
+      .then(() => {
+        addInvoice(po);
+        setSelectedInvoice(po);
+        setShowNewModal(false);
+        setNewPo({ vendor: "", items: [{ ...emptyItem }] });
+        toast(`Purchase order ${id} created`, "success");
+      })
+      .catch(() => toast("Failed to create purchase order on server", "error"));
   };
 
   const handleApprove = async () => {

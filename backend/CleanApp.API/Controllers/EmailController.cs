@@ -6,22 +6,44 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CleanApp.API.Controllers;
 
-/// <summary>Admin-only endpoint for sending transactional emails via Resend.</summary>
+/// <summary>
+/// Provides administrative endpoints for sending transactional and diagnostic emails
+/// via the configured SMTP/Resend integration. Includes utilities for ad-hoc delivery,
+/// integration testing, and manually triggering overdue credit reminder jobs.
+/// All operations are restricted to the Admin role.
+/// </summary>
 [ApiController]
 [Route("api/email")]
 [Authorize(Roles = "Admin")]
 public class EmailController : ControllerBase
 {
-    
     private readonly IEmailService _email;
     private readonly ILogger<EmailController> _log;
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="EmailController"/> with the required
+    /// email service and logger.
+    /// </summary>
+    /// <param name="email">The service responsible for composing and dispatching emails.</param>
+    /// <param name="log">The logger used to record delivery outcomes and errors.</param>
     public EmailController(IEmailService email, ILogger<EmailController> log)
     {
         _email = email;
         _log   = log;
     }
+
     // ── POST api/email/send ─────────────────────────────────────────────────
-    /// <summary>Send a one-off HTML email (admin utility).</summary>
+
+    /// <summary>
+    /// Sends a one-off HTML email to a specified recipient.
+    /// Intended as an administrative utility for direct transactional email dispatch.
+    /// </summary>
+    /// <param name="req">The email payload: recipient, subject, HTML body, and optional sender.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 204 No Content on success; 400 Bad Request if required fields are missing;
+    /// 502 Bad Gateway if the email delivery service returns an error.
+    /// </returns>
     [HttpPost("send")]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
@@ -50,8 +72,19 @@ public class EmailController : ControllerBase
             return StatusCode(502, "Email delivery failed.");
         }
     }
+
     // ── POST api/email/test ─────────────────────────────────────────────────
-    /// <summary>Send a test email to verify the Resend integration is working.</summary>
+
+    /// <summary>
+    /// Sends a predefined test email to the specified address to verify
+    /// the Resend integration is correctly configured and operational.
+    /// </summary>
+    /// <param name="to">The recipient email address (query parameter).</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 204 No Content on success; 400 Bad Request if <c>to</c> is missing;
+    /// 502 Bad Gateway if delivery fails.
+    /// </returns>
     [HttpPost("test")]
     [ProducesResponseType(204)]
     public async Task<IActionResult> Test([FromQuery] string to, CancellationToken ct)
@@ -82,8 +115,14 @@ public class EmailController : ControllerBase
             return StatusCode(502, "Test email delivery failed.");
         }
     }
+
     // ── POST api/email/trigger-overdue-reminders ────────────────────────────
-    /// <summary>Immediately fires the overdue credit reminder job (admin utility / testing).</summary>
+
+    /// <summary>
+    /// Enqueues the overdue credit reminder Hangfire job immediately,
+    /// bypassing the scheduled cron trigger. Useful for on-demand dispatches or testing.
+    /// </summary>
+    /// <returns>202 Accepted with a message confirming the job was queued.</returns>
     [HttpPost("trigger-overdue-reminders")]
     [ProducesResponseType(202)]
     public IActionResult TriggerOverdueReminders()
@@ -93,10 +132,21 @@ public class EmailController : ControllerBase
     }
 
     // ── POST api/email/test-overdue-reminder ────────────────────────────────
+
     /// <summary>
-    /// Directly sends an overdue balance reminder email to the given address —
-    /// bypasses all job/throttle logic. Use this to verify SMTP delivery works.
+    /// Directly sends a simulated overdue balance reminder email to the given address,
+    /// bypassing Hangfire scheduling and throttle logic. Use this to verify SMTP
+    /// delivery and template rendering without affecting real customer records.
     /// </summary>
+    /// <param name="to">The recipient email address (required).</param>
+    /// <param name="name">Customer display name in the reminder. Defaults to "Valued Customer".</param>
+    /// <param name="amount">Simulated outstanding balance. Defaults to 14,125.</param>
+    /// <param name="daysOverdue">Number of days the balance is overdue. Defaults to 47.</param>
+    /// <param name="ct">Token to observe for cancellation requests.</param>
+    /// <returns>
+    /// 204 No Content on success; 400 Bad Request if <c>to</c> is missing;
+    /// 502 Bad Gateway if delivery fails.
+    /// </returns>
     [HttpPost("test-overdue-reminder")]
     [ProducesResponseType(204)]
     [ProducesResponseType(502)]
@@ -124,6 +174,16 @@ public class EmailController : ControllerBase
     }
 }
 
+/// <summary>
+/// Represents the request payload for sending a one-off transactional email.
+/// </summary>
+/// <param name="From">
+/// Optional sender address in "Name &lt;email&gt;" format.
+/// Defaults to "Precision Parts &lt;noreply@pawal.com.np&gt;" if omitted.
+/// </param>
+/// <param name="To">The recipient email address. Required.</param>
+/// <param name="Subject">The email subject line. Required.</param>
+/// <param name="HtmlBody">The full HTML content of the email body. Required.</param>
 public sealed record SendEmailRequest(
     string? From,
     string  To,

@@ -91,12 +91,17 @@ class ApiClient {
 
   // ── Admin: Purchase Invoices ──────────────────────────────────
   getPurchaseInvoices()    { return this._get("/admin/purchase-invoices"); }
+  createPurchaseInvoice(dto) { return this._post("/admin/purchase-invoices", dto); }
   approvePurchaseInvoice(id) { return this._post(`/admin/purchase-invoices/${id}/approve`, {}); }
 
   // ── Admin: Financial ─────────────────────────────────────────
   getFinancialSummary()    { return this._get("/admin/financial/summary"); }
   getProfitLoss()          { return this._get("/admin/financial/profit-loss"); }
-  getFinancialReports()    { return this._get("/admin/financial/reports"); }
+  getFinancialReports(type = "monthly", date = null)    { 
+    let url = `/admin/financial/reports?type=${type}`;
+    if (date) url += `&date=${date.toISOString()}`;
+    return this._get(url); 
+  }
 
   // ── Admin: Inventory Reports ──────────────────────────────────
   getInventoryReports()    { return this._get("/admin/inventory/reports"); }
@@ -181,6 +186,9 @@ class ApiClient {
   getStaffSlotOccupancy(date)   { return this._get(`/staff/appointments/occupancy?date=${date}`); }
   staffCreateAppointment(dto)   { return this._post("/staff/appointments", dto); }
   updateStaffAppointmentStatus(id, s) { return this._patch(`/staff/appointments/${id}/status`, { status: s }); }
+
+  // ── Staff: Invoices ──────────────────────────────────────────
+  sendInvoiceEmail(invoiceId)   { return this._post(`/staff/customers/invoices/${invoiceId}/send-email`, {}); }
 }
 
 export const api = new ApiClient();

@@ -88,7 +88,7 @@ export default function ReviewsFeedback() {
           date: new Date(r.createdAtUtc).toLocaleDateString("en-NP", { day: "numeric", month: "short", year: "numeric" }),
           rating: r.rating,
           text: `"${r.comment}"`,
-          reviewer: "You",
+          reviewer: r.customerName || "Anonymous",
         })));
       } else {
         // Show placeholder reviews if API returns empty
@@ -238,7 +238,7 @@ export default function ReviewsFeedback() {
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold font-headline text-on-surface dark:text-white">
-                {loading ? "Loading reviews…" : reviews.length === 0 ? "No Reviews Yet" : "Your Reviews"}
+                {loading ? "Loading reviews…" : reviews.length === 0 ? "No Reviews Yet" : "Customer Reviews"}
               </h2>
               {reviews.length > 0 && (
                 <Button variant="outline" size="sm" onClick={loadReviews}>

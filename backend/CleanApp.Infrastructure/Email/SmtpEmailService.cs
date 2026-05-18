@@ -133,7 +133,7 @@ public sealed class SmtpEmailService : IEmailService
             From = _fromEmail,
             To = toEmail,
             Subject = $"Your Precision Parts Invoice – {invoiceRef}",
-            HtmlBody = InvoiceHtml(customerName, invoiceRef, total),
+            HtmlBody = InvoiceHtml(customerName, toEmail, invoiceRef, total),
         }, pdfAttachment, $"Invoice_{invoiceRef}.pdf", ct);
 
     public Task SendResetPasswordOtpAsync(string toEmail, string fullName, string otp, CancellationToken ct = default)
@@ -229,10 +229,10 @@ public sealed class SmtpEmailService : IEmailService
         </div>";
     }
 
-    private static string InvoiceHtml(string name, string invoiceRef, decimal total) => $@"
+    private static string InvoiceHtml(string name, string email, string invoiceRef, decimal total) => $@"
         <div style=""font-family:Inter,sans-serif;max-width:600px;margin:auto;background:#fff;padding:40px;border-radius:12px;border:1px solid #e5e7eb"">
           <h2 style=""color:#1a1a1a;margin-top:0"">Invoice Confirmation</h2>
-          <p style=""color:#4b5563"">Dear {name}, thank you for your purchase.</p>
+          <p style=""color:#4b5563"">Dear {name} (<span style=""color:#4d6172"">{email}</span>), thank you for your purchase.</p>
           <div style=""background:#f9fafb;border-radius:8px;padding:20px;margin:20px 0"">
             <p style=""margin:0 0 8px;color:#6b7280;font-size:12px;text-transform:uppercase"">Invoice Reference</p>
             <p style=""margin:0;font-family:monospace;font-size:18px;font-weight:700;color:#1a1a1a"">{invoiceRef}</p>
