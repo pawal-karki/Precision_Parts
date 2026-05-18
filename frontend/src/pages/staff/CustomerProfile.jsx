@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { formatNpt, formatDate } from "@/lib/utils";
 import { formatCurrency, parseMoneyAmount } from "@/lib/currency";
@@ -154,10 +154,14 @@ function VehiclesTab({ customer }) {
       ) : (
         vehicles.map((vehicle, i) => (
           <div key={i} className="bg-white dark:bg-[#1C1C1C] rounded-xl p-6 border border-slate-200 dark:border-neutral-800">
-            <div className="h-28 bg-slate-100 dark:bg-neutral-800 rounded-lg mb-4 flex items-center justify-center">
-              <Icon name="directions_car" className="text-4xl text-slate-300 dark:text-neutral-600" />
+            <div className="h-28 bg-slate-100 dark:bg-neutral-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+              {vehicle.imageUrl ? (
+                <img src={getImageUrl(vehicle.imageUrl)} alt={typeof vehicle === "string" ? vehicle : vehicle.name} className="w-full h-full object-cover" />
+              ) : (
+                <Icon name="directions_car" className="text-4xl text-slate-300 dark:text-neutral-600" />
+              )}
             </div>
-            <h4 className="font-bold text-slate-900 dark:text-white">{typeof vehicle === "string" ? vehicle : vehicle.nickname || vehicle.name}</h4>
+            <h4 className="font-bold text-slate-900 dark:text-white">{typeof vehicle === "string" ? vehicle : vehicle.name}</h4>
             <div className="flex gap-2 mt-2">
               <Badge variant="info">Linked</Badge>
             </div>
@@ -646,7 +650,7 @@ export default function CustomerProfile() {
               <div className="bg-slate-50 dark:bg-neutral-800 rounded-xl p-3">
                 <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Spent</p>
                 <p className="text-lg font-extrabold mt-1 text-slate-900 dark:text-white">
-                  {formatCurrency(parseMoneyAmount(customer.totalSpent))}
+                  {formatCurrency(report?.totalSpent ?? parseMoneyAmount(customer.totalSpent))}
                 </p>
               </div>
               <div className="bg-slate-50 dark:bg-neutral-800 rounded-xl p-3">

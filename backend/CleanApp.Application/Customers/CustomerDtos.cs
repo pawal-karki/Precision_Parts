@@ -1,5 +1,11 @@
 namespace CleanApp.Application.Customers;
 
+public class VehicleListItemDto
+{
+    public string Name { get; set; } = "";
+    public string? ImageUrl { get; set; }
+}
+
 public class CustomerListItemDto
 {
     public int Id { get; set; }
@@ -11,7 +17,7 @@ public class CustomerListItemDto
     public string Status { get; set; } = "";
     public string TotalSpent { get; set; } = "";
     public string LoyaltyTier { get; set; } = "";
-    public List<string> Vehicles { get; set; } = new();
+    public List<VehicleListItemDto> Vehicles { get; set; } = new();
     public string LastOrder { get; set; } = "";
     public double Credit { get; set; }
     /// <summary>Count of custom part sourcing requests (customer portal).</summary>

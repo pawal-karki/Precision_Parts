@@ -30,7 +30,11 @@ public class CustomersService : ICustomersService
                 Status = status,
                 TotalSpent = DisplayMoney.Format(p?.TotalSpent ?? 0, 0),
                 LoyaltyTier = p?.LoyaltyTier ?? "Bronze",
-                Vehicles = u.Vehicles.Select(v => v.Nickname ?? $"{v.Year} {v.Make} {v.Model}".Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList(),
+                Vehicles = u.Vehicles.Select(v => new VehicleListItemDto
+                {
+                    Name = v.Nickname ?? $"{v.Year} {v.Make} {v.Model}".Trim(),
+                    ImageUrl = v.ImageUrl
+                }).ToList(),
                 LastOrder = p?.LastOrderDate?.ToString("yyyy-MM-dd") ?? u.CreatedAtUtc.ToString("yyyy-MM-dd"),
                 Credit = (double)u.Invoices
                     .Where(i => i.Status == CleanApp.Domain.Enums.InvoiceStatus.Unpaid)
