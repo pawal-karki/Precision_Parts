@@ -118,13 +118,13 @@ public sealed class SmtpEmailService : IEmailService
             HtmlBody = LowStockHtml(items),
         }, null, null, ct);
 
-    public Task SendOverdueCreditReminderAsync(string toEmail, string customerName, decimal amount, CancellationToken ct = default)
+    public Task SendOverdueCreditReminderAsync(string toEmail, string customerName, decimal amount, int daysOverdue = 0, CancellationToken ct = default)
         => SendAsync(new AppEmailMessage
         {
             From = _fromEmail,
             To = toEmail,
-            Subject = "Overdue Balance Reminder – Precision Parts",
-            HtmlBody = OverdueCreditHtml(customerName, amount),
+            Subject = $"Payment Due: Rs. {amount:N2} Outstanding – Precision Parts",
+            HtmlBody = OverdueCreditHtml(customerName, amount, daysOverdue),
         }, null, null, ct);
 
     public Task SendInvoiceReceiptAsync(string toEmail, string customerName, string invoiceRef, decimal total, byte[]? pdfAttachment = null, CancellationToken ct = default)
@@ -185,15 +185,49 @@ public sealed class SmtpEmailService : IEmailService
             </div>";
     }
 
-    private static string OverdueCreditHtml(string name, decimal amount) => $@"
-        <div style=""font-family:Inter,sans-serif;max-width:600px;margin:auto;background:#fff;padding:40px;border-radius:12px;border:1px solid #e5e7eb"">
-          <h2 style=""color:#f59e0b;margin-top:0"">Outstanding Balance Reminder</h2>
-          <p style=""color:#4b5563"">Dear {name},</p>
-          <p style=""color:#4b5563"">Your account has an overdue balance of <strong>Rs. {amount:N2}</strong>. Please clear this balance at your earliest convenience to avoid service disruptions.</p>
-          <a href=""https://precisionparts.app/account"" style=""display:inline-block;margin-top:16px;padding:12px 24px;background:#f59e0b;color:#fff;border-radius:8px;text-decoration:none;font-weight:600"">View Account</a>
-          <hr style=""border:none;border-top:1px solid #f3f4f6;margin:32px 0"">
-          <p style=""color:#9ca3af;font-size:12px;margin:0"">Precision Parts Industrial Inventory &bull; Nepal</p>
+    private static string OverdueCreditHtml(string name, decimal amount, int daysOverdue = 0)
+    {
+        var overdueText = daysOverdue > 0 ? $"{daysOverdue} days overdue" : "overdue";
+        return $@"
+        <div style=""font-family:Inter,sans-serif;max-width:600px;margin:auto;background:#ffffff;padding:0;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden"">
+
+          <!-- Header -->
+          <div style=""background:linear-gradient(135deg,#dc2626,#f59e0b);padding:32px 40px"">
+            <p style=""margin:0 0 4px;color:rgba(255,255,255,0.85);font-size:13px;letter-spacing:1px;text-transform:uppercase"">Precision Parts</p>
+            <h1 style=""margin:0;color:#ffffff;font-size:24px;font-weight:700"">Payment Reminder</h1>
+          </div>
+
+          <!-- Body -->
+          <div style=""padding:36px 40px"">
+            <p style=""margin:0 0 24px;color:#374151;font-size:16px"">Dear <strong>{name}</strong>,</p>
+            <p style=""margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.6"">
+              Your account has an outstanding balance that is <strong style=""color:#dc2626"">{overdueText}</strong>.
+              Please settle the amount below at your earliest convenience to avoid service disruption.
+            </p>
+
+            <!-- Amount Box -->
+            <div style=""background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:28px 32px;text-align:center;margin-bottom:32px"">
+              <p style=""margin:0 0 6px;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:1px"">Total Outstanding Balance</p>
+              <p style=""margin:0;font-size:42px;font-weight:800;color:#dc2626;letter-spacing:-1px"">Rs. {amount:N2}</p>
+              {(daysOverdue > 0 ? $"<p style=\"margin:10px 0 0;color:#ef4444;font-size:14px;font-weight:600\">{daysOverdue} days past due</p>" : "")}
+            </div>
+
+            <!-- CTA -->
+            <div style=""text-align:center;margin-bottom:28px"">
+              <a href=""https://precisionparts.app/customer/payments"" style=""display:inline-block;padding:14px 36px;background:#dc2626;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px"">Pay Now</a>
+            </div>
+
+            <p style=""margin:0;color:#9ca3af;font-size:13px;text-align:center"">
+              If you have already made this payment, please ignore this reminder or contact us.
+            </p>
+          </div>
+
+          <!-- Footer -->
+          <div style=""background:#f9fafb;padding:20px 40px;border-top:1px solid #f3f4f6"">
+            <p style=""margin:0;color:#9ca3af;font-size:12px"">Precision Parts Industrial Inventory &bull; Nepal &bull; This is an automated reminder.</p>
+          </div>
         </div>";
+    }
 
     private static string InvoiceHtml(string name, string invoiceRef, decimal total) => $@"
         <div style=""font-family:Inter,sans-serif;max-width:600px;margin:auto;background:#fff;padding:40px;border-radius:12px;border:1px solid #e5e7eb"">

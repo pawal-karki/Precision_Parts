@@ -12,7 +12,7 @@ const loginCodeSlides = [
     filename: "auth.js",
     label: "Sign in",
     code: `user.login({
-  email: "pawal.karkidholi@gmai.com",
+  email: "pawal.karkidholi@koshistjames.edu.np",
   password: "••••••••",
   remember: true
 })

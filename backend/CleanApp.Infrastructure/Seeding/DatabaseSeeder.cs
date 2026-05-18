@@ -9,6 +9,9 @@ public static class DatabaseSeeder
 {
     public static async Task SeedAsync(AppDbContext db)
     {
+        // Runs on every startup (idempotent) — including hosted DBs that already have demo data.
+        await SeedPawalOverdueCreditCustomerAsync(db);
+
         if (!await db.ServiceTypes.AnyAsync())
         {
             var stGeneral = new ServiceType { Code = "SVC-GEN", Name = "General Service", Description = "Routine checks, oil change, and basic diagnostics.", BasePrice = 150m, EstimatedMinutes = 120 };
@@ -180,6 +183,104 @@ public static class DatabaseSeeder
             new Notification { UserId = admin.Id, Title = "Shipment Update", Message = "PO-2024-002 from Brembo SpA has shipped. Expected arrival: March 18.", Severity = NotificationSeverity.Info, Category = "procurement", IsRead = false }
         );
 
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Ensures the demo customer used on Login has overdue credit (&gt;30 days) for Hangfire
+    /// <see cref="Jobs.OverdueCreditReminderJob"/> and dashboard pending-payment UI. Idempotent.
+    /// </summary>
+    /// <summary>Existing demo customer only — never insert a duplicate <see cref="User"/>.</summary>
+    private const string PawalDemoEmail = "pawal.karkidholi@koshistjames.edu.np";
+
+    private static async Task SeedPawalOverdueCreditCustomerAsync(AppDbContext db)
+    {
+        const decimal outstandingAmount = 12_500m;
+        var lastOrderDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-45));
+        var emailLower = PawalDemoEmail.ToLowerInvariant();
+
+        var user = await db.Users
+            .Include(u => u.CustomerProfile)
+            .FirstOrDefaultAsync(u =>
+                u.Role == UserRole.Customer &&
+                u.Email.ToLower() == emailLower);
+
+        if (user is null)
+            return;
+
+        await ApplyOverdueCreditProfileAsync(db, user, outstandingAmount, lastOrderDate);
+        await EnsureOverdueInvoiceAsync(db, user, outstandingAmount);
+    }
+
+    private static async Task ApplyOverdueCreditProfileAsync(
+        AppDbContext db, User user, decimal outstandingAmount, DateOnly lastOrderDate)
+    {
+        if (user.CustomerProfile is null)
+        {
+            db.CustomerProfiles.Add(new CustomerProfile
+            {
+                UserId = user.Id,
+                LoyaltyTier = "Gold",
+                TotalSpent = 139_221.97m,
+                AccountKind = "Individual",
+                AccountStatus = "Credit Overdue",
+                OutstandingCredit = outstandingAmount,
+                LastOrderDate = lastOrderDate
+            });
+        }
+        else
+        {
+            var profile = user.CustomerProfile;
+            profile.OutstandingCredit = outstandingAmount;
+            profile.LastOrderDate = lastOrderDate;
+            profile.AccountStatus = "Credit Overdue";
+            if (profile.TotalSpent <= 0)
+                profile.TotalSpent = 139_221.97m;
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task EnsureOverdueInvoiceAsync(AppDbContext db, User user, decimal outstandingAmount)
+    {
+        var hasOpenInvoice = await db.Invoices.AnyAsync(i =>
+            i.CustomerId == user.Id &&
+            i.Status != InvoiceStatus.Paid &&
+            i.BalanceDue > 0);
+
+        if (hasOpenInvoice)
+            return;
+
+        var issued = DateTime.UtcNow.AddDays(-45);
+        var due = issued.AddDays(30);
+        var tax = Math.Round(outstandingAmount * 0.13m, 2);
+        var total = outstandingAmount + tax;
+
+        var invoice = new Invoice
+        {
+            InvoiceNumber = $"INV-OVERDUE-{user.PublicId:D4}-{DateTime.UtcNow:yyyyMMdd}",
+            CustomerId = user.Id,
+            IssueDate = issued,
+            DueDate = due,
+            Status = InvoiceStatus.Overdue,
+            Subtotal = outstandingAmount,
+            TaxAmount = tax,
+            DiscountAmount = 0,
+            TotalAmount = total,
+            BalanceDue = total
+        };
+        db.Invoices.Add(invoice);
+        await db.SaveChangesAsync();
+
+        db.InvoiceItems.Add(new InvoiceItem
+        {
+            InvoiceId = invoice.Id,
+            ItemType = "part",
+            Description = "Precision parts order — credit terms (45+ days outstanding)",
+            Quantity = 1,
+            UnitPrice = outstandingAmount,
+            LineTotal = outstandingAmount
+        });
         await db.SaveChangesAsync();
     }
 }

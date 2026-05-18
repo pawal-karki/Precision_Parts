@@ -13,7 +13,7 @@ public interface IEmailService
     Task SendLowStockAlertAsync(string toEmail, IReadOnlyList<LowStockItem> items, CancellationToken ct = default);
 
     /// <summary>Send an overdue-credit reminder to a customer.</summary>
-    Task SendOverdueCreditReminderAsync(string toEmail, string customerName, decimal amount, CancellationToken ct = default);
+    Task SendOverdueCreditReminderAsync(string toEmail, string customerName, decimal amount, int daysOverdue = 0, CancellationToken ct = default);
 
     /// <summary>Send an invoice / receipt to a customer.</summary>
     Task SendInvoiceReceiptAsync(string toEmail, string customerName, string invoiceRef, decimal total, byte[]? pdfAttachment = null, CancellationToken ct = default);
