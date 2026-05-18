@@ -45,19 +45,32 @@ const emptyCustomer = {
 const TYPES = ["Business", "Individual"];
 const STATUSES = ["Active", "Inactive", "Credit Overdue"];
 const TIERS = ["Bronze", "Silver", "Gold", "Platinum"];
-const FILTER_CHIPS = ["All", "Business", "Individual", "Active", "Credit Overdue", "Inactive"];
+const FILTER_CHIPS = [
+  "All",
+  "Business",
+  "Individual",
+  "Active",
+  "Credit Overdue",
+  "Inactive",
+];
 
 function statusVariant(status) {
-  return { Active: "success", "Credit Overdue": "error", Inactive: "neutral" }[status] || "neutral";
+  return (
+    { Active: "success", "Credit Overdue": "error", Inactive: "neutral" }[
+      status
+    ] || "neutral"
+  );
 }
 
 function tierColor(tier) {
-  return {
-    Platinum: "text-violet-500",
-    Gold: "text-amber-500",
-    Silver: "text-slate-400",
-    Bronze: "text-orange-400",
-  }[tier] || "text-on-surface-variant";
+  return (
+    {
+      Platinum: "text-violet-500",
+      Gold: "text-amber-500",
+      Silver: "text-slate-400",
+      Bronze: "text-orange-400",
+    }[tier] || "text-on-surface-variant"
+  );
 }
 
 export default function CustomerManagement() {
@@ -75,7 +88,9 @@ export default function CustomerManagement() {
     }
   };
 
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    reload();
+  }, []);
 
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
@@ -93,19 +108,29 @@ export default function CustomerManagement() {
 
     if (type === "regulars") {
       title = "Regular Customers Report";
-      const data = customers.filter(c => c.loyaltyTier === "Gold" || c.loyaltyTier === "Platinum" || parseMoneyAmount(c.totalSpent) > 10000);
+      const data = customers.filter(
+        (c) =>
+          c.loyaltyTier === "Gold" ||
+          c.loyaltyTier === "Platinum" ||
+          parseMoneyAmount(c.totalSpent) > 10000,
+      );
       headers = ["Name", "Email", "Tier", "Total Spent"];
-      rows = data.map(c => [c.name, c.email, c.loyaltyTier, c.totalSpent]);
+      rows = data.map((c) => [c.name, c.email, c.loyaltyTier, c.totalSpent]);
     } else if (type === "high_spenders") {
       title = "High Spenders Report";
-      const data = [...customers].sort((a, b) => parseMoneyAmount(b.totalSpent) - parseMoneyAmount(a.totalSpent)).slice(0, 10);
+      const data = [...customers]
+        .sort(
+          (a, b) =>
+            parseMoneyAmount(b.totalSpent) - parseMoneyAmount(a.totalSpent),
+        )
+        .slice(0, 10);
       headers = ["Name", "Email", "Total Spent"];
-      rows = data.map(c => [c.name, c.email, c.totalSpent]);
+      rows = data.map((c) => [c.name, c.email, c.totalSpent]);
     } else if (type === "pending_credits") {
       title = "Pending Credits Report";
-      const data = customers.filter(c => c.credit > 0);
+      const data = customers.filter((c) => c.credit > 0);
       headers = ["Name", "Email", "Credit Balance"];
-      rows = data.map(c => [c.name, c.email, formatCurrency(c.credit)]);
+      rows = data.map((c) => [c.name, c.email, formatCurrency(c.credit)]);
     }
 
     if (rows.length === 0) {
@@ -132,13 +157,17 @@ export default function CustomerManagement() {
           c.vehicles.some((v) => String(v).toLowerCase().includes(q)));
       if (!matchesSearch) return false;
       if (activeFilter === "All") return true;
-      if (activeFilter === "Business" || activeFilter === "Individual") return c.type === activeFilter;
-      if (activeFilter === "Active" || activeFilter === "Credit Overdue" || activeFilter === "Inactive")
+      if (activeFilter === "Business" || activeFilter === "Individual")
+        return c.type === activeFilter;
+      if (
+        activeFilter === "Active" ||
+        activeFilter === "Credit Overdue" ||
+        activeFilter === "Inactive"
+      )
         return c.status === activeFilter;
       return true;
     });
   }, [customers, search, activeFilter]);
-
 
   function openNewModal() {
     setEditingCustomer(null);
@@ -210,7 +239,10 @@ export default function CustomerManagement() {
   }
 
   function removeVehicle(idx) {
-    setForm((f) => ({ ...f, vehicles: f.vehicles.filter((_, i) => i !== idx) }));
+    setForm((f) => ({
+      ...f,
+      vehicles: f.vehicles.filter((_, i) => i !== idx),
+    }));
   }
 
   function setField(key, value) {
@@ -245,7 +277,10 @@ export default function CustomerManagement() {
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-[240px] max-w-md">
             <div className="relative group">
-              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-secondary transition-colors" />
+              <Icon
+                name="search"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-secondary transition-colors"
+              />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -263,7 +298,7 @@ export default function CustomerManagement() {
                   "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full transition-all duration-200",
                   activeFilter === filter
                     ? "bg-secondary text-white shadow-lg shadow-secondary/20 scale-105"
-                    : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant dark:text-zinc-400 hover:bg-surface-container dark:hover:bg-neutral-700"
+                    : "bg-surface-container-low dark:bg-neutral-800 text-on-surface-variant dark:text-zinc-400 hover:bg-surface-container dark:hover:bg-neutral-700",
                 )}
               >
                 {filter}
@@ -280,7 +315,12 @@ export default function CustomerManagement() {
                 <TableHead className="px-6">Customer</TableHead>
                 <TableHead className="px-6">Type</TableHead>
                 <TableHead className="px-6">Total Spent</TableHead>
-                <TableHead className="px-6 w-14 text-center" title="Custom part requests">✓</TableHead>
+                <TableHead
+                  className="px-6 w-14 text-center"
+                  title="Custom part requests"
+                >
+                  ✓
+                </TableHead>
                 <TableHead className="px-6">Loyalty</TableHead>
                 <TableHead className="px-6">Vehicles</TableHead>
                 <TableHead className="px-6">Status</TableHead>
@@ -300,39 +340,72 @@ export default function CustomerManagement() {
                     className="border-b border-surface-container dark:border-zinc-800 last:border-0"
                   >
                     <TableCell className="px-6">
-                      <Link to={`${basePath}/customers/${customer.id}`} className="flex items-center gap-3 group/item">
+                      <Link
+                        to={`${basePath}/customers/${customer.id}`}
+                        className="flex items-center gap-3 group/item"
+                      >
                         <div className="w-10 h-10 rounded-xl bg-surface-container-high dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-on-surface-variant dark:text-zinc-300 group-hover/item:bg-secondary/10 group-hover/item:text-secondary transition-colors border border-transparent group-hover/item:border-secondary/20">
-                          {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                          {customer.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
                         </div>
                         <div>
                           <p className="font-bold text-on-surface dark:text-zinc-100 group-hover/item:text-secondary transition-colors">
                             {customer.name}
                           </p>
-                          <p className="text-[10px] text-on-surface-variant dark:text-zinc-500 font-medium font-mono">{customer.email}</p>
+                          <p className="text-[10px] text-on-surface-variant dark:text-zinc-500 font-medium font-mono">
+                            {customer.email}
+                          </p>
                         </div>
                       </Link>
                     </TableCell>
                     <TableCell className="px-6">
-                      <Badge variant={customer.type === "Business" ? "info" : "neutral"}>
+                      <Badge
+                        variant={
+                          customer.type === "Business" ? "info" : "neutral"
+                        }
+                      >
                         {customer.type}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-6 font-bold">
                       {customer.totalSpent}
                     </TableCell>
-                    <TableCell className="px-6 text-center text-lg" title={Number(customer.partRequestCount) > 0 ? "Has custom part requests" : "No part requests"}>
-                      {Number(customer.partRequestCount) > 0 ? "✅" : "—"}
+                    <TableCell
+                      className="px-6 text-center"
+                      title={
+                        Number(customer.partRequestCount) > 0
+                          ? "Has custom part requests"
+                          : "No part requests"
+                      }
+                    >
+                      {Number(customer.partRequestCount) > 0 ? (
+                        <Icon
+                          name="check_circle"
+                          className="text-emerald-500 text-xl"
+                        />
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="px-6">
-                      <span className={`text-xs font-bold uppercase ${tierColor(customer.loyaltyTier)}`}>
+                      <span
+                        className={`text-xs font-bold uppercase ${tierColor(customer.loyaltyTier)}`}
+                      >
                         {customer.loyaltyTier}
                       </span>
                     </TableCell>
                     <TableCell className="px-6 text-on-surface-variant dark:text-zinc-400 text-xs">
-                      {customer.vehicles?.length > 0 ? customer.vehicles.join(", ") : "—"}
+                      {customer.vehicles?.length > 0
+                        ? customer.vehicles.join(", ")
+                        : "—"}
                     </TableCell>
                     <TableCell className="px-6">
-                      <Badge variant={statusVariant(customer.status)}>{customer.status}</Badge>
+                      <Badge variant={statusVariant(customer.status)}>
+                        {customer.status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="px-6">
                       <div className="flex items-center justify-end gap-1">
@@ -385,13 +458,21 @@ export default function CustomerManagement() {
                 <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
                   Full Name *
                 </label>
-                <Input value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="Customer name" />
+                <Input
+                  value={form.name}
+                  onChange={(e) => setField("name", e.target.value)}
+                  placeholder="Customer name"
+                />
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
                   Email *
                 </label>
-                <Input value={form.email} onChange={(e) => setField("email", e.target.value)} placeholder="email@example.com" />
+                <Input
+                  value={form.email}
+                  onChange={(e) => setField("email", e.target.value)}
+                  placeholder="email@example.com"
+                />
               </div>
             </div>
 
@@ -400,7 +481,11 @@ export default function CustomerManagement() {
                 <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
                   Phone
                 </label>
-                <Input value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder="+1 555 000 0000" />
+                <Input
+                  value={form.phone}
+                  onChange={(e) => setField("phone", e.target.value)}
+                  placeholder="+1 555 000 0000"
+                />
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
@@ -411,7 +496,11 @@ export default function CustomerManagement() {
                   onChange={(e) => setField("type", e.target.value)}
                   className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
                 >
-                  {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -426,7 +515,11 @@ export default function CustomerManagement() {
                   onChange={(e) => setField("status", e.target.value)}
                   className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
                 >
-                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -438,7 +531,11 @@ export default function CustomerManagement() {
                   onChange={(e) => setField("loyaltyTier", e.target.value)}
                   className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
                 >
-                  {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {TIERS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -464,7 +561,9 @@ export default function CustomerManagement() {
                   value={vehicleInput}
                   onChange={(e) => setVehicleInput(e.target.value)}
                   placeholder="e.g. 2024 BMW M3"
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addVehicle())}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addVehicle())
+                  }
                 />
                 <Button variant="outline" onClick={addVehicle} type="button">
                   <Icon name="add" className="text-sm" />
@@ -478,7 +577,10 @@ export default function CustomerManagement() {
                       className="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-container-low dark:bg-neutral-800 rounded-full text-xs font-medium"
                     >
                       {v}
-                      <button onClick={() => removeVehicle(i)} className="text-on-surface-variant hover:text-error">
+                      <button
+                        onClick={() => removeVehicle(i)}
+                        className="text-on-surface-variant hover:text-error"
+                      >
                         <Icon name="close" className="text-xs" />
                       </button>
                     </span>
@@ -488,9 +590,14 @@ export default function CustomerManagement() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-surface-container dark:border-neutral-800">
-              <Button variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setModalOpen(false)}>
+                Cancel
+              </Button>
               <Button variant="secondary" onClick={handleSave}>
-                <Icon name={editingCustomer ? "save" : "person_add"} className="text-sm" />
+                <Icon
+                  name={editingCustomer ? "save" : "person_add"}
+                  className="text-sm"
+                />
                 {editingCustomer ? "Save Changes" : "Add Customer"}
               </Button>
             </div>
@@ -507,11 +614,15 @@ export default function CustomerManagement() {
           <div className="space-y-4">
             <p className="text-sm text-on-surface-variant">
               Are you sure you want to delete{" "}
-              <span className="font-bold text-on-surface">{deleteModal?.name}</span>? This action
-              cannot be undone.
+              <span className="font-bold text-on-surface">
+                {deleteModal?.name}
+              </span>
+              ? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setDeleteModal(null)}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setDeleteModal(null)}>
+                Cancel
+              </Button>
               <Button variant="destructive" onClick={handleDelete}>
                 <Icon name="delete" className="text-sm" />
                 Delete Customer
@@ -532,21 +643,35 @@ export default function CustomerManagement() {
               Select the type of report you want to generate:
             </p>
             <div className="grid grid-cols-1 gap-3">
-              <Button variant="outline" onClick={() => generateReport("regulars")} className="justify-start">
+              <Button
+                variant="outline"
+                onClick={() => generateReport("regulars")}
+                className="justify-start"
+              >
                 <Icon name="groups" className="mr-2" />
                 Regular Customers
               </Button>
-              <Button variant="outline" onClick={() => generateReport("high_spenders")} className="justify-start">
+              <Button
+                variant="outline"
+                onClick={() => generateReport("high_spenders")}
+                className="justify-start"
+              >
                 <Icon name="monetization_on" className="mr-2" />
                 High Spenders
               </Button>
-              <Button variant="outline" onClick={() => generateReport("pending_credits")} className="justify-start">
+              <Button
+                variant="outline"
+                onClick={() => generateReport("pending_credits")}
+                className="justify-start"
+              >
                 <Icon name="credit_card" className="mr-2" />
                 Pending Credits
               </Button>
             </div>
             <div className="flex justify-end pt-4 border-t border-surface-container dark:border-neutral-800">
-              <Button variant="ghost" onClick={() => setReportModalOpen(false)}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setReportModalOpen(false)}>
+                Cancel
+              </Button>
             </div>
           </div>
         </Modal>
@@ -554,4 +679,3 @@ export default function CustomerManagement() {
     </PageTransition>
   );
 }
-                                            
