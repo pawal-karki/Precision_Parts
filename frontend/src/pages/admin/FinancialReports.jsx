@@ -21,6 +21,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/data-table";
+import { Pagination, DEFAULT_PAGE_SIZE } from "@/components/ui/pagination";
 import { api } from "@/lib/api";
 import {
   AreaChart,
@@ -42,6 +43,7 @@ export default function FinancialReports() {
   const [reportType, setReportType] = useState("monthly"); // "daily", "monthly", "yearly"
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     Promise.all([
@@ -52,8 +54,15 @@ export default function FinancialReports() {
       setSummary(s);
       setPlData(p);
       setReports(r);
+      setPage(1);
     });
   }, [reportType, selectedDate]);
+
+  const totalPages = Math.max(1, Math.ceil(reports.length / DEFAULT_PAGE_SIZE));
+  const paginatedReports = reports.slice(
+    (page - 1) * DEFAULT_PAGE_SIZE,
+    page * DEFAULT_PAGE_SIZE,
+  );
 
   const handleExport = () => {
     if (!reports.length) {
@@ -242,7 +251,7 @@ export default function FinancialReports() {
                 </tr>
               </TableHeader>
               <TableBody>
-                {reports.map((row, i) => (
+                {paginatedReports.map((row, i) => (
                   <motion.tr
                     key={row.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -260,6 +269,18 @@ export default function FinancialReports() {
             </Table>
           </div>
         </div>
+        {totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-surface-container dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-sm text-slate-500">
+              Showing{" "}
+              <span className="font-bold text-slate-800 dark:text-neutral-200">
+                {paginatedReports.length}
+              </span>{" "}
+              of {reports.length} rows (page {page}/{totalPages})
+            </p>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </motion.div>
     </PageTransition>
   );

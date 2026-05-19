@@ -12,6 +12,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/data-table";
+import { Pagination, DEFAULT_PAGE_SIZE } from "@/components/ui/pagination";
 import { useList, store } from "@/lib/store";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
@@ -168,6 +169,16 @@ export default function CustomerManagement() {
       return true;
     });
   }, [customers, search, activeFilter]);
+
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / DEFAULT_PAGE_SIZE));
+  const paginated = useMemo(
+    () => filtered.slice((page - 1) * DEFAULT_PAGE_SIZE, page * DEFAULT_PAGE_SIZE),
+    [filtered, page],
+  );
+  useEffect(() => {
+    setPage(1);
+  }, [search, activeFilter, customers.length]);
 
   function openNewModal() {
     setEditingCustomer(null);
@@ -329,7 +340,7 @@ export default function CustomerManagement() {
             </TableHeader>
             <TableBody>
               <AnimatePresence mode="popLayout">
-                {filtered.map((customer) => (
+                {paginated.map((customer) => (
                   <motion.tr
                     key={customer.id}
                     layout
@@ -441,6 +452,18 @@ export default function CustomerManagement() {
             <div className="text-center py-12 text-on-surface-variant">
               <Icon name="search_off" className="text-4xl opacity-30" />
               <p className="text-sm mt-2">No customers match your search.</p>
+            </div>
+          )}
+          {totalPages > 1 && (
+            <div className="px-4 py-3 border-t border-surface-container dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <p className="text-sm text-slate-500">
+                Showing{" "}
+                <span className="font-bold text-slate-800 dark:text-neutral-200">
+                  {paginated.length}
+                </span>{" "}
+                of {filtered.length} customers (page {page}/{totalPages})
+              </p>
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
           )}
         </div>
