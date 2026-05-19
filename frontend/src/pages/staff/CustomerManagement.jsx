@@ -154,7 +154,7 @@ export default function CustomerManagement() {
         (c.phone && String(c.phone).toLowerCase().includes(q)) ||
         String(c.id).includes(q) ||
         (Array.isArray(c.vehicles) &&
-          c.vehicles.some((v) => String(v).toLowerCase().includes(q)));
+          c.vehicles.some((v) => (typeof v === "string" ? v : v.name).toLowerCase().includes(q)));
       if (!matchesSearch) return false;
       if (activeFilter === "All") return true;
       if (activeFilter === "Business" || activeFilter === "Individual")
@@ -399,7 +399,7 @@ export default function CustomerManagement() {
                     </TableCell>
                     <TableCell className="px-6 text-on-surface-variant dark:text-zinc-400 text-xs">
                       {customer.vehicles?.length > 0
-                        ? customer.vehicles.join(", ")
+                        ? customer.vehicles.map(v => typeof v === "string" ? v : v.name).join(", ")
                         : "—"}
                     </TableCell>
                     <TableCell className="px-6">
@@ -576,7 +576,7 @@ export default function CustomerManagement() {
                       key={i}
                       className="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-container-low dark:bg-neutral-800 rounded-full text-xs font-medium"
                     >
-                      {v}
+                      {typeof v === "string" ? v : v.name}
                       <button
                         onClick={() => removeVehicle(i)}
                         className="text-on-surface-variant hover:text-error"

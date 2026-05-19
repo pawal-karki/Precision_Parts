@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Modal } from "@/components/ui/modal";
+import { Input } from "@/components/ui/input";
 import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { formatNpt, formatDate } from "@/lib/utils";
@@ -12,6 +14,10 @@ import {
 } from "@/components/ui/data-table";
 
 const TABS = ["Overview", "Vehicles", "Service History", "Purchases", "Part requests", "Activity Log", "Login Activity"];
+
+const TYPES = ["Business", "Individual"];
+const STATUSES = ["Active", "Inactive", "Credit Overdue"];
+const TIERS = ["Bronze", "Silver", "Gold", "Platinum"];
 
 // ── Pagination Component ─────────────────────────────────────────────────
 
@@ -546,6 +552,78 @@ export default function CustomerProfile() {
   const [activeTab, setActiveTab] = useState("Overview");
   const toast = useToast();
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    type: "Individual",
+    status: "Active",
+    loyaltyTier: "Bronze",
+    credit: 0,
+    vehicles: [],
+  });
+  const [vehicleInput, setVehicleInput] = useState("");
+
+  const openEditModal = () => {
+    if (!customer) return;
+    setForm({
+      name: customer.name || "",
+      email: customer.email || "",
+      phone: customer.phone || "",
+      type: customer.type || "Individual",
+      status: customer.status || "Active",
+      loyaltyTier: customer.loyaltyTier || "Bronze",
+      credit: customer.credit || 0,
+      vehicles: customer.vehicles || [],
+    });
+    setVehicleInput("");
+    setModalOpen(true);
+  };
+
+  function setField(key, value) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function addVehicle() {
+    if (!vehicleInput.trim()) return;
+    setForm((f) => ({ ...f, vehicles: [...f.vehicles, vehicleInput.trim()] }));
+    setVehicleInput("");
+  }
+
+  function removeVehicle(idx) {
+    setForm((f) => ({
+      ...f,
+      vehicles: f.vehicles.filter((_, i) => i !== idx),
+    }));
+  }
+
+  async function handleSave() {
+    if (!form.name.trim() || !form.email.trim()) {
+      toast("Please fill in name and email", "error");
+      return;
+    }
+    try {
+      await api.updateCustomer(customer.id, {
+        fullName: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone || null,
+        customerType: form.type,
+        status: form.status,
+        loyaltyTier: form.loyaltyTier,
+        creditBalance: Number(form.credit) || 0,
+      });
+      toast(`${form.name} updated successfully`, "success");
+      setModalOpen(false);
+      api.getCustomers().then((customers) => {
+        const found = customers.find((c) => c.id === Number(id) || String(c.id) === String(id));
+        setCustomer(found ?? null);
+      });
+    } catch (err) {
+      toast(err.message || "Could not save customer", "error");
+    }
+  }
+
   // Load customer from list
   useEffect(() => {
     api.getCustomers().then((customers) => {
@@ -662,7 +740,7 @@ export default function CustomerProfile() {
             </div>
 
             <div className="mt-4 space-y-2">
-              <Button variant="secondary" className="w-full">
+              <Button variant="secondary" className="w-full" onClick={openEditModal}>
                 <Icon name="edit" className="text-sm" /> Edit Profile
               </Button>
               <Button
@@ -707,6 +785,161 @@ export default function CustomerProfile() {
           {activeTab === "Login Activity" && <LoginActivityTab publicId={id} customer={customer} />}
         </div>
       </div>
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Edit Customer"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+                Full Name *
+              </label>
+              <Input
+                value={form.name}
+                onChange={(e) => setField("name", e.target.value)}
+                placeholder="Customer name"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+                Email *
+              </label>
+              <Input
+                value={form.email}
+                onChange={(e) => setField("email", e.target.value)}
+                placeholder="email@example.com"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+                Phone
+              </label>
+              <Input
+                value={form.phone}
+                onChange={(e) => setField("phone", e.target.value)}
+                placeholder="+1 555 000 0000"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+                Type
+              </label>
+              <select
+                value={form.type}
+                onChange={(e) => setField("type", e.target.value)}
+                className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
+              >
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+                Status
+              </label>
+              <select
+                value={form.status}
+                onChange={(e) => setField("status", e.target.value)}
+                className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+                Loyalty Tier
+              </label>
+              <select
+                value={form.loyaltyTier}
+                onChange={(e) => setField("loyaltyTier", e.target.value)}
+                className="w-full appearance-none bg-surface-container-lowest dark:bg-neutral-800 border border-outline-variant dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-secondary"
+              >
+                {TIERS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+                Credit (Rs.)
+              </label>
+              <Input
+                type="number"
+                value={form.credit}
+                onChange={(e) => setField("credit", Number(e.target.value))}
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          {/* Vehicles */}
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-1 block">
+              Vehicles
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={vehicleInput}
+                onChange={(e) => setVehicleInput(e.target.value)}
+                placeholder="e.g. 2024 BMW M3"
+                onKeyDown={(e) =>
+                  e.key === "Enter" && (e.preventDefault(), addVehicle())
+                }
+              />
+              <Button variant="outline" onClick={addVehicle} type="button">
+                <Icon name="add" className="text-sm" />
+              </Button>
+            </div>
+            {form.vehicles?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {form.vehicles.map((v, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-container-low dark:bg-neutral-800 rounded-full text-xs font-medium"
+                  >
+                    {typeof v === "string" ? v : v.name}
+                    <button
+                      onClick={() => removeVehicle(i)}
+                      className="text-on-surface-variant hover:text-error"
+                    >
+                      <Icon name="close" className="text-xs" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-container dark:border-neutral-800">
+            <Button variant="ghost" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="secondary" onClick={handleSave}>
+              <Icon name="save" className="text-sm" />
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }
