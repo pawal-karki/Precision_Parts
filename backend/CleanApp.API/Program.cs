@@ -17,6 +17,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 
+// Render's containers cap inotify instances well below what ASP.NET Core's
+// default appsettings.json file-watcher needs, so under load/restarts the
+// process crashes before it can even build configuration:
+//   "IOException: The configured user limit (128) on the number of inotify
+//   instances has been reached ... at PhysicalFilesWatcher.CreateFileChangeToken"
+// We never rely on hot-reloading appsettings.json in a container, so disable
+// the watcher outright. Must be set before CreateBuilder(args) reads it.
+Environment.SetEnvironmentVariable("DOTNET_hostBuilder:reloadConfigOnChange", "false");
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ── JSON serialisation ──────────────────────────────────────────
